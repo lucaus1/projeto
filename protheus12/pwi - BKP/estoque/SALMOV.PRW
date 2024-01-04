@@ -1,0 +1,118 @@
+#include "rwmake.CH"
+#include "font.CH"
+#include "topconn.ch"
+#include "vkey.ch"
+#include "colors.ch"
+#include "fivewin.ch"
+#include "protheus.ch"
+
+User Function SALMOV()
+	Private _cProduto  := Space(15)
+	Private _cDesc     := Space(15)
+    Private _clocal    := '01'
+    Private oProduto
+    Private oLocal
+	Private oDesc
+    Private oValIni
+	Private _cData     := CTOD("31/10/06")
+	Private _cDataIn   := Date()
+	Private _cDataFn   := Date()
+    Private _cValIni   := 0.0000
+    Private lCheck1
+    Private oCheck1
+   
+	Define FONT oFnt1 NAME "Comic Sans MS" BOLD Size 010,00
+	Define FONT oFnt2 NAME "Ms Sans Serif"
+	
+	@ 000,000 To 270,330 Dialog oDlgPrc Title "Custo Mov.Interna:"
+	@ 002,002 To 120,165 Title "Produto"
+		@ 010,008 Say "Codigo:" Size 050,000 Of oDlgPrc Pixel FONT oFnt2 COLOR CLR_HBLUE
+		@ 006,060 Get _cProduto object oProduto Picture "@!" Size 060,000 F3 "SB1" Valid AtuDesc(.T.)
+		
+		@ 025,008 Say "Descricao:" Size 070,000 Of oDlgPrc Pixel FONT oFnt2 COLOR CLR_HBLUE
+		@ 021,060 Get _cDesc object oDesc  Picture "@!" Size 100,000 
+        
+        @ 040,008 Say "Local:" Size 050,000 Of oDlgPrc Pixel FONT oFnt1 COLOR CLR_HBLUE
+		@ 036,060 Get oLocal var _cLocal Picture "@E 99" Size 010,000 Pixel FONT oFnt1 COLOR CLR_HBLUE
+
+		@ 055,008 Say "Data Fechamento:" Size 050,000 Of oDlgPrc Pixel FONT oFnt2 COLOR CLR_HBLUE
+		@ 051,060 Get _cData Picture "@D" Size 040,000 Pixel FONT oFnt1 COLOR CLR_HBLUE  Valid AtuExist()              
+
+		@ 070,008 Say "Custo Inicial:" Size 050,000 Of oDlgPrc Pixel FONT oFnt1 COLOR CLR_HBLUE
+		@ 066,060 Get oValIni var _cValIni Picture "@E 999,999.9999" Size 040,000 Pixel FONT oFnt1 COLOR CLR_HBLUE
+
+		@ 085,008 Say "Data inicio:" Size 050,000 Of oDlgPrc Pixel FONT oFnt2 COLOR CLR_HBLUE
+		@ 081,060 Get _cDataIn Picture "@D" Size 040,000 Pixel FONT oFnt1 COLOR CLR_HBLUE
+		                                                                                                                    
+		@ 100,008 Say "Data Final:" Size 050,000 Of oDlgPrc Pixel FONT oFnt2 COLOR CLR_HBLUE
+		@ 096,060 Get _cDataFn Picture "@D" Size 040,000 Pixel FONT oFnt1 COLOR CLR_HBLUE             		
+/*
+		lCheck1 := .f.
+		
+		@ 122,008 Checkbox oCheck1 var lCheck1 Prompt "Informa Custo" Size 050,010
+ */
+  		@ 122,075 BmpButton Type 1 Action  Confirma()
+		@ 122,0105 BmpButton Type 2 Action Close(oDlgPrc)
+
+	Activate Dialog oDlgPrc Centered
+Return                                                                            
+
+Static Function AtuDesc(lFlag)
+    
+		If !empty(Posicione("SB1", 1, xFilial("SB1")+_cProduto,"B1_DESC"))
+			_cDesc:= Posicione("SB1", 1, xFilial("SB1")+_cProduto,"B1_DESC")
+	    Else
+		if lFlag
+	        Alert('Produto Não Cadastrado')
+	    Endif    
+	        _cDesc:=""
+	    Endif
+    
+     
+   oDesc:Refresh()
+   
+Return	
+
+Static Function AtuExist()
+	dbSelectArea("SB9")
+	dbSetOrder(1)
+	SB9->(dbGotop())
+	dbSeek (xFilial()+_cProduto+_cLocal+DtoS(_cData))
+	   if Found()
+	       _cProduto := SB9->B9_COD
+		   _cValIni  := SB9->B9_VINI1/SB9->B9_QINI
+		Else
+     	   Msgbox("PRODUTO INEXISTENTE", "Atenção" , "STOP")
+		   _cValIni  := 0
+		Endif       
+
+    oValIni:Refresh()
+Return
+	
+Static Function Confirma()
+If MsgYesNo("Deseja Realmente Alterar Movimento?")
+	  If _cValIni != 0
+		TCSQLExec ( " UPDATE " + RetSQLName("SD3")+ " SET D3_CUSTO1 = D3_QUANT * "+ Str(_cValIni,14,4) +" FROM " + RetSQLName("SD3")+ " " + ;
+		            " WHERE D3_COD = '"+ _cProduto +"' AND D3_EMISSAO BETWEEN '"+ DtoS(_cDataIn) +"' " + ;
+		            " AND '"+ DtoS(_cDataFn) +"' AND  D3_TM IN ('501','503','499') AND D3_LOCAL='"+ _cLocal +"'" )  
+			            
+		Msgbox("SALDO ATUALIZADO ", "Atenção" , "INFO")
+	  Else
+	    Alert("ATENÇÃO, CUSTO ZERADO.. ATUALIZAÇÃO NAO REALIZADA!!")
+	  Endif                   
+ Else
+        Alert("ATUALIZAÇÃO NAO REALIZADA!!")
+ Endif
+  LimpaVar()
+Return   
+    
+Static Function LimpaVar()
+ _cProduto := Space(15)
+ _cLocal   := "01"
+ _Desc     := ""
+ _cValIni  := 0
+
+ oDlgPrc:Refresh()
+ oProduto:SetFocus()
+ AtuDesc(.F.)
+Return

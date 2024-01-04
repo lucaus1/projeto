@@ -1,0 +1,1474 @@
+#INCLUDE "FIVEWIN.CH"
+#INCLUDE "GPER070.CH" 
+#INCLUDE "PROTHEUS.CH"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ GPER070	³ Autor ³ Emerson Rosa de Souza ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Impressao da Provisao de Ferias						      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ GPER070(void)											  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³												              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso  	 ³ Generico 												  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ 		ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL.		      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Data	³ BOPS ³  Motivo da Alteracao					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Emerson	   ³29/01/01|007325| Relatorio sintetico estava sendo impresso³±±
+±±³            ³        |------| como analitico.  			  			  ³±±
+±±³Emerson     ³13/09/01³------³ Inclusao da pergunte "Categorias a Impr".³±±
+±±³Emerson     ³04/10/01³------³ Estavamos com problemas na totalizacao do³±±
+±±³            ³        ³------³ array aTotCc1&cQ por conta da macro.     ³±±
+±±³Emerson     ³14/11/01³------³ Ajustes na quebra de Niveis-Provisao 13o.³±±
+±±³Silvia      ³04/03/02³------³ Ajustes na Picture para Localizacoes    .³±±
+±±³Emerson     ³14/08/02³------³ Despreza Func. se nao encontra-lo no SRT.³±±
+±±³Emerson     ³20/08/02³------³ Ajuste na quebra por Centro de Custo.    ³±±
+±±³Emerson     ³02/09/02³------³ Exclusao da funcao ValidPerg().          ³±±
+±±³Emerson     ³30/05/03³------³ Passar a imprimir Baixa de 13o. Salario  ³±±
+±±³Pedro       ³18/06/04³068275³ Tratar montagem dos niveis em MontaMasc()³±±
+±±³Emerson     ³17/09/04³074057³ Inicializar cAcessaSRA como String.	  ³±±
+±±³Emerson     ³11/11/04³------³ Ajuste para impressao da coluna de PIS.  ³±±
+±±³Emerson/    ³12/05/06³089126³ Implementado o parametro MV_TRFAMES.     ³±±
+±±³Ricardo D.  ³        ³------³ Ajuste na impressao das linhas de transfe³±±
+±±³            ³        ³------³ rencia de entrada e saida.               ³±±
+±±³Ricardo D.  ³22/01/07³085125³ Implementacao de melhoria de performance ³±±
+±±³            ³        ³      ³ nos calculos e relatorios de provisoes.  ³±±
+±±³Silvia      ³24/05/07³116535³ Ajuste no layout do Relatorio - Argentina³±±
+±±³Pedro Eloy  ³05/09/07³131091³ Feito o tratamento do filtro da setprint.³±±
+±±³Jonatas     ³03/03/09³003322³ Incluido tratamento p/ geracao da bx. por³±±
+±±³            ³        ³  2009³ rescisao qdo. possui transferencia no mes³±±
+±±³            ³        ³      ³ da rescisao.                             ³±±
+±±³Renata      ³30/06/09³016232³ Ajuste na pergunta 12 - "Imp. Niveis C.  ³±±
+±±³            ³        ³  2009³ Custo", incluindo opcao "Apenas Nivel",  ³±±
+±±³            ³        ³      ³ para totalizar somente ate o nivel. 	  ³±±
+±±³Alex        ³03/08/09³      ³ Ajuste no Grupo de Campos filial         ³±±
+±±³            ³        ³      ³ tratamento para não considerar 2 posições³±±
+±±³            ³        ³      ³ fixas.                                   ³±±
+±±³Jonatas     ³18/08/09³017773³Ajuste p/ geracao do saldo de provisao no ³±±
+±±³            ³        ³  2009³no c.custo de destino nos casos de transf.³±±
+±±³            ³        ³      ³e rescisao na mesma competencia.          ³±±
+±±³Francisco Jr³24/11/09³028371³Compatibilizar para versao corporativa.   ³±±
+±±³            ³        ³  2009³                                          ³±±
+±±³            ³        ³      ³                                          ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+USER Function PWGPER070()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Locais (Basicas)							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cString :="SRA"        	    // alias do arquivo principal (Base)
+Local aOrd	  := {STR0001,STR0002,STR0003,STR0004} //"Matricula"###"C.Custo"###"Nome"###"C.Custo+Nome"
+Local cDesc1  := STR0005			//"Emiss„o da Provis„o de F‚rias."
+Local cDesc2  := STR0006			//"ser  impresso de acordo com os parametros solicitados"
+Local cDesc3  := STR0007			//"pelo usu rio."
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Private(Basicas)					         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aReturn  := {STR0008, 1,STR0009, 2, 2, 1, "",1 }		// "Zebrado"###"Administra‡„o"
+Private nomeprog := "PWGPER070"
+Private nLastKey := 0
+Private cPerg	 := "GPR070"
+Private cPict1	:=	If (MsDecimais(1)==2,"@E 999,999,999.99",TM(999999999,14,MsDecimais(1)))  // "@E 99,999,999,999.99
+Private cPict2  := If (MsDecimais(1)== 2,"@E 999999999.99"  ,TM(999999999,12,MsDecimais(1)))  // "@E 999999999.99
+Private cPict3  := If (MsDecimais(1)== 2,"@E 9999999999.99" ,TM(9999999999,13,MsDecimais(1)))  // "@E 9999999999.99
+Private cPict4  := If (MsDecimais(1)== 2,"@E 99999999999.99",TM(99999999999,14,MsDecimais(1)))  // "@E 99999999999.99
+Private cPict5  := If (MsDecimais(1)== 2,"@E 9999999.99"  ,TM(9999999,10,MsDecimais(1)))  		// "@E 9999999.99
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis Utilizadas na funcao IMPR 					     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private Titulo	 := STR0010			//"PROVISO DE FERIAS "
+Private AT_PRG	 := "PWGPER070"
+Private wCabec0  := 1
+Private wCabec1  := STR0011 //"Data Base: "
+Private CONTFL   :=1
+Private LI		 :=0
+Private nTamanho :="M"
+
+#IFDEF TOP
+	TCInternal(5,"*OFF")   // Desliga Refresh no Lock do Top
+#ENDIF
+
+      
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas					  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+pergunte("GPR070",.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT				  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+wnrel:="PWGPER070"            //Nome Default do relatorio em Disco
+wnrel:=SetPrint(cString,wnrel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,,nTamanho)
+
+If nLastKey = 27
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey = 27
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega variaveis privates comuns a GPEA070,GPER070 e GPEM070|
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+// GPEProvisao(wnRel,cString,Titulo,,2)
+   u_pwgp070imp()
+   
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ GP070imp ³ Autor ³ Emerson Rosa de Souza ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Provisao de Ferias										  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ GP070Imp(lEnd,WnRel,cString)								  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+USER Function PWGP070IMP(lEnd,WnRel,cString)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Locais (Programa)							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cMapa       := 0
+Local nLaco       := nByte := 0
+Local cMascCus    := GetMv( "MV_MASCCUS" ) // Mascara do p/Niveis do C.Custo
+Local cTPRDbf,cTPRNtx
+Local cAcessaSRA  := ChkRH("U_PWGPER070","SRA","2")
+Local aAreaSRA    := SRA->(GetArea())
+Local nQ
+Local nCnt2
+Local nCnt1
+Local lCalcula    := .T.
+Local lFerias     := .T.
+Local l13oSal     := .F.
+Local lTodosCpos  := !(cAcessaSRA==".T.")
+Local cFiltroRel  := aReturn[7]
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Private(Programa)					  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aFerVenc     := Array(_Linhas,_Colunas)
+Private aFerProp     := Array(_Linhas,_Colunas)
+Private aTotVePr     := Array(_Linhas,_Colunas)
+Private aCabProv     := {}
+Private aVerba  	 := {}
+Private aTransf      := {}
+Private aTotCc1      := {}
+Private aTotCc2      := {}
+Private aTotCc3      := {}
+Private aTotFil1     := {}
+Private aTotFil2     := {}
+Private aTotFil3     := {}
+Private aTotEmp1     := {}
+Private aTotEmp2     := {}
+Private aTotEmp3     := {}
+Private aInfo	     := {}
+Private aCodFol  	 := {}
+Private aNiveis      := {} // Niveis do Centro de Custo
+Private lSalInc    	 := .F.
+Private lTrataTrf    := .F.
+Private lCalcPis	 := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carregando variaveis mv_par?? para Variaveis do Sistema.	 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nOrdem		:= aReturn[8]
+dDataRef   	:= mv_par01                             // Data de Referencia
+cFilDe	   	:= mv_par02								//	Filial De
+cFilAte    	:= mv_par03								//	Filial Ate
+cCcDe	   	:= mv_par04								//	Centro de Custo De
+cCcAte	   	:= mv_par05								//	Centro de Custo Ate
+cMatDe	   	:= mv_par06								//	Matricula De
+cMatAte     := mv_par07								//	Matricula Ate
+cNomeDe     := mv_par08								//	Nome De
+cNomeAte    := mv_par09								//	Nome Ate
+nAnaSin     := mv_par10								//	Analitica / Sintetica
+nGerRes     := mv_par11								//	Geral / Resumida
+nImpNiv		:= mv_par12                             //  Imprimir Niveis C.Custo
+cCateg	    := mv_par13								//	Categorias (Utilizada em fMonta_TPR)
+
+If !Empty( cFiltroRel )
+	lTodosCpos  := .T.
+	cAcessaSRA :=  "{ || " +ChkRH("U_PWGPER070","SRA","2") + " .And. " + cFiltroRel +"}"
+Else
+	cAcessaSRA := "{ || " + cAcessaSRA + "}"
+Endif
+Titulo  := STR0012+If(nAnaSin==1,STR0013,STR0014)+;		//"RELACAO DE PROVISAO DE FERIAS "###"ANALITICA"###"SINTETICA"
+               " "+If(nGerRes == 1,STR0015,STR0016)		//"(GERAL)"###"(RESUMIDA)"
+wCabec1 += Dtoc(dDataRef)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ aNiveis -  Armazena as chaves de quebra.                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nImpNiv <> 2
+	aNiveis:= MontaMasc(cMascCus)
+
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Criar os Arrays com os Niveis de Quebras					 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    For nQ := 1 to Len(aNiveis)
+        cQ := STR(NQ,1)
+        Private aTotCc1&cQ   := {} // Niveis dos Centro de Custo
+        Private aTotCc2&cQ   := {}
+		Private aTotCc3&cQ   := {}
+        cCcAnt&cQ            := "" // Variaveis c.custo dos niveis de quebra
+    Next nQ
+Endif
+If cPaisLoc == "ARG"
+	cPict1	:=	If (MsDecimais(1)==2,"@E 999,999.99",TM(999999,10,MsDecimais(1)))  // "@E 999,999.99
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta o arquivo temporario "TPR" a partir do SRA e SRE     |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Processa({ || fMonta_TPR(@cTPRDbf,@cTPRNtx,nOrdem,dDataRef,@lSalInc,@lTrataTrf,@aTransf,,cAcessaSRA,,lTodosCpos)},STR0010) //"PROVISO DE FERIAS "
+
+dbSelectArea( "SRA" )
+dbSetOrder(1)
+
+dbSelectArea( "TPR" )
+dbGoTop()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega regua de processamento							   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SetRegua( RecCount() )
+
+cFilialAnt := Replicate("!", FWGETTAMFILIAL)
+cCcAnt	   := "!!!!!!!!!"
+While !Eof()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Movimenta Regua de Processamento							 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IncRegua()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Garante o Posicionamento do Funcionario no SRA				 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea( "SRA" )
+	dbSeek( TPR->PR_FILIAL + TPR->PR_MAT )
+	dbSelectArea( "TPR" )
+
+	If lEnd
+		@Prow()+1,0 PSAY cCancel
+   		Exit
+    Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Quebra de Filial											 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If TPR->PR_FILIAL # cFilialAnt       
+	
+		If !Fp_CodFol(@aCodFol,TPR->PR_FILIAL) .Or.;
+		   !fInfo(@aInfo,TPR->PR_FILIAL)
+			Exit
+		Endif
+
+		cFilialAnt := TPR->PR_FILIAL
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Carrega os identificadores da Provisaos						 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		fIdentProv(@aVerba,aCodFol,.T.,.F.)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica a existencia dos identificadores do PIS.         	 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		lCalcPis := ( !Empty( aCodFol[416,1] ) )
+
+	Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Limpa o array com o conteudo especificado no 2§ parametro    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	fLimpaArray( @aTotVePr, 0 )
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca informacoes de cabecalho no SRT	 					 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !fBusCabSRT(dDataRef,@aCabProv)
+		fTestaTotal(_FerVenc)
+		Loop
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca os lancamentos de ferias vencidas e proporcionais      ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	#IFDEF TOP
+		fQryDetSRT(aVerba,aTransf,dDataRef,lTrataTrf,lCalcula,lFerias,l13oSal)
+	#ELSE
+		fBusDetSRT(@aFerVenc,,aVerba,aTransf,dDataRef,_FerVenc,lTrataTrf,.T.)
+		fBusDetSRT(@aFerProp,,aVerba,aTransf,dDataRef,_FerProp,lTrataTrf,.T.)
+	#ENDIF
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Totalizador -> Vencidas + Proporcionais						 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	For nCnt1 := 1 To _Linhas
+		For nCnt2 := 1 To _Colunas
+			aTotVePr[nCnt1,nCnt2] := aFerVenc[nCnt1,nCnt2]+aFerProp[nCnt1,nCnt2]
+		Next nCnt2
+	Next nCnt1
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Totalizadores dos Niveis de Quebra                           |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	fTotNivCC(aFerVenc, aFerProp, aTotVePr) 							    // Niveis do Centro de Custo
+	fAtuCont(@aToTCc1 , @aTotCc2 , @aTotCc3, aFerVenc, aFerProp, aTotVePr)  // Centro de Custo
+	fAtuCont(@aTotFil1, @aTotFil2, @aTotFil3, aFerVenc, aFerProp, aTotVePr) // Filial
+	fAtuCont(@aTotEmp1, @aTotEmp2, @aTotEmp3, aFerVenc, aFerProp, aTotVePr) // Empresa
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Imprime o funcionario                                        |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If nAnaSin == 1
+		fImpFunFer()
+	EndIf	
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Quebras e Skips                                              |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	fTestaTotal(_FerVenc)
+Enddo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Termino do relatorio							   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea( "SRA" )
+Set Filter To
+dbSetOrder(1)
+
+If aReturn[5] == 1
+	Set Printer To
+	ourspool(wnrel)
+Endif
+MS_FLUSH()
+
+TPR->(dbCloseArea())
+fErase(cTPRNtx + OrdBagExt())
+fErase(cTPRDbf + ".DBF")
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Retorna area original do cadastro de funcionarios		     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaSRA)
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o	 ³ GPER090	³ Autor ³ Emerson Rosa de Souza ³ Data ³ 25.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Provisao de 13§ Salario									  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ GPER090(void)											  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Parametros³															  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso 	 ³ Generico 										   		  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ 		ATUALIZACOES SOFRIDAS DESDE A CONSTRU€AO INICIAL.			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Programador ³ Data	³ BOPS ³  Motivo da Alteracao					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+USER Function PWGPER090()
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Locais (Basicas)							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cString := "SRA"        			// Alias do arquivo principal (Base)
+Local aOrd	  := {STR0001,STR0002,STR0003,STR0004}   //"Matricula"###"C.Custo"###"Nome"###"C.Custo+Nome"
+Local cDesc1  := STR0059				//"Emiss„o de Provis„o de 13o Salario."
+Local cDesc2  := STR0006				//"Ser  impresso de acordo com os parametros solicitados pelo"
+Local cDesc3  := STR0007				//"usu rio."
+
+Private cPict1	:=	If (MsDecimais(1)==2,"@E 999,999,999.99",TM(999999999,14,MsDecimais(1)))  // "@E 99,999,999,999.99
+Private cPict2  := If (MsDecimais(1)== 2,"@E 999999999.99"  ,TM(999999999,12,MsDecimais(1)))  // "@E 999999999.99
+Private cPict3  := If (MsDecimais(1)== 2,"@E 9999999999.99" ,TM(9999999999,13,MsDecimais(1)))  // "@E 9999999999.99
+Private cPict4  := If (MsDecimais(1)== 2,"@E 99999999999.99",TM(99999999999,14,MsDecimais(1)))  // "@E 99999999999.99
+Private cPict5  := If (MsDecimais(1)== 2,"@E 9999999.99"  ,TM(9999999,10,MsDecimais(1)))  		// "@E 9999999.99
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Private(Basicas)							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private aReturn  := {STR0008,1,STR0009, 2, 2, 1, "",1 }		// "Zebrado"###"Administra‡„o"
+Private NomeProg := "PWGPER090"
+Private nLastKey := 0
+Private cPerg	 := "GPR090"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Variaveis Utilizadas na funcao IMPR 						 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private Titulo	 := STR0058		//"PROVISO DE 13o SALARIO"
+Private AT_PRG	 := "PWGPER090"
+Private wCabec0  := 1
+Private wCabec1  := STR0011	//"Data Base: "
+Private CONTFL	 := 1
+Private LI		 := 0
+Private nTamanho := "M"
+
+#IFDEF TOP
+	TCInternal(5,"*OFF")   // Desliga Refresh no Lock do Top
+#ENDIF
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Ajuste Perguntas									  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Pergunte("GPR090",.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Envia controle para a funcao SETPRINT						 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+wnrel := "GPER090"            //Nome Default do relatorio em Disco
+wnrel := SetPrint(cString,wnrel,cPerg,@Titulo,cDesc1,cDesc2,cDesc3,.F.,aOrd,,nTamanho)
+
+If nLastKey = 27
+	Return
+Endif
+
+SetDefault(aReturn,cString)
+
+If nLastKey = 27
+	Return
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega variaveis privates comuns a GPEA070,GPER070 e GPEM070|
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+GPEProvisao(wnRel,cString,Titulo,,3)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ GP090imp ³ Autor ³ Emerson Rosa de Souza ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Provisao de 13§ Salario									  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ GP090Imp(lEnd,WnRel,cString)								  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+USER Function PWGP090IMP(lEnd,WnRel,cString)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Locais (Programa)							 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cMapa      := 0
+Local nLaco      := nByte := 0
+Local cMascCus   := GetMv( "MV_MASCCUS" ) // Mascara do p/Niveis do C.Custo
+Local cTPRDbf,cTPRNtx
+Local cAcessaSRA := ChkRH("U_PWGPER090","SRA","2")
+Local aAreaSRA   := SRA->(GetArea())
+Local nQ
+Local nCnt2
+Local nCnt1
+Local lCalcula    := .T.
+Local lFerias     := .F.
+Local l13oSal     := .T.
+Local lTodosCpos  := !(cAcessaSRA==".T.")
+Local cFiltroRel  := aReturn[7]
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Define Variaveis Private(Programa)					  ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private a13Salar     := Array(_Linhas,_Colunas)
+Private a14Salar     := Array(_Linhas,_Colunas)
+Private aTot1314     := Array(_Linhas,_Colunas)
+Private aCabProv     := {}
+Private aVerba  	 := {}
+Private aTransf      := {}
+Private aTotCc1      := {}
+Private aTotCc2      := {}
+Private aTotCc3      := {}
+Private aTotFil1     := {}
+Private aTotFil2     := {}
+Private aTotFil3     := {}
+Private aTotEmp1     := {}
+Private aTotEmp2     := {}
+Private aTotEmp3     := {}
+Private aInfo	     := {}
+Private aCodFol  	 := {}
+Private aNiveis      := {} // Niveis do Centro de Custo
+Private lTrataTrf    := .F.
+Private lSalInc    	 := .F.
+Private lCalcPis	 := .F.
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carregando variaveis mv_par?? para Variaveis do Sistema.	 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+nOrdem		:= aReturn[8]
+dDataRef   	:= mv_par01                             // Data de Referencia
+cFilDe	   	:= mv_par02								//	Filial De
+cFilAte    	:= mv_par03								//	Filial Ate
+cCcDe	   	:= mv_par04								//	Centro de Custo De
+cCcAte	   	:= mv_par05								//	Centro de Custo Ate
+cMatDe	   	:= mv_par06								//	Matricula De
+cMatAte     := mv_par07								//	Matricula Ate
+cNomeDe     := mv_par08								//	Nome De
+cNomeAte    := mv_par09								//	Nome Ate
+nAnaSin     := mv_par10								//	Sintetica / Analitica
+nGerRes     := mv_par11								//	Resumida  / Geral
+nImpNiv		:= mv_par12                    		    //  Imprimir Niveis C.Custo
+cCateg	    := mv_par13								//	Categorias (Utilizada em fMonta_TPR)
+
+
+If !Empty( cFiltroRel )
+	lTodosCpos  := .T.
+	cAcessaSRA :=  "{ || " +ChkRH("U_PWGPER090","SRA","2") + " .And. " + cFiltroRel +"}"
+Else
+	cAcessaSRA := "{ || " + cAcessaSRA + "}"
+Endif
+
+Titulo  := STR0060+If(nAnaSin==1,STR0013,STR0014)+;		//"RELACAO DE PROVISAO DE 13o SALARIO "###"ANALITICA"###"SINTETICA"
+               " "+If(nGerRes == 1,STR0015,STR0016)		//"(GERAL)"###"(RESUMIDA)"
+wCabec1 += Dtoc(dDataRef)
+
+If cPaisLoc == "ARG"
+	cPict1	:=	If (MsDecimais(1)==2,"@E 999,999.99",TM(999999,10,MsDecimais(1)))  // "@E 999,999.99
+Endif
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ aNiveis -  Armazena as chaves de quebra.                     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nImpNiv <> 2
+
+	aNiveis:= MontaMasc(cMascCus)
+
+    //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Criar os Arrays com os Niveis de Quebras					 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	For nQ := 1 to Len(aNiveis)
+        cQ := STR(NQ,1)
+        Private aTotCc1&cQ   := {} // Niveis dos Centro de Custo
+        Private aTotCc2&cQ   := {}
+	    Private aTotCc3&cQ   := {}
+        cCcAnt&cQ            := "" // Variaveis c.custo dos niveis de quebra
+    Next nQ
+Endif
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta o arquivo temporario "TPR" a partir do SRA e SRE     |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Processa({ || fMonta_TPR(@cTPRDbf,@cTPRNtx,nOrdem,dDataRef,@lSalInc,@lTrataTrf,@aTransf,,cAcessaSRA,,lTodosCpos)},STR0058) //"PROVISO DE 13§ SALARIO"
+
+dbSelectArea( "SRA" )
+dbSetOrder(1)
+
+dbSelectArea( "TPR" )
+dbGoTop()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Carrega regua de processamento							   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+SetRegua( RecCount() )
+
+cFilialAnt := Replicate("!", FWGETTAMFILIAL)
+cCcAnt	   := "!!!!!!!!!"
+While !Eof()
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Movimenta Regua de Processamento							 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	IncRegua()
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Garante o Posicionamento do Funcionario no SRA				 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	dbSelectArea( "SRA" )
+	dbSeek( TPR->PR_FILIAL + TPR->PR_MAT )
+	dbSelectArea( "TPR" )
+
+	If lEnd
+		@Prow()+1,0 PSAY cCancel
+   		Exit
+    Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Quebra de Filial											 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If TPR->PR_FILIAL # cFilialAnt       
+	
+		If !Fp_CodFol(@aCodFol,TPR->PR_FILIAL) .Or.;
+		   !fInfo(@aInfo,TPR->PR_FILIAL)
+			Exit
+		Endif
+
+		cFilialAnt := TPR->PR_FILIAL
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Carrega os identificadores da Provisaos						 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		fIdentProv(@aVerba,aCodFol,.F.,.T.)
+
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³ Verifica a existencia dos identificadores do PIS.         	 ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		lCalcPis := ( !Empty( aCodFol[416,1] ) )
+
+	Endif
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Limpa o array com o conteudo especificado no 2§ parametro    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	fLimpaArray( @aTot1314, 0 )
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca informacoes de cabecalho no SRT	 					 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If !fBusCabSRT(dDataRef,@aCabProv)
+		fTestaTotal(_13Salar)
+		Loop
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Busca os lancamentos de 13§ e 14§ Salario				     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	#IFDEF TOP
+		fQryDetSRT(aVerba,aTransf,dDataRef,lTrataTrf,lCalcula,lFerias,l13oSal)
+	#ELSE
+		fBusDetSRT(@a13Salar,,aVerba,aTransf,dDataRef,_13Salar,lTrataTrf,.T.)
+		fBusDetSRT(@a14Salar,,aVerba,aTransf,dDataRef,_14Salar,lTrataTrf,.T.)
+	#ENDIF
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Totalizador (13o + 14o)	                    			     ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	For nCnt1 := 1 To _Linhas
+		For nCnt2 := 1 To _Colunas
+			aTot1314[nCnt1,nCnt2] := a13Salar[nCnt1,nCnt2]+a14Salar[nCnt1,nCnt2]
+		Next nCnt2
+	Next nCnt1
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Totalizadores dos Niveis de Quebra                           |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+    fTotNivCC(a13Salar, a14Salar, aTot1314) 								// Niveis do Centro de Custo
+	fAtuCont(@aToTCc1 , @aTotCc2 , @aTotCc3, a13Salar, a14Salar, aTot1314)  // Centro de Custo
+	fAtuCont(@aTotFil1, @aTotFil2, @aTotFil3, a13Salar, a14Salar, aTot1314) // Filial
+	fAtuCont(@aTotEmp1, @aTotEmp2, @aTotEmp3, a13Salar, a14Salar, aTot1314) // Empresa
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Imprime o funcionario                                        |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If nAnaSin == 1
+		fImpFun13o()
+	EndIf
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//| Quebras e Skips                                              |
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	fTestaTotal(_13Salar)
+Enddo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Termino do relatorio							   ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+dbSelectArea( "SRA" )
+Set Filter To
+dbSetOrder(1)
+
+If aReturn[5] == 1
+	Set Printer To
+	ourspool(wnrel)
+Endif
+MS_FLUSH()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Retorna area original do cadastro de funcionarios		     ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RestArea(aAreaSRA)
+
+TPR->(dbCloseArea())
+fErase(cTPRNtx + OrdBagExt())
+fErase(cTPRDbf + ".DBF")
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fAtuCont ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Atualiza Acumuladores     								  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fAtuCont(aTotal1,aTotal2,aTotal3,aValor1,aValor2,aValor3)  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fAtuCont(aTotal1,aTotal2,aTotal3,aValor1,aValor2,aValor3)
+Local x
+Local z
+
+If Len(aTotal1) > 0
+	For x:= 1 To _Linhas
+		For z:= 1 To _Colunas
+			aTotal1[x,z] += aValor1[x,z]
+			aTotal2[x,z] += aValor2[x,z]
+			aTotal3[x,z] += aValor3[x,z]
+		Next z
+	Next x
+Else
+	aTotal1 := Aclone(aValor1)
+	aTotal2 := Aclone(aValor2)
+	aTotal3 := Aclone(aValor3)
+Endif
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³fTestaTota³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totalizadores                                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fTestaTotal(nTipProv)                   					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fTestaTotal(nTipProv)
+
+Local cCusto
+Local nQ
+
+dbSelectArea( "TPR" )
+cFilialAnt := TPR->PR_FILIAL
+cCcAnt	   := TPR->PR_CC
+dbSkip()
+
+  If nImpNiv <> 2 .and. Len(aNiveis) > 0
+    For nQ := 1 TO Len(aNiveis)
+        cQ        := Str(nQ,1)
+        cCcAnt&cQ := Subs(cCcAnt,1,aNiveis[nQ])
+    Next nQ
+Endif
+
+If Eof()
+	cCusto := TPR->PR_CC 
+	If nImpNiv <> 3
+		fImpCc(nTipProv)
+	EndIf 
+	fImpNiv(cCcAnt,.T.,nTipProv)
+	fImpFil(nTipProv)
+	fImpEmp(nTipProv)
+Elseif cFilialAnt # TPR->PR_FILIAL
+	If nImpNiv <> 3
+		fImpCc(nTipProv)
+    EndIf
+    fImpNiv(cCcAnt,.T.,nTipProv)
+	fImpFil(nTipProv)
+Elseif cCcAnt # TPR->PR_CC
+	cCusto := TPR->PR_CC
+	If nImpNiv <> 3
+		fImpCc(nTipProv)
+    EndIf
+    fImpNiv(cCusto,.F.,nTipProv)
+Endif
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³fImpFunFer³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Impressao dos Funcionarios							      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpFunFer()     					    				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpFunFer()
+Local lRetu1   := .T.
+Local lRetu2   := .T.             
+Local cDemissa := If(MesAno(TPR->PR_DEMISSA) <= MesAno(dDataRef),TPR->PR_DEMISSA,CTOD(""))
+
+cSituacao := If(aCabProv[_MovProv] == _Cong_Fer .Or. aCabProv[_MovProv] == _Cong_F13,STR0048,If(aCabProv[_MovProv] == _Trfe_Sai,STR0047,"")) // CONGELADO##TRANSFERENCIA 
+cSituacao := Left( Upper(cSituacao) + Space(27), 27)
+
+cDET:=STR0017+TPR->PR_FILIAL+STR0018+Subs(TPR->PR_CC+Space(20),1,20)+STR0019+Subs(TPR->PR_MAT,1,30) 	//"FILIAL: "###" CCTO: "###" MAT: "
+cDET+=STR0020+TPR->PR_NOME+STR0021+DtoC(aCabProv[_DBsProv])           									//" NOME: "###" DT.BASE FER: "
+cDET+=STR0022+TRANSFORM(aCabProv[_SalProv],cPict1)		 												//" SALARIO: "
+Impr(cDet,"C")
+cDet:=Space(11)+cSituacao+STR0044+Dtoc(TPR->PR_ADMISSA)+SPACE(3)+STR0045+Dtoc(cDemissa)  //"DATA ADMISSAO: "###"DATA DEMISSAO: "
+cDet+=Space(3)+STR0046+Transform(aCabProv[_DFerAnt],"999.9")	                          //"DIAS FERIAS ANTECIP.: "
+Impr(cDet,"C")
+
+lRetu1 := fImpComp(aFerVenc,1,.T.,_FerVenc)
+lRetu2 := fImpComp(aFerProp,2,.T.,_FerVenc)
+
+If lRetu1 .And. lRetu2
+	fImpComp(aTotVePr,3,.T.,_FerVenc)
+Endif
+
+cDet := Repl("-",132)
+Impr(cDet,"C")
+Impr("","C")
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³fImpFun13o³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Impressao dos Funcionarios							      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpFun13o()     			             				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpFun13o()
+Local lRetu1   := .T.
+Local lRetu2   := .T.
+Local cDemissa := If(MesAno(TPR->PR_DEMISSA) <= MesAno(dDataRef),TPR->PR_DEMISSA,CTOD(""))
+
+cSituacao := If(aCabProv[_MovProv] == _Cong_13s .Or. aCabProv[_MovProv] == _Cong_F13,STR0048,If(aCabProv[_MovProv] == _Trfe_Sai,STR0047,"")) // CONGELADO##TRANSFERENCIA 
+cSituacao := Left( Upper(cSituacao) + Space(27), 27)
+
+cDET := STR0023+TPR->PR_FILIAL+STR0024+Subs(TPR->PR_CC+Space(20),1,20)+STR0019+Subs(TPR->PR_MAT,1,30)	//"FILIAL: "###" CCTO: "###" MAT: "
+cDET += STR0020+TPR->PR_NOME												//" NOME: "
+cDET += STR0022+TRANSFORM(aCabProv[_SalProv],cPict1)					    //" SALARIO: "
+Impr(cDet,"C")
+
+cDet := Space(11)+cSituacao+STR0044+DtoC(TPR->PR_ADMISSA)+Space(3)+STR0045+Dtoc(cDemissa)  //" DT.ADMISSAO: "###" DATA DEMISSAO: "
+Impr(cDet,"C")
+
+lRetu1 := fImpComp(a13Salar,1,.T.,_13Salar)
+lRetu2 := fImpComp(a14Salar,2,.T.,_13Salar)
+
+If lRetu1 .And. lRetu2
+	fImpComp(aTot1314,3,.T.,_13Salar)
+Endif
+
+cDet := Repl("-",132)
+Impr(cDet,"C")
+Impr("","C")
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fImpCc   ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totalizador do Centro de Custo						      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpCc(nTipProv)                        					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpCc(nTipProv)
+Local lRetu1 := .T.
+Local lRetu2 := .T.
+
+If Len(aTotCc1) == 0 .Or. (nOrdem # 2 .And. nOrdem # 4)
+	Return Nil
+Endif
+
+cDET:=STR0023+cFilialAnt+STR0024+cCcAnt+" - "+DescCc(cCcAnt,cFilialAnt)		//"FILIAL: "###" CCTO: "
+Impr(cDet,"C")
+Impr("","C")
+
+lRetu1 := fImpComp(aTotCc1,1,.F.,nTipProv)
+lRetu2 := fImpComp(aTotCc2,2,.F.,nTipProv)
+If lRetu1 .And. lRetu2
+	fImpComp(aTotCc3,3,.F.,nTipProv)
+Endif
+
+aTotCc1 := {}
+aTotCc2 := {}
+aTotCc3 := {}
+
+cDet := Repl("=",132)
+Impr(cDet,"C")
+Impr("","C")
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fImpNiv  ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totalizador dos niveis    							      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpNiv(cCusto,lGeral,nTipProv)         					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpNiv(cCusto,lGeral,nTipProv)
+
+Local lRetu1 := .T.
+Local lRetu2 := .T.
+Local nQ
+
+If nOrdem # 2 .And. nOrdem # 4
+	Return Nil
+Endif
+
+If nImpNiv <> 2 .And. Len(aNiveis) > 0
+
+	For nQ := Len(aNiveis) to 1 Step -1
+		cQ := Str(nQ,1)
+	    //-- Verifica se houve quebra dos Niveis de C.Custo
+    	If Subs(cCusto,1,aNiveis[nQ]) # cCcAnt&cQ .Or. lGeral
+			If (Len(aTotCc1&cQ) # 0 .Or. Len(aTotCc2&cQ) # 0 .Or. Len(aTotCc1&cQ) # 0)
+				If cCcAnt&cQ # Nil
+				   cDET:=STR0023+cFilialAnt+STR0024+cCcAnt&cQ+" - "+DescCc(cCcAnt&cQ,cFilialAnt)	//"FILIAL: "###" CCTO: "
+				Else
+				   cDET:=STR0023+cFilialAnt+STR0024+cCcAnt+" - "+DescCc(cCcAnt,cFilialAnt)		//"FILIAL: "###" CCTO: "
+				EndIf
+				Impr(cDet,"C")
+				Impr("","C")
+
+				lRetu1 := fImpComp(aTotCc1&cQ,1,.F.,nTipProv)
+				lRetu2 := fImpComp(aTotCc2&cQ,2,.F.,nTipProv)
+				If lRetu1 .And. lRetu2
+					fImpComp(aTotCc3&cQ,3,.F.,nTipProv)
+				Endif
+                aTotCc1&cQ   := {} //Zera
+	            aTotCc2&cQ   := {}
+			    aTotCc3&cQ   := {}
+
+				cDet := Repl("=",132)
+				Impr(cDet,"C")
+				Impr("","C")
+			Endif
+		Endif
+	Next nQ
+Endif
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fImpFil  ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totalizador da Filial    							      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpFil(nTipProv)                       					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpFil(nTipProv)
+Local lRetu1 := .T.
+Local lRetu2 := .T.
+Local cDescFil
+
+If Len(aTotFil1) == 0
+	Return Nil
+Endif
+
+cDescFil := aInfo[1] + Space(25)
+cDET:=STR0023+cFilialAnt+" - "+cDescFil		//"FILIAL: "
+Impr(cDet,"C")
+Impr("","C")
+
+lRetu1 := fImpComp(aTotFil1,1,.F.,nTipProv)
+lRetu2 := fImpComp(aTotFil2,2,.F.,nTipProv)
+If lRetu1 .And. lRetu2
+	fImpComp(aTotFil3,3,.F.,nTipProv)
+Endif
+
+aTotFil1 :={}
+aTotFil2 :={}
+aTotFil3 :={}
+
+cDet := Repl("#",132)
+Impr(cDet,"C")
+Impr("","C")
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fImpEmp  ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totalizador da Empresa   							      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpEmp(nTipProv)                       					  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpEmp(nTipProv)
+Local lRetu1 := .T.
+Local lRetu2 := .T.
+If Len(aTotEmp1) == 0
+	Retu Nil
+Endif
+
+cDET:=STR0025+aInfo[3]		//"Empresa: "
+Impr(cDet,"C")
+Impr("","C")
+
+lRetu1 := fImpComp(aTotEmp1,1,.F.,nTipProv)
+lRetu2 := fImpComp(aTotEmp2,2,.F.,nTipProv)
+If lRetu1 .And. lRetu2
+	fImpComp(aTotEmp3,3,.F.,nTipProv)
+Endif
+
+aTotEmp1 :={}
+aTotEmp2 :={}
+aTotEmp3 :={}
+Impr("","F")
+
+Return Nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fImpComp ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Complemento da Impressao								      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fImpComp(aPosicao,nNroArray,lImpFunc,nTipProv)			  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fImpComp(aPosicao,nNroArray,lImpFunc,nTipProv)
+Local lRet := .F.
+
+If nTipProv == _FerVenc
+	lRet := fCompFer(aPosicao,nNroArray,lImpFunc)
+ElseIf nTipProv == _13Salar
+	lRet := fComp13o(aPosicao,nNroArray,lImpFunc)
+EndIf
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fCompFer ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Complemento da Impressao								      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fCompFer(aPosicao,nLugar,lImpFunc)       				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fCompFer(aPosicao,nNroArray,lImpFunc)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//| aPosicao  = Array contendo o que sera impresso     (Venc/Prop/Total)     |
+//| nNroArray = Posicao fisica dos grupos de impressao (1-Venc,2-Prop,3-Tot) |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cCab1,cCab2,Sub_C,nDiasImp
+Local nValPro,nValAdi,nVal1Te,nValIns,nValFgt,nValPis,nTotFer,nTotEnc,nTotGer,nValSalV
+Local nPosImp  := 0
+Local lImpTxBx := .T.
+Local nTotImp  := _Linhas - 1
+Local bChkVal  := { |nArg| ( aPosicao[nArg,_Prov] + aPosicao[nArg,_Adic] + aPosicao[nArg,_1Ter] + aPosicao[nArg,_INSS] + aPosicao[nArg,_FGTS] == 0 ) }
+
+lImpFunc := If(lImpFunc == Nil,.F.,lImpFunc) // Se verdadeiro, sera impresso o funcionario
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Nao Imprime Nenhuma das Colunas se o Valor for Zero 		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Eval(bChkVal,_Anter) .And. Eval(bChkVal,_Atual) .And. Eval(bChkVal,_BxTot)
+	If nGerRes == 1
+		Return .F.
+	EndIf
+Endif
+
+If nGerRes == 1 .Or. (nGerRes == 2 .And. nNroArray == 1)
+	Sub_C := If(nGerRes==2,Space(8),If(nNroArray==1,STR0026,If(nNroArray==2,STR0027,STR0028)))	//"VENCIDAS"###"A VENCER"###"TOTAL"
+    If cPaisLoc == "BRA"
+	   cDET  := Sub_C+SPACE(20)+STR0029+SPACE(3)+STR0030		//"VALOR"###"ADICIONAIS  1/3 CONSTIT.   TOTAL FERIAS"
+	   If lCalcPis
+		   cDET  += SPACE(5)+STR0031+SPACE(5)+STR0072 //"I.N.S.S. "###"F.G.T.S.        P.I.S.    TOTAL GERAL"
+	   Else
+		   cDET  += SPACE(5)+STR0031+SPACE(5)+STR0032 //"I.N.S.S. "###"F.G.T.S.  TOT.ENCARGOS    TOTAL GERAL"
+	   EndIf
+	ElseIf cPaisLoc == "URU"
+	   cDET  := Sub_C+SPACE(18)+STR0029+SPACE(3)+STR0069		//"VALOR"### "PROM.LIC.  PROM.SAL.VAC. SAL.VACA. TOTAL VACACION"
+	   cDET  += SPACE(1)+STR0070+SPACE(3)+STR0071				//"C.SOCIAL  TOT.ENCARGOS    TOTAL GRAL."
+	Else
+      cDET  := Sub_C+SPACE(16)+STR0029+SPACE(7)+STR0030		//"VALOR"###"ADICIONAIS  PROM.LICEN. PROM.SAL.VAC TOTAL VACACION"
+      cDET  += SPACE(10)+SUBSTR(STR0032,10,28)					//"I.N.S.S. "###"F.G.T.S   TOT.ENCARGOS    TOTAL GERAL"	Endif
+		cDet := Stuff(cDet,AT("1/3 CONSTIT.",cDet),13,"")
+	Endif
+	IMPR(cDET,"C")
+Endif
+
+For nPosImp := 1 To nTotImp
+
+	If nGerRes == 2
+		cCab1:=If(nNroArray == 1,STR0033,If(nNroArray == 2,STR0034,STR0035))		//"Venc. "###"Prop. "###"Total "
+		cCab2:=Space(6)
+	Else    
+		cCab1:= If(nPosImp == _Anter,STR0036,If(nPosImp == _Corre, Space(6),;
+			     If(nPosImp == _NoMes,STR0037,If(nPosImp == _Atual,STR0038,If(nPosImp == _TrfEnt .Or. nPosImp == _TrfSai,STR0073,STR0049)))))	//"D.Fer "###"Faltas"###"Saldo "###"Val. Baixa"###"Transf.Saldo"
+		cCab2:= If(nPosImp == _Anter,STR0039,If(nPosImp == _Corre,STR0040,;
+				 If(nPosImp == _NoMes,STR0041,If(nPosImp == _Atual,STR0043,;
+				 If(nPosImp == _BxTrf,STR0050,If(nPosImp == _BxFer,STR0051,;
+				 If(nPosImp == _BxRes, STR0052,If(nPosImp == _TrfEnt,STR0074,If(nPosImp == _TrfSai,STR0075,""))))))))) //"Anter "###"Correc"###"No Mes"###"Atual "###"Transf"###"Ferias"###"Rescis"###"Entr."###"Saida"
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Nao Imprime Correcao ou Baixa se o Valor for Zero    		 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (nPosImp == _Corre .Or. nPosImp > _Atual) .And. Eval(bChkVal,nPosImp)
+		Loop
+	Endif
+	
+	If nPosImp == _Anter .Or. nPosImp == _NoMes .Or. nPosImp == _Corre .Or. nPosImp == _Atual
+		If nPosImp == _Anter
+			nDiasImp := aPosicao[_Atual,_Dias]+aPosicao[_NoMes,_Dias]
+		Else
+			nDiasImp := aPosicao[If(nGerRes==2,_NoMes,nPosImp),_Dias]
+		EndIf
+		cDet:= cCab1+" "+If(lImpFunc,Transform(nDiasImp,"999.9"),Space(05))+" "+cCab2+"  "
+	Else
+		If lImpTxBx .Or. nPosImp == _TrfEnt
+	        cDet:= cCab1+"  "+cCab2+"  "
+	     	lImpTxBx := .F.
+	    Else
+   	     	cDet:= Space(13)+cCab2+"  "
+	    EndIf 	
+	EndIf           	
+	
+	nValPro := aPosicao[nPosImp,_Prov]
+	nValAdi := aPosicao[nPosImp,_Adic]
+	nVal1Te := aPosicao[nPosImp,_1Ter]
+    nTotFer := aPosicao[nPosImp,_Prov]+aPosicao[nPosImp,_Adic]+aPosicao[nPosImp,_1Ter]
+    If cPaisLoc == "URU"
+   		nTotFer+=aPosicao[nPosImp,_SalV]
+    Endif
+    nValIns := aPosicao[nPosImp,_INSS]
+    nValFgt := aPosicao[nPosImp,_FGTS]
+    nValPis := aPosicao[nPosImp,_PIS]
+    nValSalV:= aPosicao[nPosImp,_SalV]
+	nTotEnc := aPosicao[nPosImp,_INSS]+aPosicao[nPosImp,_FGTS]
+    nTotEnc := If(lCalcPis, nValPis, nTotEnc)
+    nTotGer := nTotFer + nValIns + nValFgt + nValPis
+	    
+	cDet +=     TRANSFORM(nValPro,cPict2)
+	cDet += " "+TRANSFORM(nValAdi,cPict2)  
+	If cPaisLoc == "BRA"
+		cDet += " "+TRANSFORM(nVal1Te,cPict3)
+		cDet += " "+TRANSFORM(nTotFer,cPict4)
+	    cDet += " "+TRANSFORM(nValIns,cPict2)
+	    cDet += " "+TRANSFORM(nValFgt,cPict3) 
+	    cDet += " "+TRANSFORM(nTotEnc,cPict4)
+		cDet += " "+TRANSFORM(nTotGer,cPict4)
+	ElseIf cPaisLoc == "URU"
+		cDet+= " "+TRANSFORM(nValSalV,cPict5)
+		cDet+= " "+TRANSFORM(nVal1Te,cPict5)
+		cDet += " "+TRANSFORM(nTotFer,cPict2)
+	    cDet += " "+TRANSFORM(nValIns,cPict5)
+	    cDet += " "+TRANSFORM(nValFgt,cPict5) 
+	    cDet += " "+TRANSFORM(nTotEnc,cPict4)
+		cDet += " "+TRANSFORM(nTotGer,cPict4)
+	Else
+		cDet += " "+TRANSFORM(nTotFer,cPict4)
+	    cDet += "        "
+	    cDet += " "+TRANSFORM(nTotEnc,cPict4)+"    "
+		cDet += " "+TRANSFORM(nTotGer,cPict4)
+	Endif
+
+	If nGerRes == 1 .Or. (nGerRes == 2 .And. nPosImp == _NoMes)
+		Impr(cDet,"C")
+	EndIf
+Next
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Montagem e impressao do valor que sera contabilizado 		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nNroArray == 3 .And. !lImpFunc
+	If !Eval(bChkVal,_BxTot)
+		nValPro := aPosicao[_NoMes,_Prov]-aPosicao[_BxTot,_Prov]
+		nValAdi := aPosicao[_NoMes,_Adic]-aPosicao[_BxTot,_Adic]
+		nVal1Te := aPosicao[_NoMes,_1Ter]-aPosicao[_BxTot,_1Ter]
+   		nValSalV:= aPosicao[_NoMes,_SalV]-aPosicao[_BxTot,_Salv]
+		nTotFer := nValPro + nValAdi + nVal1Te + If(cPaisLoc== "URU",nValSalV,0)
+		nValIns := aPosicao[_NoMes,_INSS]-aPosicao[_BxTot,_INSS]
+		nValFgt := aPosicao[_NoMes,_FGTS]-aPosicao[_BxTot,_FGTS]
+		nValPis := aPosicao[_NoMes,_PIS] -aPosicao[_BxTot,_PIS]
+	    nTotEnc := nValIns + nValFgt
+   	    nTotEnc := If(lCalcPis, nValPis, nTotEnc)
+	    nTotGer := nTotFer + nValIns + nValFgt + nValPis
+	
+		cDet := STR0053+If(cPaisLoc <> "ARG" ,"         ","        ") // No Mes-Baixa
+		cDet +=     TRANSFORM(nValPro,cPict2)
+		cDet += " "+TRANSFORM(nValAdi,cPict2)
+		If cPaisLoc == "BRA"
+			cDet += " "+TRANSFORM(nVal1Te,cPict3)
+			cDet += " "+TRANSFORM(nTotFer,cPict4)
+		    cDet += " "+TRANSFORM(nValIns,cPict2)
+		    cDet += " "+TRANSFORM(nValFgt,cPict3)
+		    cDet += " "+TRANSFORM(nTotEnc,cPict4)
+			cDet += " "+TRANSFORM(nTotGer,cPict4)
+	    ElseIf cPaisLoc == "URU"
+			cDet+= " "+TRANSFORM(nValSalV,cPict5)
+			cDet+= " "+TRANSFORM(nVal1Te,cPict5)
+			cDet += " "+TRANSFORM(nTotFer,cPict2)
+		    cDet += " "+TRANSFORM(nValIns,cPict5)
+		    cDet += " "+TRANSFORM(nValFgt,cPict5) 
+	   	    cDet += " "+TRANSFORM(nTotEnc,cPict5)
+			cDet += " "+TRANSFORM(nTotGer,cPict4)
+	    Else
+			cDet += " "+TRANSFORM(nTotFer,cPict4)
+		    cDet += "        "
+		    cDet += " "+TRANSFORM(nTotEnc,cPict4)+"    "
+			cDet += " "+TRANSFORM(nTotGer,cPict4)
+		Endif
+		Impr(cDet,"C")
+	EndIf
+EndIf
+Li := If(nGerRes == 1 ,Li++,Li)
+
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³ fComp13o ³ Autor ³ Equipe R.H.           ³ Data ³ 16.07.00 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Complemento da Impressao								      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fComp13o(aPosicao,nLugar,lImpFunc)       				  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fComp13o(aPosicao,nNroArray,lImpFunc)
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//| aPosicao  = Array contendo o que sera impresso     (13§/14§/Total)       |
+//| nNroArray = Posicao fisica dos grupos de impressao (1-13o,2-14o,3-Tot)   |
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Local cCab1,cCab2,cMes,Sub_C
+Local nValPro,nValAdi,nVal1Pa,nValIns,nValFgt,nTotFer,nTotEnc,nTotGer
+Local nPosImp  := 0
+Local lImpTxBx := .T.
+Local nTotImp  := _Linhas - 1
+Local cTexTot  := If(nNroArray == 1, STR0062, If(nNroArray == 2, STR0063, STR0064)) //"ADICIONAIS    1o PARCELA      TOTAL 13o"##"ADICIONAIS    1o PARCELA      TOTAL 14o"##"ADICIONAIS    1o PARCELA      TOT 13/14"
+Local bChkVal  := { |nArg| ( aPosicao[nArg,_Prov] + aPosicao[nArg,_Adic] + aPosicao[nArg,_1Par] + aPosicao[nArg,_INSS] + aPosicao[nArg,_FGTS] == 0 ) }
+
+lImpFunc := If(lImpFunc == Nil,.F.,lImpFunc) // Se verdadeiro, sera impresso o funcionario
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Nao Imprime Nenhuma das Colunas se o Valor for Zero 		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If Eval(bChkVal,_Anter) .And. Eval(bChkVal,_Atual) .And. Eval(bChkVal,_BxTot)
+	If nGerRes == 1
+		Return .F.
+	EndIf
+Endif
+
+If nGerRes == 1 .Or. (nGerRes == 2 .And. nNroArray == 1)
+	If cPaisLoc == "BRA"
+	   cDET:=SPACE(28)+STR0029+SPACE(3)+cTexTot	//"VALOR"###"ADICIONAIS    1o PARCELA      TOTAL 13o"
+	   If lCalcPis
+		   cDET+=SPACE(05)+STR0031+SPACE(5)+STR0072 //"I.N.S.S. "###"F.G.T.S.        P.I.S.    TOTAL GERAL"
+       Else
+		   cDET+=SPACE(05)+STR0031+SPACE(5)+STR0065 //"I.N.S.S. "###"F.G.T.S.  TOT.ENCARGOS    TOTAL GERAL"
+       EndIf
+	ElseIf cPaisLoc == "URU"
+	   cDET:=SPACE(28)+STR0029+SPACE(3)+cTexTot	//"VALOR"###"ADICIONAIS    1o PARCELA      TOTAL 13o"
+	   cDET+=SPACE(1)+STR0070+SPACE(6)+STR0071 //"C.SOCIAL "###"B.S.E     TOT.ENCARGOS    TOTAL GERAL"
+	Else
+	   cDET:=SPACE(28)+STR0029+SPACE(7)+cTexTot	//"VALOR"###"ADICIONAIS    1o PARCELA      TOTAL 13o"
+       cDET+=SPACE(10)+SUBSTR(STR0065,10,28)                //##TOT.ENCARGOS    TOTAL GERAL"	
+    Endif
+	IMPR(cDET,"C")
+Endif
+
+Sub_C := If(nGerRes==2,Space(5),If(nNroArray==1,If(lImpFunc,STR0061,STR0066),If(nNroArray==2,STR0067,Left(STR0028,5)))) //"MESES"##" 14 §"##"TOTAL"
+
+For nPosImp := 1 To nTotImp
+	
+	If nGerRes == 2
+		cCab1 := Space(5)
+		cCab2 := Space(6)
+	Else
+		cCab1 := If(nPosImp == _NoMes, Sub_C, If(nPosImp == _TrfEnt .Or. nPosImp == _TrfSai,STR0073,If(nPosImp > _Atual,STR0049,Space(5)))) //"MESES"###"Val. Baixa"###"Transf.Saldo"
+		cCab2 := If(nPosImp == _Anter,STR0039,If(nPosImp == _Corre,STR0040 ,;
+				  If(nPosImp == _NoMes,STR0041,If(nPosImp == _Atual,STR0043,;
+				  If(nPosImp == _BxTrf,STR0050,If(nPosImp == _BxRes,STR0052,;
+				  If(nPosImp == _Bx13o,STR0068,If(nPosImp == _TrfEnt,STR0074,If(nPosImp == _TrfSai,STR0075,"")))))))))	//"Anter "###"Correc"###"No Mes"###"Atual "###"Transf"###"Rescis"###"13.Sal"###"Entr."###"Saida"
+	EndIf
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Nao Imprime Correcao ou Baixa se o Valor for Zero    		 ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	If (nPosImp == _Corre .Or. nPosImp > _Atual) .And. Eval(bChkVal,nPosImp)
+		Loop
+	Endif
+	
+	cMes := If(lImpFunc .And. nPosImp == _NoMes,Transform(aPosicao[_NoMes,_Avos],"99"),Space(02))
+	cMes := If (Val(cMes) > 0 , cMes ,"  ")
+
+	If nPosImp == _Anter .Or. nPosImp == _NoMes .Or. nPosImp == _Corre .Or. nPosImp == _Atual
+		cDet := cCab1+" "+cMes+Space(5)+cCab2+"  "
+	Else
+		If lImpTxBx .Or. nPosImp == _TrfEnt
+	        cDet:= cCab1+"  "+cCab2+"  "
+	     	lImpTxBx := .F.
+	    Else
+   	     	cDet:= Space(13)+cCab2+"  "
+	    EndIf 	
+	EndIf
+	
+	nValPro := aPosicao[nPosImp,_Prov]
+	nValAdi := aPosicao[nPosImp,_Adic]
+	nVal1Pa := aPosicao[nPosImp,_1Par]
+    nTotFer := aPosicao[nPosImp,_Prov]+aPosicao[nPosImp,_Adic]-aPosicao[nPosImp,_1Par]
+    nValIns := aPosicao[nPosImp,_INSS]
+    nValFgt := aPosicao[nPosImp,_FGTS]
+    nValPis := aPosicao[nPosImp,_PIS]
+    nTotEnc := aPosicao[nPosImp,_INSS]+aPosicao[nPosImp,_FGTS]
+	nTotEnc := If(lCalcPis, nValPis, nTotEnc)
+    nTotGer := nTotFer + nValIns + nValFgt + nValPis
+	    
+	cDet +=     TRANSFORM(nValPro,cPict2)
+	cDet += " "+TRANSFORM(nValAdi,cPict2)  
+	cDet += " "+TRANSFORM(nVal1Pa,cPict3)
+	cDet += " "+TRANSFORM(nTotFer,cPict4)
+   If cPaisLoc $ "BRA|URU"
+	   cDet += " "+TRANSFORM(nValIns,cPict2)
+	   cDet += " "+TRANSFORM(nValFgt,cPict3) 
+	   cDet += " "+TRANSFORM(nTotEnc,cPict4)
+	Else
+	   cDet += "        "
+	   cDet += " "+TRANSFORM(nTotEnc,cPict4)+"    "
+	Endif
+	cDet += " "+TRANSFORM(nTotGer,cPict4)
+
+	If nGerRes == 1 .Or. (nGerRes == 2 .And. nPosImp == _NoMes)
+		Impr(cDet,"C")
+	EndIf
+Next
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Montagem e impressao do valor que sera contabilizado 		 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+If nNroArray == 3 .And. !lImpFunc
+	If !Eval(bChkVal,_BxTot)
+		nValPro := aPosicao[_NoMes,_Prov]-aPosicao[_BxTot,_Prov]
+		nValAdi := aPosicao[_NoMes,_Adic]-aPosicao[_BxTot,_Adic]
+		nVal1Te := aPosicao[_NoMes,_1Par]-aPosicao[_BxTot,_1Par]
+		nTotFer := nValPro + nValAdi + nVal1Pa
+		nValIns := aPosicao[_NoMes,_INSS]-aPosicao[_BxTot,_INSS]
+		nValFgt := aPosicao[_NoMes,_FGTS]-aPosicao[_BxTot,_FGTS]
+		nValPis := aPosicao[_NoMes,_PIS] -aPosicao[_BxTot,_PIS]
+		nTotEnc := nValIns + nValFgt
+		nTotEnc := If(lCalcPis, nValPis, nTotEnc)
+	    nTotGer := nTotFer + nValIns + nValFgt + nValPis
+	
+		cDet := STR0053+"         "  // No Mes-Baixa
+		cDet +=     TRANSFORM(nValPro,cPict2)
+		cDet += " "+TRANSFORM(nValAdi,cPict2)
+		cDet += " "+TRANSFORM(nVal1Pa,cPict3)
+		cDet += " "+TRANSFORM(nTotFer,cPict4)
+		If cPaisLoc $ "BRA|URU"
+		   cDet += " "+TRANSFORM(nValIns,cPict2)
+		   cDet += " "+TRANSFORM(nValFgt,cPict3)
+		   cDet += " "+TRANSFORM(nTotEnc,cPict4)
+	    Else
+	       cDet += "        "
+		   cDet += " "+TRANSFORM(nTotEnc,cPict4)+"    "
+		Endif
+		cDet += " "+TRANSFORM(nTotGer,cPict4)
+		Impr(cDet,"C")
+	EndIf
+EndIf
+Li := If(nGerRes == 1 ,Li++,Li)
+
+Return .T.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡ao	 ³fTotNivCC ³ Autor ³ Equipe R.H.           ³ Data ³ 14.11.01 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡ao ³ Totaliza os niveis de Centro de Custo para Ferias e 13o Sal³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Sintaxe	 ³ fTotNivCC(aNivCC1, aNivCC2, aNivCC3, aArray1, aArray2...)  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso	 	 ³ Generico 												  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß*/
+Static Function fTotNivCC(aArray1, aArray2, aTot1e2)
+Local aTotTmp1,aTotTmp2,aTotTmp3, nQ
+
+If nImpNiv <> 2 .And. Len(aNiveis) > 0
+    For nQ :=1 To Len(aNiveis)
+        cQ := Str(nQ,1)
+        aTotTmp1 := {}; aTotTmp2 := {}; aTotTmp3 := {}
+        aTotTmp1 := Aclone(aTotCc1&cQ)
+        aTotTmp2 := Aclone(aTotCc2&cQ)
+        aTotTmp3 := Aclone(aTotCc3&cQ)
+		fAtuCont(@aTotTmp1, @aTotTmp2, @aTotTmp3, aArray1, aArray2, aTot1e2)
+		aTotCc1&cQ := Aclone(aTotTmp1)
+		aTotCc2&cQ := Aclone(aTotTmp2)
+		aTotCc3&cQ := Aclone(aTotTmp3)
+    Next nQ
+Endif
+
+Return Nil
+

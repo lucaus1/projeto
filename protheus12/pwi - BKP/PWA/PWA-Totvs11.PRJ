@@ -1,0 +1,257 @@
+Group PWA
+   Version=7.0
+   VSSDB=
+   HasProperties=1
+   Properties
+      BeforeApply=
+      AfterApply=
+      Icon=
+      ID=
+      Version=
+      PalmName=
+      OutPut=
+   End
+   ProjectsCount=2
+   Project Totvs11
+      FoldersCount=8
+      Folder GestaoPessoal
+         VSSPath=Fontes
+         FilesCount=4
+         File \Totvs\Microsiga\Protheus\my projects\PWA\RH\IMPRESH.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\RH\exporta.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\RH\Fonte Contra-Cheques via Banco\GdlqBanc_RecibodePagamento_ItaueBrasil.prx
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\rh\PTGPR80.PRW
+             Type=T
+         End
+      End
+      Folder Faturamento
+         VSSPath=Definições
+         FilesCount=5
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Faturamento\NotProGraf.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Faturamento\FatAuxExp.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\PWA\Faturamento\Sf2460i_MIL.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\PWA\Faturamento\M460FIM.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\FatAuxExp.prw
+             Type=T
+         End
+      End
+      Folder NFE
+         VSSPath=Nova Pasta3
+         FilesCount=2
+         File \Totvs\Microsiga\Protheus\my projects\PWA\NFE\danfeii.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\NFE\2016\danfeii.prw
+             Type=T
+         End
+      End
+      Folder Compras
+         VSSPath=Nova Pasta4
+         FilesCount=4
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Compras\PTMACO.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Compras\Pcompra_HTML.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Compras\MAPCMP.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\compras\AJUSTSC7.prw
+             Type=T
+         End
+      End
+      Folder Financeiro
+         VSSPath=Nova Pasta5
+         FilesCount=2
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Financeiro\Sf1100I.PRW
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\Financeiro\FINR490.PRW
+             Type=T
+         End
+      End
+      Folder IFRS
+         VSSPath=Nova Pasta6
+         FilesCount=16
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\BKEDIF.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\BKEINT.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\CADIFR.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\MOVCON.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\MOVINT.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PBKEDIF.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PBKEINT.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PPWADIF.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PPWAINT.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PPWPDIF.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PPWPINT.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PTC2ZT4.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PWADIF.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PWAINT.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PWPDIF.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\IFRS\PWPINT.prw
+             Type=T
+         End
+      End
+      Folder Contabilidade
+         VSSPath=Nova Pasta7
+         FilesCount=1
+         File \Totvs\Microsiga\Protheus\my projects\PWA\Contabilidade\PCTBR070.PRW
+             Type=T
+         End
+      End
+      Folder FONTES NFE
+         VSSPath=Nova Pasta8
+         FilesCount=6
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\danfeii.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\danfeiii.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\nfesefaz.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\310\danfeii.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\310\danfeiii.prw
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\FONTES DANFE\310\nfesefaz.prw
+             Type=T
+         End
+      End
+   End
+   Project CoC
+      FoldersCount=6
+      Folder Cadastros
+         VSSPath=Nova Pasta1
+         FilesCount=4
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Cadastros\ST_Perfil.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Cadastros\ST_Estufas.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Cadastros\ST_Cad_Med.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Cadastros\ST_Cad_Esp.PRW
+             Type=T
+         End
+      End
+      Folder Industria
+         VSSPath=Nova Pasta2
+         FilesCount=4
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Industria\ST_BXA_IND.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Industria\ST_CAD_IND.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Industria\ST_CLA_IND.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Industria\ST_CTR_IND.PRW
+             Type=T
+         End
+      End
+      Folder Materia-Prima
+         VSSPath=Nova Pasta3
+         FilesCount=1
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Materia-Prima\ST_CAD_TOR.prw
+             Type=T
+         End
+      End
+      Folder Pedidos
+         VSSPath=Nova Pasta4
+         FilesCount=4
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Pedidos\ST_CAD_PED.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Pedidos\ST_CAD_PLT.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Pedidos\ST_GER_PED.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Pedidos\ST_GER_PKT.PRW
+             Type=T
+         End
+      End
+      Folder Relatorios
+         VSSPath=Nova Pasta5
+         FilesCount=1
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Relatorios\ST_REL_SER.prw
+             Type=T
+         End
+      End
+      Folder Serrada
+         VSSPath=Nova Pasta6
+         FilesCount=6
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_BXA_SER.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_CAD_SER.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_CLA_SER.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_CTR_SER.PRW
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_INT_SER.prw
+             Type=T
+         End
+         File \Totvs\Microsiga\Protheus\my projects\PWA\CoC\Serrada\ST_SEC_SER.PRW
+             Type=T
+         End
+      End
+   End
+End

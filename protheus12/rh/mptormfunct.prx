@@ -1,0 +1,80 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmfunct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+// CT / IT 
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADFUNCAOCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADFUNCAOIT.TXT")
+Endcase 
+*/
+// ARMOR 
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADFUNCAO0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADFUNCAO0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADFUNCAO0201.TXT")
+Endcase 
+
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - FUNCOES ")
+DbselectArea("SRJ")
+nTot := RECCOUNT()
+dbGotop()
+
+While  !EOF()
+    // Formula	                //	Posição	Descrição	Tipo	Tamanho		Campo
+cLine := PADR(RJ_FUNCAO,5)+";" 	//	1	Código	String	10		PFUNCAO.CODIGO
+cLine += PADR(RJ_DESC,40)+";"	  //	2	Nome da Função           	String	100		PFUNCAO.NOME
+cLine += PADR("0",15)+";"	      //	3	Numero de Pontos (Formato 99999,99)	Real	15		PFUNCAO.NUMPONTOS
+cLine += PADR(RJ_CODCBO,08)+";"	//	4	CBO	String  	8		PFUNCAO.CBO
+cLine += PADR("",5)+";" 	      //	5	Código do Cargo	String  	16		PFUNCAO.CARGO 
+cLine += "0"+";"                // 	6	Indicativo de Inatividade (0-Não/1-Sim)	Inteiro	1		PFUNCAO.INATIVA
+cLine += PADR("",5)+";" 	      //	7	Atividade de Transporte (0-Não/1-Sim)  	Inteiro	1		PFUNCAO.ATIVTRANSP
+cLine += PADR("",5) + ";" 	//	8	Descrição (começa com /@ e termina com @/)	Memo	250		PFUNCAO.DESCRICAO
+cLine += PADR("",5) + ";" 	//	9	Faixa Salarial               	String	16		PFUNCAO.FAIXASALARIAL
+cLine += PADR("",5) + ";" 	//	10	Limite de Funcionários	Inteiro	10		PFUNCAO.LIMITEFUNC
+cLine += PADR("",5) + ";" 	//	11	Valor Verba Q.Vagas    	Real	15		PFUNCAO.VERBAQUADROVAGAS
+cLine += PADR("",5) + ";" 	//	12	Percentual Verba Q.Vagas	Real	15		PFUNCAO.PERCQUADROVAGAS
+cLine += PADR(RJ_CODCBO,08) + ";"	//	13	CBO 2002	String	10		PFUNCAO.CBO2002
+cLine += PADR("",5) + ";" 	//	14	Código da tabela	String	10		PFUNCAO.CODTABELA
+cLine += PADR("",5) + ";" 	//	15	Nro pontos disponíveis para a função	Inteiro	10		PFUNCAO.BENEFPONTOS
+cLine += PADR("",5) + ";" 	//	16	Objetivo da função	Memo	100		PFUNCAO.OBJETIVO
+cLine += PADR("",5) + ";" 	//	17	Descrição para o PPP	Memo	100		PFUNCAO.DESCRICAOPPP
+cLine += PADR("",5) + ";" 	//	18	Exibição no Organograma	Booleano	1		PFUNCAO.EXIBEORGANOGRAMA
+cLine += PADR("",5) + ";" 	//	19	Cód. função chefia        	String	10		PFUNCAO.CODFUNCAOCHEFIA
+cLine += PADR("",5) + ";" 	//	20	Jornada de referência da função	Real	15		PFUNCAO.JORNADAREF
+cLine += PADR("",5) + ";" 	//	21	Tipo de Função PPE	String	2		PFUNCAO.CODTIPOFUNCAO
+cLine += PADR("",5) + ";" 	//	22	Sigla da função/cargo   	String	30		PFUNCAO.SIGLA
+cLine += PADR("",5) + ";" 	//	23	Definir se o cargo é de confiança ou não   	Booleano	1		PFUNCAO.ESOCIALFUNCAOCONF
+cLine += PADR("",5) + ";" 	//	24	Integração GUPY: ´de para´ do nome da função utilizado para enviar CSV com dados da entidade   	Booleano	1		PFUNCAO.SIMILARIDADEINTEGRACAOGUPY
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

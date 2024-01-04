@@ -1,0 +1,83 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmhsal()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("HistSalCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("HistSalIT.TXT")
+Endcase 
+*/
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("HistSa0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("HistSa0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("HistSa0201.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - periodo de gozo ")
+DbselectArea("SR3")
+nTot := RECCOUNT()
+dbGotop()
+DbSeek(Xfilial("SR3")+"",.T.)
+While !EOF() .AND. R3_FILIAL == SM0->M0_CODFIL 
+    // Formula	//	Posição	DESCRIÇÃO	TIPO	TAMANHO	CAMPO
+     cLine := PADR(R3_MAT,16) + ";" 	//	1	Chapa	String	16	PFHSTSAL.CHAPA
+     cLine += STRTRAN(DTOC(R3_DATA),"/","")+" 00:00:00" + ";" 	//	2	Data de mudança (ddmmaaaa hh:mm:ss)	Data	17	PFHSTSAL.DTMUDANCA
+     cMotivoAltSal :="001"
+     Do Case 
+       Case R3_TIPO == "001" // salario inicial 
+            cMotivoAltSal :="01"
+       Case R3_TIPO == "002" // Antecipação salarial  
+            cMotivoAltSal :="02"
+       Case R3_TIPO == "003"  // Dissidio 
+            cMotivoAltSal :="03"
+       Case R3_TIPO == "004" // Enquadramento 
+            cMotivoAltSal :="04"
+       Case R3_TIPO == "005" // Promoção  
+            cMotivoAltSal :="05"
+       OTHERWISE
+            cMotivoAltSal :="1"
+     EndCase 
+     cLine += PADL(cMotivoAltSal,03) + ";"	//	3	Motivo de alteração salarial	String	2	PFHSTSAL.MOTIVO
+     cLine += PADL(R3_SEQ,02) + ";"	//	4	Número do salário	Inteiro	2	PFHSTSAL.NROSALARIO
+     cLine += STRTRAN(ALLTRIM(STR(R3_VALOR)),".",",") + ";"	//	5	Valor atual do salário	Real	15	PFHSTSAL.SALARIO
+     cLine += "220:00"+";"	//	6	Jornada de Trabalho (HHH:mm)	Hora	8	PFHSTSAL.JORNADA
+     cLine += STRTRAN(DTOC(R3_DATA),"/","")+" 00:00:00" + ";" 	//	7	Data de referência da alteração salarial (ddmmaaaa hh:mm:ss)	Data	17	PFHSTSAL.DATADEREFERENCIA
+     cLine += "101"+";"	//	8	Código do evento de salário	String	4	PFHSTSAL.CODEVENTO
+     cLine += STRTRAN(DTOC(R3_DATA),"/","")+ ";" 	//	9	Data da inclusão do aumento salarial	Data	8	PFHSTSAL.DATADEINCLUSAO
+     cLine += "0" + ";"	//	10	Alteração de Jornada?	Booleano	2	PFHSTSAL.ALTERACAOJORNADA
+     cLine += ""+";"	//	11	Percentual Aplicado	Real	9	PFHSTSAL.PERCENTAPLICADO
+     cLine += ""+";"	//	12	Historico Tabela Salarial	String	10	PFHSTSAL.HISTORICOTABELASALARIAL
+     cLine += ""+";"	//	13	Historico Faixa	String	10	PFHSTSAL.HISTORICODEFAIXA
+     cLine += ""+";"	//	14	Historico Nivel	String	10	PFHSTSAL.HISTORICODENIVEL
+     cLine += ""+";"	//	15	Identificador de executação da Alteração Global de Salário.	Inteiro	10	PFHSTSAL.IDAUMENTO
+     cLine += ""+";"	//	16	Referência	Real	15	PFHSTSAL.REFERENCIA
+     fWrite(nHdl,cLine+CRLF)
+     nLin++
+     nCt++
+     // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+      Dbskip()
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

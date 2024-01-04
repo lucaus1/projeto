@@ -1,0 +1,281 @@
+#Include "RwMake.ch"
+#Include "Topconn.ch"        
+
+
+/*
+Desenvolvedor: Ellcyo Castro
+Data.........: 21/12/2006
+Objetivo.....: Relatório Lista de Veículos
+*************************************************************************************************************************************
+** Alterações * Favor Adicionar Todas as Alteração Realizadas ***********************************************************************
+*************************************************************************************************************************************
+|Data			 | Programador				| Alteração
+*************************************************************************************************************************************
+|            |                      |
+*************************************************************************************************************************************/
+
+User Function PTREST02()
+	Local cString := "SN1"
+	Local Tamanho := "G"
+	Local wnRel   := "PTRE02"
+	Local cDesc1  := ""
+	Local cDesc2  := ""
+	Local cDesc3  := ""
+	
+	Private aReturn     := { "Zebrado", 1,"Administracao", 1, 2, 1, "",1 }
+	Private aLinha      := {}
+	Private aPerg       := {}
+	Private nLastKey    := 0
+	
+	Private _cEndereco  := ""
+	Private _cEmpresa   := ""
+	Private _cSeparacao := Replicate("-",132)
+	Private _cSituacao  := ""
+	Private _cQuery     := ""
+	
+	Private _cFilial     := ""
+	Private _cFilial2    := ""
+	
+	Private Titulo      := "CONTROLE DE ABASTECIMENTO"
+	Private NomeProg    := "PTRE02"
+	Private cPerg       := "PTRE02"
+	Private aOrd        := {}
+	
+	//- Defindo grupo de perguntas
+	dbSelectArea("SX1")
+	dbSetOrder(1)
+	//- Defindo grupo de perguntas
+	aAdd(aPerg, {cPerg, "01", "Cod Veic. de ?","mv_ch1","C",10,0,1,"G","","mv_par01","","PT1","","","","","","","","","","","","",""})
+	aAdd(aPerg, {cPerg, "02", "Cod Veic. ate?","mv_ch2","C",10,0,1,"G","","mv_par02","","PT1","","","","","","","","","","","","",""})
+	aAdd(aPerg, {cPerg, "03", "Grupo de     ?","mv_ch3","C",03,0,1,"G","","mv_par03","","P1" ,"","","","","","","","","","","","",""})
+	aAdd(aPerg, {cPerg, "04", "Grupo ate    ?","mv_ch4","C",03,0,1,"G","","mv_par04","",""   ,"","","","","","","","","","","","",""})
+	aAdd(aPerg, {cPerg, "05", "Mes          ?","mv_ch4","C",02,0,1,"G","","mv_par05","",""   ,"","","","","","","","","","","","",""})
+	aAdd(aPerg, {cPerg, "06", "Ano          ?","mv_ch4","C",04,0,1,"G","","mv_par06","",""   ,"","","","","","","","","","","","",""})
+	
+	//- Gravando grupo de perguntas
+	For nA:= 1 To Len(aPerg)
+		If !(dbSeek(cPerg+aPerg[nA,2]))
+			RecLock("SX1",.t.)
+			Replace X1_GRUPO    with aPerg[nA][1]
+			Replace X1_ORDEM    with aPerg[nA][2]
+			Replace X1_PERGUNT  with aPerg[nA][3]
+			Replace X1_PERSPA   with aPerg[nA][3]
+			Replace X1_PERENG   with aPerg[nA][3]
+			Replace X1_VARIAVL  with aPerg[nA][4]
+			Replace X1_TIPO     with aPerg[nA][5]
+			Replace X1_TAMANHO  with aPerg[nA][6]
+			Replace X1_GSC      with aPerg[nA][9]
+			Replace X1_DECIMAL  with aPerg[nA][7]
+			Replace X1_PRESEL   with aPerg[nA][8]
+			Replace X1_DEF01    with aPerg[nA][12]
+			Replace X1_DEF02    with aPerg[nA][15]
+			Replace X1_DEFSPA1  with aPerg[nA][12]
+			Replace X1_DEFSPA2  with aPerg[nA][15]
+			Replace X1_DEFENG1  with aPerg[nA][12]
+			Replace X1_DEFENG2  with aPerg[nA][15]
+			Replace X1_F3       with aPerg[nA][13]
+			MsUnlock()
+		Endif
+	Next
+	
+	If Pergunte(cPerg, .T.)
+		//³Executa a rotina de impressao ³
+		Processa({ |lEnd| PTRE02IMP(), OemToAnsi("Gerando o relatório.")}, OemToAnsi("Aguarde..."))
+	Endif
+		
+	
+	/*
+	Pergunte(cPerg,.F.)
+	
+	wnRel := SetPrint(cString,wnrel,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,,Tamanho)
+	
+	wnrel := "PTRE02" //- Nome Default do relatorio em Disco
+	
+	If nLastKey = 27
+		Return
+	Endif
+	
+	SetDefault(aReturn,cString)
+	
+	If nLastKey = 27
+		Return
+	Endif
+	
+	RptStatus({|lEnd| PTRE02IMP(@lEnd,wnRel,cString)},titulo)
+	*/
+Return
+
+
+Static Function PTRE02IMP()
+	oPrint		:= TMSPrinter():New(OemToAnsi("Relatorio de Acumulados "))
+	oBrush		:= TBrush():New(,4)
+	oPen		:= TPen():New(0,5,CLR_BLACK)
+	// cFileLogo	:= GetSrvProfString("Startpath","") + "LOGORECH02" + ".BMP"
+	oFont06		:= TFont():New("Arial",06,06,,.F.,,,,.T.,.F.)
+	oFont07		:= TFont():New("Arial",07,07,,.F.,,,,.T.,.F.)
+	oFont07n	:= TFont():New("Arial",07,07,,.T.,,,,.T.,.F.)
+	oFont08		:= TFont():New("Arial",08,08,,.F.,,,,.T.,.F.)
+	oFont08n	:= TFont():New("Arial",08,08,,.T.,,,,.T.,.F.)
+	oFont09		:= TFont():New("Arial",09,09,,.F.,,,,.T.,.F.)
+	oFont10		:= TFont():New("Arial",10,10,,.F.,,,,.T.,.F.)
+	oFont10n	:= TFont():New("Arial",10,10,,.T.,,,,.T.,.F.)
+	oFont11		:= TFont():New("Arial",11,11,,.F.,,,,.T.,.F.)
+	oFont12		:= TFont():New("Arial",12,12,,.T.,,,,.T.,.F.)
+	oFont12n	:= TFont():New("Arial",12,12,,.F.,,,,.T.,.F.)
+	oFont13		:= TFont():New("Arial",13,13,,.T.,,,,.T.,.F.)
+	oFont14		:= TFont():New("Arial",14,14,,.T.,,,,.T.,.F.)
+	oFont15		:= TFont():New("Arial",15,15,,.T.,,,,.T.,.F.)
+	oFont18		:= TFont():New("Arial",18,18,,.T.,,,,.T.,.T.)
+	oFont16		:= TFont():New("Arial",16,16,,.T.,,,,.T.,.F.)
+	oFont20		:= TFont():New("Arial",20,20,,.F.,,,,.T.,.F.)
+	oFont22		:= TFont():New("Arial",22,22,,.T.,,,,.T.,.F.)
+	
+	nLinha		:= 3030	// Controla a linha por extenso
+	
+	oPrint:SetPortrait()
+	oPrint:SetLandScape()
+
+	
+	m_pag := 1
+	li    := 80
+	Titulo:= "CONTROLE DE ABASTECIMENTO - OLEO DIESEL"
+	
+	//***************************************************************************************
+	// Validação do Cabeçalho do Relatório
+	_cEmpresa  := SM0->M0_NOMECOM
+	_cEndereco := SM0->M0_ENDCOB
+	_cCNPJ     := SM0->M0_CGC
+	//***************************************************************************************
+	//** Final do Procedimento **************************************************************
+	//***************************************************************************************
+    
+
+	/* Posições do Vetor
+		01 - Codigo Veiculo
+		02 - Dia 01
+		03 - Dia 02
+		04 - Dia 03
+		05 - Dia 04
+		06 - Dia 05
+		07 - Dia 06
+		08 - Dia 07
+		09 - Dia 08
+		10 - Dia 09
+		11 - Dia 10
+		12 - Dia 11
+		13 - Dia 12
+		14 - Dia 13
+		15 - Dia 14
+		16 - Dia 15
+		17 - Dia 16
+		18 - Dia 17
+		19 - Dia 18
+		20 - Dia 19
+		21 - Dia 20
+		22 - Dia 21
+		23 - Dia 22
+		24 - Dia 23
+		25 - Dia 24
+		26 - Dia 25
+		27 - Dia 26
+		28 - Dia 27
+		29 - Dia 28
+		30 - Dia 29
+		31 - Dia 30
+		32 - Dia 31
+	*/
+	aBase := {}
+
+	_cQuery := "SELECT COUNT(*) AS QUANT "
+	_cQuery += "FROM "+ RetSqlName("SN1") +" "
+	_cQuery += "WHERE N1_YGRUPO <> '' AND D_E_L_E_T_ <> '*' AND "
+	_cQuery += "N1_CBASE BETWEEN '"+ mv_par01 +"' AND '"+ mv_par02 +"' AND N1_YGRUPO BETWEEN '"+ mv_par03 +"' AND '"+ mv_par04 +"' "
+	TcQuery _cQuery New Alias qQTD
+	
+	_cQuery := "SELECT N1_CBASE, N1_DESCRIC, N1_YGRUPO, N1_YKML, N1_YFATOR, N1_PLACA, N1_CHASSIS "
+	_cQuery += "FROM "+ RetSqlName("SN1") +" "
+	_cQuery += "WHERE N1_YGRUPO <> '' AND D_E_L_E_T_ <> '*' AND "
+	_cQuery += "N1_CBASE BETWEEN '"+ mv_par01 +"' AND '"+ mv_par02 +"' AND N1_YGRUPO BETWEEN '"+ mv_par03 +"' AND '"+ mv_par04 +"' "
+	_cQuery += "ORDER BY N1_YGRUPO, N1_DESCRIC "
+	TcQuery _cQuery New Alias qSN1
+
+	dbSelectArea("qSN1")
+	dbGotop()
+	
+	ProcRegua( qQTD->QUANT )
+	Do While !Eof()
+		aAdd(aBase, {qSN1->N1_CBASE, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00, 0.00})
+	
+		dbSkip()
+		IncProc()
+	EndDo
+	
+	_nPg := 0
+	_cGrupo := ""
+	_nCount := 0
+	
+	//Inicio da Impressao do Relatorio
+	ProcRegua( Len(aBase) )
+	
+	For nRow := 1 to Len(aBase)
+		xVerPag()
+		
+		oPrint:Say(nLinha,0050, PadR(SRA->RA_CC,10), oFont06)
+		oPrint:Say(nLinha,0150, PadR(qRegSRD->RD_MAT,10), oFont06)
+		oPrint:Say(nLinha,0250, PadR(SRA->RA_NOME,50), oFont06)
+		oPrint:Say(nLinha,0600, PadR(qRegSRD->RD_PD,10), oFont06)
+		oPrint:Say(nLinha,0650, PadR(SRV->RV_DESC,50), oFont06)
+		oPrint:Say(nLinha,0900, Transform(qRegSRD->RD_HORAS, "@E 999.99"), oFont07)
+		
+		oPrint:Say(nLinha,1050, Transform(qRegSRD->RD_VALOR, "@E 999,999,999.99"), oFont07)
+		oPrint:Say(nLinha,1250, PadR(qRegSRD->RD_DATARQ,10), oFont06)
+		
+		nLinha += 40
+		qRegSRD->(dbSkip())
+		oPrint:Line(nLinha,050,nLinha,2190)
+		nLinha += 20
+		
+		IncProc()
+	Next
+	_Pagina := _Pagina + 1
+
+	oPrint:EndPage()
+	nLinha:= 0150
+	oPrint:StartPage()
+	xCabec()
+	
+	qQTD->(dbCloseArea())
+	qSN1->(dbCloseArea())
+	oPrint:Preview()
+Return
+
+Static Function xCabec()
+	nLinha := 200
+	oPrint:Say(050,050,AllTrim( SM0->M0_NOMECOM ),oFont08)
+	oPrint:Say(100,050,"Relatorio de Acumulados" ,oFont08)
+	oPrint:Say(120,2100,AllTrim("Page:"), oFont07)
+	oPrint:Say(120,2295,AllTrim(Transform(_Pagina,"@E 999,999")), oFont07)
+	oPrint:Line(150,050,150,2330)
+	oPrint:Say(nLinha,0050, "RA_CC"    , oFont06)
+	oPrint:Say(nLinha,0150, "RD_MAT"   , oFont06)
+	oPrint:Say(nLinha,0250, "RA_NOME"  , oFont06)
+	oPrint:Say(nLinha,0600, "Ver"      , oFont06)
+	oPrint:Say(nLinha,0650, "RV_DESC"  , oFont06)
+	oPrint:Say(nLinha,0890, "RD_HORAS" , oFont07)
+	oPrint:Say(nLinha,1050, "RD_VALOR" , oFont07)
+	oPrint:Say(nLinha,1250, "DATARQ"   , oFont06)
+	oPrint:Line(250,050,250,2330)
+	nLinha := 300
+Return
+
+
+Static Function xVerPag()
+	If	nLinha >= 3030
+		_Pagina := _Pagina + 1
+		oPrint:EndPage()
+		nLinha:= 0150
+		oPrint:StartPage()
+		xCabec()
+	EndIf
+Return
+

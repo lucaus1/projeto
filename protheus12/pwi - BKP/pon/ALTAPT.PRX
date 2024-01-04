@@ -1,0 +1,143 @@
+#include "rwmake.ch"
+/*
+Programa para:
+ Autorizacao de HE nos apontamentos DO SPC
+por funcionarios,Turnos ou Centro de Custo
+ Substituicao de evento calculado por informado 
+
+Autor: Franciney Alves -Potencial Assessoria e Consultoria Ltda
+
+*/
+User Function ALTAPT
+cPerg:="ALTAPT"
+
+Validperg()
+DbSelectArea("SPC")
+cFilde     :=space(2)
+cFilate    :=space(2)
+cMatde     :=space(6)
+cMatAte    :=space(6)
+cMat       :=space(6)  
+dDatade    :=Date()
+dDataaTe   :=Date()
+cPDC       :=Space(3)   // Provento Calculado
+cPDI       :=Space(3)   // Provento Informado
+cTurde     :=Space(3)
+cTurate    :=Space(3)
+cCCde      :=Space(9)
+cCCate     :=Space(9)
+nPcSub     :=0.00       // Percentual do evento a substituir
+
+
+Pergunte("ALTAPT",.F.)
+if !Pergunte(cPerg,.T.)
+  Return Nil
+endif
+  DbSelectArea("SRA")
+  ProcRegua(RECCOUNT())
+  Processa( {|| RunProc()} )
+Return Nil    
+  
+Static Function RunProc()
+  cFilde     :=mv_par01
+  cFilate    :=mv_par02
+  cMatde     :=mv_par03
+  cMatAte    :=mv_par04
+  dDatade    :=mv_par05                                                     
+  dDataaTe   :=mv_par06
+  cPDC       :=mv_par07
+  cPDI       :=mv_par08
+  cTurde     :=mv_par09
+  cTurate    :=mv_par10
+  cCCde      :=mv_par11
+  cCCate     :=mv_par12
+  nPcSub     :=mv_par13
+  DbSelectArea("SRA")
+  DbSetOrder(1)                    
+  if Empty(cMatde)
+   DbGotop()   
+  Else
+   DbSeek(xFilial("SRA")+cMatde,.T.)
+  Endif      
+
+Do While !eof().And.SRA->RA_MAT<=cMatAte
+  cMat       :=SRA->RA_MAT
+  dData1     :=dDatade
+
+  IF SRA->RA_CC < cCCde .or. SRA->RA_CC > cCCate .or. SRA->RA_TNOTRAB < cTurde .or. SRA->RA_TNOTRAB > cTurate
+       DbSelectArea("SRA")
+       DbSkip()
+       Loop  
+  Endif 
+
+  DbSelectArea("SPC")
+  DbSetOrder(1)                    
+  For dData1:=dDatade to dDataaTe
+   Dbseek(Xfilial("SPC")+cMAT+cPDC+DTos(dData1))
+   IF Found()
+     RecLock("SPC")
+      Replace  PC_PDI     with  cPDI                  
+      Replace  PC_QUANTI  with  PC_QUANTC
+     if nPcSub<>0.00
+      Replace  PC_QUANTI  with  (PC_QUANTC*nPcSub)/100
+     Endif    
+     Msunlock()
+   Endif
+  Next
+  DbSelectArea("SRA")
+  DbSkip()
+  IncProc()
+Enddo
+
+Return NIL
+
+ Static Function ValidPerg
+  Local _sAlias := Alias()
+  Local aRegs := {}
+  Local i,L
+  dbSelectArea("SX1")
+  dbSetOrder(1)
+  cPerg := PADR(cPerg,6)
+  
+/*
+cFilde     :=mv_par01
+cFilate    :=mv_par02
+cMatde     :=mv_par03
+cMatAte    :=mv_par04
+dDatade    :=mv_par05
+dDataaTe   :=mv_par06
+cPDC       :=mv_par07
+cPDI       :=mv_par08
+
+
+nPcSub     :=mv_par09
+*/
+  // Grupo/Ordem/Pergunta/Variavel/Tipo/Tamanho/Decimal/Presel/GSC/Valid/Var01/Def01/Cnt01/Var02/Def02/Cnt02/Var03/Def03/Cnt03/Var04/Def04/Cnt04/Var05/Def05/Cnt05
+  aadd(aRegs,{cPerg,"01","Da Filial          ?"," "," ","mv_ch1","C", 2,0,0,"G","","mv_par01","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"02","Ate Filial         ?"," "," ","mv_ch2","C", 2,0,0,"G","","mv_par02","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"03","Da Matricula       ?"," "," ","mv_ch3","C", 6,0,0,"G","","mv_par03","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"04","Ate Matricula      ?"," "," ","mv_ch4","C", 6,0,0,"G","","mv_par04","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"05","Da Data            ?"," "," ","mv_ch5","D", 8,0,0,"G","","mv_par05","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"06","Ate Data           ?"," "," ","mv_ch6","D", 8,0,0,"G","","mv_par06","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"07","Do Evento NAutoriz ?"," "," ","mv_ch7","C", 3,0,0,"G","","mv_par07","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"08","Para o Evento Autor?"," "," ","mv_ch8","C", 3,0,0,"G","","mv_par08","","","","","","","","","","","","","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"09","Do Turno           ?"," "," ","mv_ch9","C", 3,2,0,"G","","mv_par09","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"10","Até o turno        ?"," "," ","mv_chA","C", 3,2,0,"G","","mv_par10","","","","","","","","","","","","","",""})
+  aadd(aRegs,{cPerg,"11","Do centro de Custo ?"," "," ","mv_chB","C", 9,2,0,"G","","mv_par11","","","","","","","","","","","","","",""})  
+  aadd(aRegs,{cPerg,"12","Ate Centro de Custo?"," "," ","mv_chC","C", 9,2,0,"G","","mv_par12","","","","","","","","","","","","","",""})  
+  aadd(aRegs,{cPerg,"13","Percentual Autoriza?"," "," ","mv_chD","N", 6,2,0,"G","","mv_par13","","","","","","","","","","","","","",""})  
+
+  
+  For i:=1 to Len(aRegs)
+     If !dbSeek(cPerg+aRegs[i,2])
+        RecLock("SX1",.T.)
+        For L:=1 to FCount()
+           If L <= Len(aRegs[i])
+              FieldPut(L,aRegs[i,L])
+           Endif
+        Next
+        MsUnlock()
+     Endif
+  Next
+  dbSelectArea(_sAlias)
+Return

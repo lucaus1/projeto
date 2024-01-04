@@ -1,0 +1,74 @@
+#line 1 "C:\PROJETOS\MP8\INCLUDE\rwmake.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\std.ch"
+#line 6 "rwmake.CH"
+#line 2 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\font.CH"
+#line 3 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\topconn.ch"
+#line 4 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\vkey.ch"
+#line 5 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\colors.ch"
+#line 6 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\fivewin.ch"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Dialog.ch"
+#line 17 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Font.ch"
+#line 18 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Ini.ch"
+#line 19 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\PTMenu.ch"
+#line 20 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Print.ch"
+#line 22 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Colors.ch"
+#line 24 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\DLL.ch"
+#line 25 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Folder.ch"
+#line 26 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\msobject.ch"
+#line 27 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\ODBC.ch"
+#line 28 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\DDE.ch"
+#line 29 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Video.ch"
+#line 30 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\VKey.ch"
+#line 31 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\Tree.ch"
+#line 32 "PROTHEUS.CH"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\WinApi.ch"
+#line 1 "C:\PROJETOS\MP8\INCLUDE\FwMsgs.h"
+#line 6 "WinApi.ch"
+#line 33 "PROTHEUS.CH"
+#line 3 "fivewin.ch"
+#line 10 "c:\projetos\mp8\pwi\estoque\POTENC~1.PRW"
+Function U_Potencial(cNome)
+
+	oFonte := TFont():New( "Comic Sans MS", 013, 000,.F.,.T.,,,,,,,,,,, )
+
+	oDlg := MSDialog():New(000, 000, 400, 400, OemToAnsi("Controle de Combustível"),,,,,,,,, .t. ,,,)
+	 oBmp := TBitmap():New( 005, 075, 080, 065,, "potlogo.bmp",.T.,,,,.F.,.F.,,,.F.,,.T.,,.F. )
+
+	 TGroup():New(065,005,080,195,OemToAnsi("Desenvolvimento"),, , , .t. )
+		 TSay():New( 070, 010,{||  PadR("Consultor - "+cNome,95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+
+	 TGroup():New(090,005,175,195,OemToAnsi("Informações Adicionais"),, , , .t. )
+		 TSay():New( 100, 010,{||  PadR("Potencial Tecnologia e Soluções Empresariais Ltda",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+		 TSay():New( 110, 010,{||  PadR("Av. Des. João Machado, 1297, Sala 402, Planalto",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+		 TSay():New( 120, 010,{||  PadR("Fone: 3184-0863",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+
+		 TSay():New( 130, 010,{||  PadC("Contatos",95)},oDlg,, oFonte,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+
+		 TSay():New( 140, 010,{||  PadR("Ellcyo Castro - ellcyo@potencial.inf.br",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+		 TSay():New( 150, 010,{||  PadR("Franciney Alves - franciney@potencial.inf.br",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+		 TSay():New( 160, 010,{||  PadR("Gustavo Cunha - gustavo@potencial.inf.br",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+
+		 TSay():New( 175, 010,{||  PadC("www.potencial.inf.br",95)},,,,.F.,.F.,.F.,.T., 16711680,,,,.F.,.F.,.F.,.F.,.F. )
+
+         SButton():New(185, 160, 1,{|| oDlg:End()},,)
+	oDlg:Activate( oDlg:bLClicked, oDlg:bMoved, oDlg:bPainted,.T.,,,, oDlg:bRClicked, )
+Return

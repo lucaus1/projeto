@@ -1,0 +1,59 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmsindict()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADSINDICACT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADSINDICAIT.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - SINDICATOS  ")
+DbselectArea("RCE")
+nTot := RECCOUNT()
+dbGotop()
+
+While  !EOF()
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    cLine := PADR(RCE_CODIGO,02) + ";"	
+    cLine += PADR(RCE_DESCRI,40) + ";"	
+    cLine += PADR(RCE_CGC,14) + ";"	
+    cLine += PADR(RCE_ENTSIN,08) + ";"	
+    cLine += PADR(RCE_ENDER,40) + ";"
+    cLine += PADR(RCE_NUMER,10) + ";"
+    cLine += PADR(RCE_BAIRRO,15) + ";"
+    cLine += PADR(RCE_CEP,10) + ";"
+    cLine += PADR(RCE_DDD,03) + ";"
+    cLine += PADR(RCE_FONE,10) + ";"
+    cLine += PADR(RCE_MUNIC,10) + ";"
+    cLine += PADR(RCE_MESDIS,02) + ";"
+    cLine += PADR(RCE_DIADIS,02) + ";"
+
+
+    
+
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

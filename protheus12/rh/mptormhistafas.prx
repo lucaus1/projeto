@@ -1,0 +1,149 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmhafa()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+//M1
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("HistAfastCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("HistAfastIT.TXT")
+Endcase 
+*/
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("histaf0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("histaf0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("histaf0201.TXT")
+Endcase 
+
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - periodo de gozo ")
+DbselectArea("SR8")
+nTot := RECCOUNT()
+DbSeek(Xfilial("SR8")+"",.T.)
+While !EOF() .AND. R8_FILIAL == SM0->M0_CODFIL 
+
+      if R8_TIPOAFA == "001" // férias 
+            Dbskip()
+            Loop
+      Endif 
+    // Formula	//	Posição	DESCRIÇÃO	TIPO	TAMANHO		CAMPO
+    cLine := PADR(R8_MAT,16) + ";" 	//	1	Chapa	String	16		PFHSTAFT.CHAPA
+    cLine += STRTRAN(DTOC(R8_DATAINI),"/","") + ";" 	//	2	Data de início	Data	8		PFHSTAFT.DTINICIO
+    cLine += STRTRAN(DTOC(R8_DATAFIM),"/","") + ";" 	//	3	Data final	Data	8		PFHSTAFT.DTFINAL
+    
+    // Tabela S048 - afastamento e-social 
+    cMotAfasEFD := "01"
+    Do Case 
+      Case R8_TPEFD == "01" // Acidente de trabalho
+            cTipoAfast :="T"
+      CASE R8_TPEFD == "02" // descontinuado 
+            cTipoAfast :="L" 
+      CASE R8_TPEFD == "03" // Acidente nao relacionado ao trabalho 
+            cTipoAfast :="P" 
+      CASE R8_TPEFD == "04" // descontinuado 
+            cTipoAfast :="L" 
+      CASE R8_TPEFD == "05" // Licenca servidor publico sem remuneracao 
+            cTipoAfast :="L" 
+      CASE R8_TPEFD == "06" // Aposentadoria por invalidez  
+            cTipoAfast :="I" 
+      CASE R8_TPEFD == "07" // Licenca para acompanhamento de parente enfermo
+            cTipoAfast :="R" 
+      CASE R8_TPEFD == "08" // Para participar de atividade do conselho curador 
+            cTipoAfast :="R" 
+      CASE R8_TPEFD == "10" // Licensa servidor publico com remuneracao  
+            cTipoAfast :="R" 
+      CASE R8_TPEFD == "11" // Cacere  
+            cTipoAfast :="Q" 
+      CASE R8_TPEFD == "12" // Cargo eletivo  
+            cTipoAfast :="N" 
+      CASE R8_TPEFD == "13" // Cargo eletivo  
+            cTipoAfast :="S" 
+      CASE R8_TPEFD == "15" .or. (Empty(R8_TPEFD).AND. R8_TIPOAFA == "001") // Ferias  
+            cTipoAfast :="U" 
+      CASE R8_TPEFD == "17" // Licença Maternidade   
+            cTipoAfast :="E" 
+      CASE R8_TPEFD == "21" // Licença sem remuneração   
+            cTipoAfast :="L" 
+      CASE R8_TPEFD == "29" // Serviço militar  
+            cTipoAfast :="M" 
+      OTHERWISE
+            cTipoAfast :="L"
+    EndCase 
+    cLine += PADL(cTipoAfast,04) + ";"	//	4	Tipo	String	1		PFHSTAFT.TIPO
+    
+    // Tabela RCM 
+    cMotAfast :="001" // ferias
+    Do Case 
+      Case R8_TIPOAFA == "001" // Ferias 
+            cMotAfast :="001"
+      CASE R8_TIPOAFA == "002" // Recesso 
+            cMotAfast :="002"
+      CASE R8_TIPOAFA == "003" // Afast Temp Acid Trab  
+            cMotAfast :="003"
+      CASE R8_TIPOAFA == "004" // Doenca  
+            cMotAfast :="004"
+      CASE R8_TIPOAFA == "005" // Prestacao Serviço Militar 
+            cMotAfast :="005"
+      CASE R8_TIPOAFA == "006" // Licença Maternidade   
+            cMotAfast :="006"
+      CASE R8_TIPOAFA == "014" // Licença sem vencimentos  
+            cMotAfast :="014"
+      CASE R8_TIPOAFA == "016" // Outro motivos afast tempo   
+            cMotAfast :="016"
+      CASE R8_TIPOAFA == "017" // Aposentadoria por invalidez 
+            cMotAfast :="017"
+      CASE R8_TIPOAFA == "020" // Afastamento COVID 19 
+            cMotAfast :="020"
+      OTHERWISE
+            cMotAfast :="014"  // generico 
+    EndCase 
+    cLine += PADL(cMotAfast,03) + ";" //	5	Motivo do afastamento	String	2		PFHSTAFT.MOTIVO
+    cLine += ""+";"	//	6	Observações	String	50		PFHSTAFT.OBSERVACAO
+    cLine += ""+";"	//	7	Estorna tempo de serviço	Inteiro	1		PFHSTAFT.ESTTEMPOSERVICO
+    cLine += ""+";"	//	8	Código da Coligada do Tomador	Inteiro	2		PFHSTAFT.CODCOLTOMADOR
+    cLine += ""+";"	//	9	Código do Tomador	String	25		PFHSTAFT.CODTOMADOR
+    cLine += ""+";"	//	10	Tipo do Tomador	Intero	2		PFHSTAFT.TPTOMADOR
+    cLine += ""+";"	//	11	Data de Requerimento	Data	8		PFHSTAFT.DATAREQUERIMENTO
+    cLine += ""+";"	//	12	CEI	String	20		PFHSTAFT.CEI
+    cLine += ""+";"	//	13	Codigo da Tabela CID	String	10		PFHSTAFT.CODCID
+    cLine += ""+";"	//	14	Ônus da Cessão	String	1		PFHSTAFT.INFOONUS
+    cLine += ""+";"	//	15	Código do Médico	Inteiro	8		PFHSTAFT.CODMEDICO
+    cLine += PADL(R8_TIPOAT,01) + ";"	//	16	Tipo de Acidente de Trânsito	String	1		PFHSTAFT.TIPOACIDENTETRANSITO
+    cLine += ""+";"	//	17	Flag Acidente de Trânsito	Inteiro	2		PFHSTAFT.ACIDENTETRANSITO
+    cLine += ""+";"	//	18	CNPJ do sindicato	String	18		PFHSTAFT.CNPJSINDICATO
+    cLine += ""+";"	//	19	Informação onus da Remuneração	String	1		PFHSTAFT.INFOONUSREMUNERACAO
+    cLine += ""+";"	//	20	Código da estabilidade	Inteiro	4		PFHSTAFT.CODESTABILIDADE
+    cLine += ""+";"	//	21	Doença ou agravo de notificação compulsória	Inteiro	2		PFHSTAFT.DOENCANOTIFCOMPULSORIA
+    cLine += ""+";"	//	22	Cnpj do orgão a qual o funcionário foi cedido	String	18		PFHSTAFT.CNPJORGAOCEDIDO
+    cLine += ""+";"	//	23	Dt. Inicial da Continuidade de Aft.	Data	8		PFHSTAFT.DTINICONTINUIDADEAFT
+
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

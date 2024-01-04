@@ -1,0 +1,1052 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function migraprotorm()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local cLine :=""
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADFUNC0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADFUNC0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADFUNC0201.TXT")
+Endcase 
+
+/*
+Linha <1> - Chapa: '000001' Campo(s) obrigatório(s) não informado(s): 
+Código de Situação do Funcionário, pos 55 
+Motivo de Admissão, pos 83 
+Tipo de Funcionário,  pos 56
+Índice de início de Horário,  pos 156
+Motivo da Mudança Salarial, pos 345
+Motivo da Mudança de Função, pos 347
+Motivo da Mudança de Situação, 349
+Motivo da Mudança de Seção, 351
+Natureza da Atividade do eSocial. 359
+
+*/
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - Funcionarios ")
+DbselectArea("SRA")
+DbSetOrder(1)
+DbSeek(Xfilial("SRA")+"",.T.)
+While !EOF() .AND. RA_FILIAL == SM0->M0_CODFIL 
+    cLine := ALLTRIM(RA_MAT)+";"  // POS 1
+    cLine += ALLTRIM(RA_NOME)+";"  // POS 2
+    cLine += ALLTRIM(RA_APELIDO)+";"  // POS 3
+    cLine += ALLTRIM(STRTRAN(DTOC(RA_NASC),"/",""))+";"   // POS 4
+    cESTCiv :="C"
+    DO CASE 
+      Case RA_ESTCIVI == "M"
+        cESTCiv :="C"
+      OTHERWISE
+        cESTCiv := RA_ESTCIVI
+    ENDCASE
+    cLine += ALLTRIM(cESTCIV)+";"    // POS 5
+    cLine += ALLTRIM(RA_SEXO)+";"    // POS 6
+    cNacionalidade := "10"
+    Do case
+     Case RA_NACIONA == 'Br' .or. RA_NACIONA == 'Br.' .or. Empty(RA_NACIONA)
+        cNacionalidade := "10"
+      OTHERWISE
+        cNacionalidade := "10" // RA_NACIONA
+    ENDCASE
+    cLine += cNacionalidade +";"   // POS 7
+    cGrauInst:="7"
+    Do CASE
+      Case RA_GRINRAI == "10"  // analfabeto 
+        cGrauInst:="1"
+      Case RA_GRINRAI == "20"   
+        cGrauInst:="2"
+      Case RA_GRINRAI == "25"  // analfabeto 
+        cGrauInst:="3"
+      Case RA_GRINRAI == "30"  // analfabeto 
+        cGrauInst:="4"
+      Case RA_GRINRAI == "35"  // analfabeto 
+        cGrauInst:="5"
+      Case RA_GRINRAI == "40"  // analfabeto 
+        cGrauInst:="6"
+      Case RA_GRINRAI == "45"  // ensino medio completo 
+        cGrauInst:="7"
+      Case RA_GRINRAI == "50"  // sup incompleto 
+        cGrauInst:="8"
+      Case RA_GRINRAI == "55" // sup completo 
+        cGrauInst:="9"
+      Case RA_GRINRAI == "65"  //  Mestrado completo 
+        cGrauInst:="D"
+      Case RA_GRINRAI == "75"  //  Doutorado completo  
+        cGrauInst:="F"
+      Case RA_GRINRAI == "85"  // Pos graducao / especializacao  
+        cGrauInst:="B"
+      Case RA_GRINRAI == "95"  // Pos Doutorado  
+        cGrauInst:="H"
+    ENDCASE
+
+    cLine += ALLTRIM(cGrauInst)+";"  // TOTVS 2  POS 8 
+    cLine += ALLTRIM(RA_ENDEREC)+";"   // POS 9
+    cLine += ALLTRIM(RA_NUMENDEC)+";"    // POS 10
+    cLine += ALLTRIM(RA_COMPLEM)+";"   // POS 11
+    cLine += ALLTRIM(RA_BAIRRO)+";"   // POS 12
+    cESTADO:='AM'
+    Do Case 
+      Case RA_ESTADO == 'EX' .or. RA_NACIONA <> "10" .or. Empty(RA_CODMUN)
+        cESTADO:='AM'
+      Case RA_ESTADO == 'XX' .or. AllTrim(RA_ESTADO) == 'XX'
+        cESTADO:='AM'
+      OTHERWISE 
+        cESTADO:= RA_ESTADO
+    EndCase 
+    cLine += ALLTRIM(cESTADO)+";"    // POS 13
+    cLine += ALLTRIM(RA_MUNICIP)+";"  // POS 14
+    cLine += ALLTRIM(RA_CEP)+";"   // POS 15
+    cLine += ALLTRIM(RA_CPAISOR)+";"   // POS 16 NOME DO PAIS), 16 - NO PROTHEUS GPE CODIGO C 5
+    cLine += ALLTRIM(RA_NUMCP)+";"   // POS 17 REGISTRO PROFISSIONAL ), 15 
+    cLine += ALLTRIM(RA_CIC)+";"  // POS 18
+    cLine += ALLTRIM(PADL(RA_TELEFON,15))+";"  // POS 19 TELEFONE 1 C 15
+    cLine += ALLTRIM(PADL(RA_NUMCELU,15))+";"  // POS 20 TELEFONE 2 C 15
+    cLine += ALLTRIM(RA_RG)+";"   // POS 21 NO GPE C 30 
+    Do case 
+     case Empty(RA_RGUF) .and. !Empty(RA_UFCP)
+      cLine += ALLTRIM(RA_UFCP)+";"   // POS 22 UF RG C 2 
+     case Empty(RA_RGUF) .and. Empty(RA_UFCP)
+      cLine += ALLTRIM(RA_NATURAL)+";"   // POS 22 UF RG C 2 
+     OTHERWISE
+      cLine += ALLTRIM(RA_RGUF)+";"   // POS 22 UF RG C 2 
+    ENDCASE
+    cLine += PADL(RA_ORGEMRG,15)+";"   // ORGAO EMISSOR C 15 - POS 23
+    cLine += (STRTRAN(DTOC(RA_DTRGEXP),"/",""))+";"   // POS 24 Data de EmissÃ£o RG
+    cLine += ALLTRIM("")+";"   // POS 25 Data de Vencimento - RG
+    cLine += ALLTRIM(PADL(RA_TITULOE,14))+";"   // POS 26 TÃ­tulo de Eleitor),  String), 14 
+    cLine += PADL(ALLTRIM(RA_ZONASEC),6)+";"   // POS 27  Zona de VotaÃ§Ã£o), String),  6
+    cLine += ALLTRIM(RA_SECAO)+";"   // POS 28  SeÃ§Ã£o de VotacÃ£o), String),  6
+    cLine += ALLTRIM(PADL(RA_NUMCP,10))+";"   //POS 29 N Carteira de Trabalho), String), 10),
+    cLine += ALLTRIM(RA_SERCP)+";"   //POS 30 Serie Carteira de Trab), String), 5
+    cLine += ALLTRIM(RA_UFCP)+";"   // POS 31 UF - Carteira de Trabalho), String), 2
+    cLine += STRTRAN(DTOC(RA_DTCPEXP),"/","")+";"   // POS 32 Data da emissÃ£o - Carteira de Trabalho), Data), 8
+    cLine += ALLTRIM("")+";"   // POS 33 Data de Vencimento - Carteira de Trabalho), Data), 8
+    cLine += ALLTRIM("0")+";"   // POS 34 NIT - Tipo de Carteira de Trabalho (0-NÃ£o/1-Sim), Inteiro), 1
+    cLine += ALLTRIM(RA_HABILIT)+";"   // POS 35 Nº da Carteira de Motorista), String), 15
+    cLine += ALLTRIM(RA_CATCNH)+";"   // POS 36 Tipo da Carteira de HabilitaÃ§Ã£o), String), 5 
+    cLine += STRTRAN(DTOC(RA_DTVCCNH),"/","")+";"   // POS 37 Data de Venc. Da HabilitaÃ§Ã£o), Data), 8
+    cLine += ALLTRIM(RA_RESERVI)+";"   // POS 38  Nº do Certif Reserv), String), 40
+    cLine += ALLTRIM(SPACE(10))+";"   // POS 39 Categoria Militar), String), 10
+    cLine += ALLTRIM(RA_MUNNASC)+";"   // POS 40 Naturalidade), String), 32
+    cLine += ALLTRIM(RA_NATURAL)+";"   // POS 41 Estado Natal), String), 2 
+    cLine += STRTRAN(DTOC(RA_DATCHEG),"/","")+";"   // POS 42 Data da Chegada ao Brasil), Data ), 8  
+    cLine += ALLTRIM("")+";"   // POS 43 Carta Modelo 19 ), String ), 15
+    cLine += ALLTRIM(IIF(RA_CASADBR=='1',"1","0"))+";"   // POS 44 CÃ´njuge Brasil (0-NÃ£o/1-Sim), Inteiro ), 1
+    cLine += ALLTRIM(IIF(Empty(RA_NUMNATU),"0","1"))+";"   // POS 45 Naturalizado (0-NÃ£o/1-Sim), Inteiro ), 1
+    cLine += ALLTRIM(IIF(RA_FILHOBR=='1',"1","0"))+";"   // POS 46 Filhos no Brasil (0-NÃ£o/1-Sim), Inteiro ), 1
+    cLine += ALLTRIM(IIF(RA_FILHOBR=='1',"1","0"))+";"   // POS 47 NÂº de Filhos no Brasil), Inteiro ), 2
+    cLine += ALLTRIM(RA_RNE)+";"   // POS 48 Nº do Registro Geral), String), 15
+    cLine += ALLTRIM(RA_NUMNATU)+";"   // POS 49 Nº do Decreto), String ), 15
+    cLine += ALLTRIM("VIPER")+";"   // POS 50   Tipo de Visto), String), 10
+    cLine += ALLTRIM(RA_EMAIL)+";"   // POS 51 E-Mail), String), 60 
+    cLine += ALLTRIM("")+";"   // POS 52 Senha),  String), 8 
+    cLine += ALLTRIM(if(empty(RA_REGISTR),RA_MAT,RA_REGISTR))+";"   // POS 53 Nº  Ficha de Registro ), Inteiro), 10
+    cLine += ALLTRIM( IIF(RA_CATFUNC=="M","M","H"))+";"   // POS 54 Codigo de Recebimento),  Char),  1
+     cSitFolha:="A"
+     DO CASE 
+      CASE RA_SITFOLH==" "
+        cSitFolha:="A"
+      CASE RA_SITFOLH=="F"
+        cSitFolha:="F"
+      CASE RA_SITFOLH=="D"
+        cSitFolha:="D"
+     ENDCASE 
+    cLine += cSitFolha+";"   // POS 55  Codigo de SituaÃ§Ã£o), Char ), 1 
+    cTpFuncionario :="N"
+    Do case 
+      case RA_CATFUNC=="A"
+        cTpFuncionario :="A" // Autonomo
+      case RA_CATFUNC=="M"
+        cTpFuncionario :="N" // Normal ou Mensalista 
+      case RA_CATFUNC=="E"
+        cTpFuncionario :="T"  // estagiario 
+      case RA_CATFUNC=="P"
+        cTpFuncionario :="D" // Diretor 
+      OTHERWISE 
+        cTpFuncionario :="N" // Normal ou Mensalista
+    Endcase 
+
+    cLine += cTpFuncionario+";"   // POS 56  Codigo do Tipo do FuncionÃ¡rio),  Char), 1 
+    // ARMOR 
+    // FILIAL 0101: 01.01.001
+    // FILIAL 0103: 03.03.001
+    cSecao :="01.01.001"
+    Do case
+      Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+        cSecao :="01.01.001"
+      Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+        cSecao :="03.03.001"
+    Endcase 
+    cLine += csecao+";"   // POS 57 Codigo da Secao), String ), 35 
+    cLine += ALLTRIM(RA_CODFUNC )+";"   // POS 58 Codigo da Funcao),  String),  10
+    cLine += "01"+";"   // POS 59 Codigo do Sindicato),  String),  10),
+    cHora:= STRZERO(INT(RA_HRSDIA),2) 
+    nMinutos := RA_HRSDIA - INT(RA_HRSDIA) 
+    cLine += "220:00"+";"   // POS 60  Jornada (Formato HHH:MM), String), 6
+    // cLine += "001"+";"   // POS 61 Codigo do Horario), String), 10
+    cLine += ALLTRIM(PADL(RA_TNOTRAB,10)) +";"   // POS 61 Codigo do Horario), String), 10
+    cLine += ALLTRIM(RA_DEPIR)+";"   // POS 62 Numero de Dependentes de IRRF), Inteiro), 2
+    cLine += RA_DEPSF+";"   // POS 63  Numero de Dependentes de Salario Fami­lia), Inteiro), 2
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"   // POS 64 Data Base),  Data), 8 
+    cLine += STRTRAN(STR(RA_SALARIO),".",",")+";"   // POS 65 Salario (Formato 999999999999),99), Real), 15
+    cLine += ALLTRIM("1" )+";"   // POS 66 Situacao de FGTS (1-Optante / 2-NÃ£o Optante), Char), 1
+    cLine += STRTRAN(DTOC(RA_OPCAO),"/","")+";"   // POS 67 Data de Opcao de FGTS), Data), 8), 67
+    cLine += PADL(ALLTRIM(RA_CTDPFGT),11)+";"   // POS 68 Numero da Conta de FGTS),  String), 11
+    cLine += ALLTRIM('0,00' )+";"   // POS 69 Saldo do FGTS no Banco (Formato 999999999999),99), Real), 15
+    cLine += ALLTRIM("")+";"   // POS 70 Data do Saldo do FGTS), Data), 8 
+    cLine += ALLTRIM(RA_PIS)+";"   // POS 71 PIS/PASEP),  String ), 11
+    cLine += ALLTRIM("" )+";"   // POS 72  Data de Cadastro do PIS),  Data), 8
+    cLine += ALLTRIM('')+";"   // POS 73 Cad. Banco do PIS),  String), 3
+    cLine += ALLTRIM(if(empty(RA_PGCTSIN),"J","N"))+";"   // POS 74 Contribuicao Sindical (J-Ja Desc /L-Liberal/N-Nao Desc.), Char),  1 
+    cLine += ALLTRIM(IIF(RA_EAPOSEN=='1',"1","0"))+";"   // POS 75 Aposentado (0-NÃ£o/1-Sim), Inteiro), 1 
+    nAnosVida := RA_NASC - DDATABASE 
+    cLine += ALLTRIM(IIF(nAnosVida>65,"1","0"))+";"   // POS 76 Tem Mais de 65 Anos (0-NÃ£o/1-Sim), Inteiro), 1
+    cLine += ALLTRIM( '0,00' )+";"  // POS 77 Ajuda de Custo (Formato 999999999999),99), Real), 15
+    cLine += STR(RA_PERCADT)+";"   // POS 78 Percentual de Adiantamento (Formato 999),99), Real), 6
+    cLine += ALLTRIM('1,00' )+";"   // POS 79 Arredondamento (Formato 99999),99), Real), 8 
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"   // POS 80 Data de AdmissÃ£o), Data ), 8
+    cLine += "O"+";"   // POS 81 Tipo de Admiss?£o), Char), 1 OBS CRIAR UMA TABELA DE PARA
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"   // POS 82 Data da Transfer?™ncia), Data), 8
+    cLine += ALLTRIM('1')+";"	//	83	Motivo da Admissão	String	2	PFUNC.MOTIVOADMISSAO
+    cLine += ALLTRIM(IIF(RA_TPCONTR=='1','0','1'))+";"	//	84	Contrato tem Prazo Determinado (0-Não/1-Sim)	Inteiro	1	PFUNC.TEMPRAZOCONTR
+    cLine += STRTRAN(DTOC(RA_DTFIMCT),"/","")+";"	//	85	Fim do Prazo do Contrato	Data	8	PFUNC.FIMPRAZOCONTR
+    cLine += STRTRAN(DTOC(RA_DEMISSA),"/","")+";"	//	86	Data de Demissão	Data	8	PFUNC.DATADEMISSAO
+    cLine += ALLTRIM('')+";"	//	87	Tipo de Demissão	Char	1	PFUNC.TIPODEMISSAO
+    cLine += ALLTRIM("1")+";"	//	88	Motivo de Demissão	String	2	PFUNC.MOTIVODEMISSAO
+    cLine += STRTRAN(DTOC(RA_DEMISSA),"/","")+";"	//	89	Data de Desligamento	Data	8	PFUNC.DTDESLIGAMENTO
+    cLine += ALLTRIM('')+";"	//	90	Data da Última Movimentação	Data	8	PFUNC.DTULTIMOMOVIM
+    cLine += ALLTRIM('')+";"	//	91	Data de Pagamento da Rescisão	Data	8	PFUNC.DTPAGTORESCISAO
+    cLine += ALLTRIM('')+";"	//	92	Código de Saque de FGTS	String	2	PFUNC.CODSAQUEFGTS
+    cLine += ALLTRIM('0')+";"	//obrig	93	Tem Aviso Prévio (0- Não / 1-Sim)	Integer	1	PFUNC.TEMAVISOPREVIO
+    cLine += ALLTRIM('')+";"	//	94	Data do Aviso Prévio	Data	8	PFUNC.DTAVISOPREVIO
+    cLine += ALLTRIM('')+";"	//	95	Número de Dias de Aviso	Inteiro	3	PFUNC.NRODIASAVISO
+    cLine += ALLTRIM('')+";"	//	96	Data de Venc. De Férias	Data	8	PFUNC.DTVENCFERIAS
+    cLine += ALLTRIM('')+";"	//	97	Início de Programação de Férias 1	Data	8	PFUNC.INICPROGFERIAS1
+    cLine += ALLTRIM('')+";"	//	98	Fim de Programação de Férias 1	Data	8	PFUNC.FIMPROGFERIAS1
+    cLine += ALLTRIM('0')+";"	//obrig	99	Quer Abono (0- Não / 1-Sim)	Inteiro	1	PFUNC.QUERABONO
+    cLine += ALLTRIM('0')+";"	//obrig	100	Quer 1ª Parcela de 13º (0- Não / 1-Sim)	Inteiro	1	PFUNC.QUER1APARC13O
+    cLine += ALLTRIM('')+";"	//	101	Nº de dias de Adiantamento de Férias	Inteiro	3	PFUNC.NRODIASADIANTFER
+    cLine += ALLTRIM('')+";"	//	102	Evento de Adiantamento de Férias	String	4	PFUNC.EVTADIANTFERIAS
+    cLine += ALLTRIM('0')+";"	//obrig	103	Férias Coletivas / Globais (0-Não/1-Sim)	Inteiro	1	PFUNC.FERIASCOLETIVAS
+    cLine += ALLTRIM('')+";"	//	104	Nº de dias de Férias (Formato 9999),99), onde 1º dígito é sinal. Se for positivo), 1º dígito é 0)	Real	7	PFUNC.NRODIASFERIAS
+    cLine += ALLTRIM('')+";"	//	105	Nº de dias de Abono (Formato 999),99)	Real	6	PFUNC.NRODIASABONO
+    cLine += ALLTRIM('')+";"	//	106	Saldo de Férias (Formato 999),99)	Real	6	PFUNC.SALDOFERIAS
+    cLine += ALLTRIM('')+";"	//	107	Saldo de Férias Anterior (Formato 999),99)	Real	6	PFUNC.SALDOFERIASANT
+    cLine += ALLTRIM('')+";"	//	108	Saldo de Férias Auxiliar (Formato 999),99)	Real	6	PFUNC.SALDOFERANTAUX
+    cLine += ALLTRIM('')+";"	//	109	Observação de Férias	String	80	PFUNC.OBSFERIAS
+    cLine += ALLTRIM('')+";"	//	110	Data de Pagamento de Férias	Data	8	PFUNC.DTPAGTOFERIAS
+    cLine += ALLTRIM('')+";"	//	111	Data de Aviso de Férias	Data	8	PFUNC.DTAVISOFERIAS
+    cLine += ALLTRIM('')+";"	//	112	Nº de Dias Licença Remunerada 1 (Formato 999),99)	Real	6	PFUNC.NDIASLICREM1
+    cLine += ALLTRIM('')+";"	//	113	Nº de Dias Licença Remunerada 2 (Formato 999),99)	Real	6	PFUNC.NDIASLICREM2
+    cLine += ALLTRIM('')+";"	//	114	Data de Início da Licença	Data	8	PFUNC.DTINICIOLICENCA
+    cLine += ALLTRIM('')+";"	//	115	Média Salário Maternidade (Formato 999999999999),99)	Real	15	PFUNC.MEDIASALMATERN
+    cLine += ALLTRIM('1')+";"	//obrig	116	Situação RAIS	Char	1	PFUNC.SITUACAORAIS
+    cLine += ALLTRIM(If(LEFT(RA_BCDEPSA,3)=='C01'.or.Empty(RA_BCDEPSA),'001',LEFT(RA_BCDEPSA,3)))+";"	//	117	Cód. Banco de Pagamento	String	3	PFUNC.CODBANCOPAGTO
+    cLine += ALLTRIM(if(empty(RA_BCDEPSA),'0001', SUBSTR(RA_BCDEPSA,4,6)))+";"	//	118	Cód. Agência Pagamento	String	6	PFUNC.CODAGENCIAPAGTO
+    // ARMOR
+    // cLine += "0001"+";"	//	118	Cód. Agência Pagamento	String	6	PFUNC.CODAGENCIAPAGTO
+    cLine += ALLTRIM(RA_CTDEPSA)+";"	//	119	Conta de Pagamento	String	15	PFUNC.CONTAPAGAMENTO
+    cLine += ALLTRIM('0')+";"	//obrig	120	Membro Sindical (0-Não/1-Sim)	Inteiro	1	PFUNC.MEMBROSINDICAL
+    cLine += ALLTRIM('')+";"	//	121	Vínculo RAIS	Char	1	PFUNC.VINCULORAIS
+    cLine += ALLTRIM('0')+";"	//obrig	122	Usa Vale Transporte (0-Não/1-Sim)	Inteiro	1	PFUNC.USAVALETRANSP
+    cLine += ALLTRIM('')+";"	//	123	Dias Úteis no Mês	Inteiro	2	PFUNC.DIASUTEISMES
+    cLine += ALLTRIM('')+";"	//	124	Dias Úteis Meio Expediente	Inteiro	2	PFUNC.DIASUTMEIOEXP
+    cLine += ALLTRIM('')+";"	//	125	Dias Úteis Próximo Mês	Inteiro	2	PFUNC.DIASUTPROXMES
+    cLine += ALLTRIM('')+";"	//	126	Dias Úteis Próximo Mês Meio Expediente	Inteiro	2	PFUNC.DIASUTPROXMEIO
+    cLine += ALLTRIM('')+";"	//	127	Dias Úteis Restantes	Inteiro	2	PFUNC.DIASUTRESTANTES
+    cLine += ALLTRIM('')+";"	//	128	Dias Úteis Restantes Meio	Inteiro	2	PFUNC.DIASUTRESTMEIO
+    cLine += ALLTRIM('0')+";"	//obrig	129	Mudou Endereço (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUENDERECO
+    cLine += ALLTRIM('0')+";"	//obrig	130	Mudou Carteira de Trabalho (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUCARTTRAB
+    cLine += ALLTRIM('')+";"	//	131	Antiga Carteira de Trabalho	String	10	PFUNC.ANTIGACARTTRAB
+    cLine += ALLTRIM('')+";"	//	132	Antiga Série - Carteira de Trabalho	String	5	PFUNC.ANTIGASERIECART
+    cLine += ALLTRIM('0')+";"	//obrig	133	Mudou Nome (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUNOME
+    cLine += ALLTRIM('')+";"	//	134	Antigo Nome	String	45	PFUNC.ANTIGONOME
+    cLine += ALLTRIM('0')+";"	//	135	Mudou PIS (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUPIS
+    cLine += ALLTRIM('')+";"	//	136	Antigo PIS	String	11	PFUNC.ANTIGOPIS
+    cLine += ALLTRIM('0')+";"	//obrig	137	Mudou Chapa (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUCHAPA
+    cLine += ALLTRIM('')+";"	//	138	Antiga Chapa	String	16	PFUNC.ANTIGACHAPA
+    cLine += ALLTRIM('0')+";"	//obrig	139	Mudou Data de Admissão (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUADMISSAO
+    cLine += ALLTRIM('')+";"	//	140	Antiga Data de Admissão	Data	8	PFUNC.ANTIGADTADM
+    cLine += ALLTRIM('')+";"	//	141	Antigo Vínculo	Char	1	PFUNC.ANTIGOVINCULO
+    cLine += ALLTRIM('')+";"	//	142	Antigo Tipo do Funcionário	Char	1	PFUNC.ANTIGOTIPOFUNC
+    cLine += ALLTRIM('')+";"	//	143	Antigo Tipo de Admissão	Char	1	PFUNC.ANTIGOTIPOADM
+    cLine += ALLTRIM('0')+";"	//obrig	144	Mudou Data de Opção (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUDTOPCAO
+    cLine += ALLTRIM('')+";"	//	145	Antiga Data de Opção	Data	8	PFUNC.ANTIGADTOPCAO
+    cLine += ALLTRIM('0')+";"	//obrig	146	Mudou Seção (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUSECAO
+    cLine += ALLTRIM('')+";"	//	147	Antiga Seção	String	35	PFUNC.ANTIGASECAO
+    cLine += ALLTRIM('0')+";"	//obrig	148	Mudou Data de Nascimento (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUDTNASCIM
+    cLine += ALLTRIM('')+";"	//	149	Antiga Data de Nascimento	Data	8	PFUNC.ANTIGADTNASCIM
+    cLine += ALLTRIM('0')+";"	//obrig	150	Falta Alterar FGTS (0-Não/1-Sim)	Inteiro	1	PFUNC.FALTAALTERFGTS
+    cLine += ALLTRIM('0')+";"	//obrig	151	Deduzir IRRF Mais 65 (0-Não/1-Sim)	Inteiro	1	PFUNC.DEDUZIRRF65
+    cLine += ALLTRIM('')+";"	//	152	PIS para FGTS	String	11	PFUNC.PISPARAFGTS
+    cLine += ALLTRIM('')+";"	//	153	Cód. Banco de FGTS	String	3	PFUNC.CODBANCOFGTS
+    cLine += ALLTRIM('')+";"	//	154	Desconta Aviso Prévio (0-Não/1-Sim)	Inteiro	1	PFUNC.DESCONTAAVISOPREVIO
+    cLine += ALLTRIM('1')+";"	//	155	Código identificador da filial	Inteiro	2	PSECAO.CODFILIAL
+    cLine += ALLTRIM('1')+";"	//	156	Índice de Início de Horário	Int	5	PFUNC.INDINICIOHOR
+    cLine += ALLTRIM('0')+";"	//obrig	157	Usa Salário Composto (0-Não/1-Sim)	Inteiro	1	PFUNC.USASALCOMPOSTO
+    cLine += ALLTRIM('0')+";"	//obrig	158	Funcionário é membro da CIPA (0-Não/1-Sim)	Inteiro	1	PFUNC.MEMBROCIPA
+    cLine += ALLTRIM('')+";"	//	159	Operação bancária	String	5	PFUNC.OPBANCARIA
+    cLine += ALLTRIM('')+";"	//	160	Nro vezes para desconto do empréstimo de férias	Inteiro	2	PFUNC.NUMVEZESDESCEMPRESTIMO
+    cLine += ALLTRIM('')+";"	//	161	Data de início para desconto do empréstimo de férias	Data	8	PFUNC.DATAINICIODESCEMPRESTIMO
+    cLine += ALLTRIM('')+";"	//	162	Grupo Salarial	String	10	PFUNC.GRUPOSALARIAL
+    cLine += ALLTRIM('1')+";"	// obrig	163	Funcionário é o atual? (0-Não/1-Sim)	Inteiro	1	PFUNC.REGATUAL
+    	//		Atenção:			
+    	//		Bitmap Este campo deve ser preenchido com 1 nos casos em que o funcionário tenha apenas um vínculo (registro) a ser importado na mesma coligada. Caso exista mais de um vínculo), o critério de preenchimento do campo deve ser o seguinte :			
+    	//		1 para o vínculo com data de admissão mais recente (seja este ativo ou já demitido)			
+    	//		0 para os demais vínculos			
+    cLine += ALLTRIM('')+";"	//	164	Previsão de disponibilidade   Atenção:   Este campo deverá ficar em branco pois o mesmo não é mais utilizado	Data	8	PFUNC.PREVDISP
+    cLine += ALLTRIM('00')+";"	//obrig	165	Código da Ocorrência	Inteiro	2	PFUNC.CODOCORRENCIA
+    cLine += ALLTRIM('')+";"	//	166	Código da Categoria	Inteiro	2	PFUNC.CODCATEGORIA
+    cLine += ALLTRIM('')+";"	//	167	Classe de contribuição para o INSS	Inteiro	8	PFUNC.CLASSECONTRIB
+    cLine += ALLTRIM('')+";"	//	168	Código da equipe do funcionário	String	4	PFUNC.CODEQUIPE
+    cLine += ALLTRIM('0')+";"	//obrig	169	Funcionário tem status de supervisor? (0-Não/1-Sim) 	Inteiro	1	PFUNC.ESUPERVISOR
+    cLine += ALLTRIM('')+";"	//	170	Integração Contábil	String	22	PFUNC.INTEGRCONTABIL
+    cLine += ALLTRIM('')+";"	//	171	Integração Gerencial	String	22	PFUNC.INTEGRGERENCIAL
+    cLine += ALLTRIM('0')+";"	// obrig	172	Usa Controle de Saldo de Verbas? (0-Não/1-Sim)	Inteiro	1	PFUNC.USACONTROLEDESALDO
+    cLine += ALLTRIM('')+";"	//	173	Código Contribuinte Individual	String	11	PFUNC.CI
+    cLine += ALLTRIM('0')+";"	// obriga	174	Mudou Código Contribuinte Individual (0-Não/1-Sim)	Inteiro	1	PFUNC.MUDOUCI
+    cLine += ALLTRIM('')+";"	//	175	Antigo Código Contribuinte Individual	Inteiro	11	PFUNC.ANTIGOCI
+    cLine += ALLTRIM('')+";"	//	176	Período de Rescisão	Inteiro	2	PFUNC.PERIODORESCISAO
+    cRacaCor := "1"// indigena 
+    Do case 
+      Case RA_RACACOR == '1''
+          cRacaCor := "0"// indigena 
+      Case RA_RACACOR == 'X' .or. RA_RACACOR == '9'  // nao informado 
+          cRacaCor := "8"// pardo  
+      OTHERWISE     
+          cRacaCor := RA_RACACOR
+    EndCase 
+    cLine += ALLTRIM(cRacaCor)+";"	//	177	Cor / Raça ( 0 Indígena - 2 Branca - 4 Preta - 6 Amarela - 8 Parda)	Inteiro	1	PPESSOA.CORRACA
+    cLine += ALLTRIM(RA_DEFIFIS)+";"	//	178	Flag Deficiente físico?	Inteiro	1	PPESSOA.DEFICIENTEFISICO
+    cLine += ALLTRIM('0')+";"	// obrig	179	FGTS mês anterior será recolhido na GRFC (0-Não/1-Sim)	Inteiro	1	PFUNC.FGTSMESANTRECOLGRFP
+    cLine += ALLTRIM('')+";"	//	180	Código do Nível da Tabela Salarial	String	10	PFUNC.CODNIVELSAL
+    cLine += ALLTRIM('')+";"	//	181	Número de Dias de Férias para a Jornada Reduzida	Inteiro	2	PFUNC.NRODIASFERIASJORNRED
+    cLine += ALLTRIM('2')+";"	// obrig	182	Tem alvará judicial p/func menor 16 anos (1-Sim/2-Não)	String	1	PFUNC.POSSUIALVARAMENOR16
+    cLine += ALLTRIM('')+";"	//	183	Situação do INSS	Inteiro	1	PFUNC.SITUACAOINSS
+    cLine += ALLTRIM('')+";"	//	184	Data de aposentadoria	Data	8	PFUNC.DTAPOSENTADORIA
+    cLine += ALLTRIM('0')+";"	// obrig	185	Quer adiantamento nas férias (0-Não/1-Sim)	Inteiro	1	PFUNC.QUERADIANTAMENTO
+    cLine += ALLTRIM('')+";"	//	186	Data próximo período aquisitivo de férias	Data	8	PFUNC.DTPROXAQUISFERIAS
+    cLine += ALLTRIM('')+";"	//	187	Coligada do fornecedor	Inteiro	5	PFUNC.CODCOLFORNEC
+    cLine += ALLTRIM('')+";"	//	188	Código do fornecedor	String	25	PFUNC.CODFORNECEDOR
+    cLine += ALLTRIM(IIF(SUBSTR(RA_PORTDEF,2,1)=='2','1','0'))+";"	//	189	Deficiente Auditivo	Inteiro	1	PPESSOA.DEFICIENTEAUDITIVO
+    cLine += ALLTRIM('')+";"	//	190	Deficiente Fala	Inteiro	1	PPESSOA.DEFICIENTEFALA
+    cLine += ALLTRIM(IIF(SUBSTR(RA_PORTDEF,4,1)=='4','1','0'))+";"	//	191	Deficiente Mental	Inteiro	1	PPESSOA.DEFICIENTEMENTAL
+    cLine += ALLTRIM(IIF(SUBSTR(RA_PORTDEF,3,1)=='3','1','0'))+";"	//	192	Deficiente Visual	Inteiro	1	PPESSOA.DEFICIENTEVISUAL
+    cCodManaus:="02603"
+    Do case 
+    case Upper(alltrim(RA_MUNICIP))=="MANAUS" .or. "Manaus" $ RA_MUNICIP .or. (cNacionalidade <> "10")
+      cLine += "02603"+";"	//	193	Código Município	String	20	PPESSOA.CODMUNICIPIO
+      cLine += "Manaus"+";"	//	194	Localidade	String	40	PPESSOA.LOCALIDADE
+    Case Empty(RA_CODMUN) // .and. !Empty(RA_MUNNASC)
+      cLine += "02603"+";"
+      cLine += "Manaus"+";"	//	194	Localidade	String	40	PPESSOA.LOCALIDADE
+    OTHERWISE
+      cLine += ALLTRIM(RA_CODMUN)+";"	//	193	Código Município	String	20	PPESSOA.CODMUNICIPIO
+      cLine += ALLTRIM(RA_MUNICIP)+";"	//	194	Localidade	String	40	PPESSOA.LOCALIDADE
+    Endcase
+    cLine += ALLTRIM('0')+";"	// obrig	195	Posição Abono (0-Não/1-Sim)	Inteiro	2	PFUNC.POSICAOABONO
+    cLine += ALLTRIM('')+";"	//	196	Nº de Dias de Férias Corridos	Inteiro	2	PFUNC.NRODIASFERIASCORRIDOS
+    cLine += ALLTRIM('')+";"	//	197	País de Origem	String	20	PPESSOA.PAISORIGEM
+    cLine += ALLTRIM('0')+";"	// obrig	198	Fumante (0-Não/1-Sim)	Inteiro	2	PPESSOA.FUMANTE
+    cLine += ALLTRIM(RA_NUMEPAS)+";"	//	199	N.Passaporte	String	15	PPESSOA.NPASSAPORTE
+    cLine += ALLTRIM(PADL(RA_TELEFON,15))+";"	//	200	Telefone 3	String	15	PPESSOA.TELEFONE3
+    cLine += STRTRAN(DTOC(RA_DEMIPAS),"/","")+";"	//	201	Data de Emissão do Passaporte	Data	8	PPESSOA.DTEMISSPASSAPORTE
+    cLine += STRTRAN(DTOC(RA_DVALPAS),"/","")+";"	//	202	Data validade do Passaporte	Data	8	PPESSOA.DTVALPASSAPORTE
+    cLine += ALLTRIM('')+";"	//	203	Tipo de Aposentadoria (1-Tempo Serv./2-Idade/3-Especial)	Inteiro	1	PFUNC.TIPOAPOSENTADORIA
+    cLine += ALLTRIM('N')+";"	// obr	204	Reposição de Vaga (N-Não/S-Sim)	String	1	PFUNC.REPOEVAGA
+    cLine += ALLTRIM('')+";"	//	205	Saldo de FGTS Real	Real	15	PFUNC.SALDOFGTSREAL
+    cLine += ALLTRIM('')+";"	//	206	BR-PDH (0-Não Aplicável/1-BR/2-PDH)	Inteiro	5	PPESSOA.BRPDH
+    cLine += ALLTRIM('')+";"	//	207	Carregou Dados do Aviso Prévio	Inteiro	2	PFUNC.CARREGOUAVISOPREVIO
+    cLine += ALLTRIM('')+";"	//	208	Situação IRRF (0-Não Calcula./1-Calcula)	Inteiro	1	PFUNC.SITUACAOIRRF
+    cLine += ALLTRIM('')+";"	//	209	Código da coligada origem	String	2	PFUNC.CODCOLIGADAORIGEM
+    cLine += ALLTRIM('')+";"	//	210	Chapa Origem	String	16	PFUNC.CHAPAORIGEM
+    cLine += ALLTRIM('')+";"	//	211	Férias finalizadas para o próximo mês	Booleano	2	PFUNC.FERIASFINALIZADASPROXMES
+    cLine += ALLTRIM('')+";"	//	212	Número do Cartão SUS	String	100	PFUNC.NUMEROCARTAOSUS
+    cLine += ALLTRIM('')+";"	//	213	Tipo de redução do aviso: dias ou jornada	Inteiro	2	PFUNC.TIPOREDUCAOAVISO
+    cLine += ALLTRIM('')+";"	//	214	Forma de redução do aviso: inicio ou fim	Inteiro	2	PFUNC.FORMAREDUCAOAVISO
+    cLine += ALLTRIM('')+";"	//	215	Indicador de Contribuição Substituída	Inteiro	2	PFUNC.INDSIMPLES
+    cLine += ALLTRIM('')+";"	//	216	Tipo de conta bancária	String	1	PFUNC.TPCONTABANCARIA
+    cLine += ALLTRIM('')+";"	//	217	Preencher com o número do processo judicial	String	20	PFUNC.NRPROCJUD
+    cLine += ALLTRIM('')+";"	//	218	Indicar se a residência pertence ao trabalhador	Inteiro	2	PFUNC.RESIDENCIAPROPRIA
+    cLine += ALLTRIM('')+";"	//	219	Indicar se foi adquirido o imóvel próprio foi adquirido com recursos do FGTS	Inteiro	2	PFUNC.RESIDENCIARECURSOSFGTS
+    cLine += ALLTRIM('')+";"	//	220	Tipo de regime previdenciário	String	1	PFUNC.TPREGIMEPREV
+    cLine += ALLTRIM('')+";"	//	221	Indicativo de Admissão	Inteiro	2	PFUNC.INDADMISSAO
+    cLine += ALLTRIM('')+";"	//	222	Tipo da Reintegração	Inteiro	2	PFUNC.TIPOREINTEGRACAO
+    cLine += ALLTRIM('')+";"	//	223	Data da Reintegração	Data	8	PFUNC.DATAREINTEGRACAO
+    cLine += ALLTRIM('')+";"	//	224	Data do Efetivo Retorno ao Trabalho	Data	8	PFUNC.DATARETORNOEFETIVO
+    cLine += ALLTRIM('')+";"	//	225	Número da Lei de Anistia	String	20	PFUNC.NROLEIANISTIA
+    cLine += ALLTRIM('')+";"	//	226	Número do Processo Judicial	String	20	PFUNC.NROPROCESSOJUDICIAL
+    cLine += ALLTRIM('')+";"	//	227	Natureza do Estágio	String	1	PFUNC.NATUREZAESTAGIO
+    cLine += ALLTRIM('')+";"	//	228	Nível do Estágio	String	1	PFUNC.CODNIVELESTAGIO
+    cLine += ALLTRIM('')+";"	//	229	Área de Atuação do Estagiário  	String	50	PFUNC.AREAATUACAOESTAGIO
+    cLine += ALLTRIM('')+";"	//	230	Nr. Apólice de Seguro	String	30	PFUNC.NUMEROAPOLICEESTAGIO
+    cLine += ALLTRIM('')+";"	//	231	Data Prevista para o Término do Estágio	Data	8	PFUNC.DTPREVTERMINOESTAGIO
+    cLine += ALLTRIM('')+";"	//	232	Código da Instituição de Ensino	String	16	PFUNC.CODINSTITUICAOENSINOESTAGIO
+    cLine += ALLTRIM('')+";"	//	233	Código do Agente de Integração	String	16	PFUNC.CODAGENTEINTEGRACAOESTAGIO
+    cLine += ALLTRIM('')+";"	//	234	CPF do Coordenador do Estágio	String	11	PFUNC.CPFCOORDENADORESTAGIO
+    cLine += ALLTRIM('')+";"	//	235	Nome do Coordenador do Estágio	String	80	PFUNC.NOMECOORDENADORESTAGIO
+    cLine += ALLTRIM('')+";"	//	236	CNPJ empressa anterior	String	20	PFUNC.CNPJEMPRESAANTERIOR
+    cLine += ALLTRIM('')+";"	//	237	Data de Admissão do Dirigente Sindical na Empresa de Origem	Data	8	PFUNC.DTADMISSAOEMPRESAORIGEM
+    cLine += ALLTRIM('')+";"	//	238	Matrícula do Trabalhador na Empresa de Origem	String	30	PFUNC.MATRICULAEMPRESAORIGEM
+    cLine += ALLTRIM('')+";"	//	239	Código Correspondente à Categoria de Origem do Dirigente Sindical	Inteiro	2	PFUNC.CODCATEGORIAEMPRESAORIGEM
+    cLine += ALLTRIM('')+";"	//	240	Motivo de Contratação do Trabalhador Temporário	Inteiro	2	PFUNC.MOTIVOTRABTEMP
+    cLine += ALLTRIM('')+";"	//	241	Chapa do ex-funcionario que o trabalhador temporário esta substituindo	String	16	PFUNC.CHAPASUBSTRABTEMP
+    cLine += ALLTRIM('')+";"	//	242	Motivo cancelamento do Aviso Prévio	Inteiro	2	PFUNC.MOTIVOCANCELAMENTOAVISO
+    cLine += ALLTRIM('')+";"	//	243	  Data do cancelamento do aviso prévio visando	Data	8	PFUNC.DTCANCELAMENTOAVISO
+    cLine += ALLTRIM('')+";"	//	244	Número que identifica o registro do Atestado de Óbito	String	30	PFUNC.NROATESTADOOBITO
+    cLine += ALLTRIM('')+";"	//	245	Número que identifica o processo trabalhista	String	20	PFUNC.NROPROCESSOTRAB
+    cLine += ALLTRIM('')+";"	//	246	Observação sobre o desligamento do trabalhador	String	255	PFUNC.OBSERVACAORESCISAO
+    cLine += ALLTRIM('')+";"	//	247	  Observação do aviso prévio	String	255	PFUNC.OBSERVACAOAVISOPREVIO
+    cLine += ALLTRIM('')+";"	//	248	Descrição do Salário Variável	String	90	PFUNC.DESCRICAOSALVARIAVEL
+    cLine += ALLTRIM('')+";"	//	249	Observação cancelamento Aviso Prévio	String	255	PFUNC.OBSCANCELAMENTOAVISO
+    cLine += ALLTRIM('')+";"	//	250	Indicativo sucessão de vínculo	Inteiro	2	PFUNC.SUCESSAOVINCULO
+    cLine += ALLTRIM('')+";"	//	251	CNPJ da Empresa de Origem do Dirigente Sindical	String	14	PFUNC.CNPJEMPRESAORIGEM
+    cLine += ALLTRIM('')+";"	//	252	Matrícula anterior	String	30	PFUNC.MATRICULAANTERIOR
+    cLine += ALLTRIM('')+";"	//	253	Data início do vínculo	Data	8	PFUNC.DTINICIOVINCULO
+    cLine += ALLTRIM('')+";"	//	254	Observação da sucessão	String	255	PFUNC.OBSERVACAOSUCESSAO
+    cLine += ALLTRIM('')+";"	//	255	Transferência por sucessão	Inteiro	2	PFUNC.TRANSFERENCIASUCESSAO
+    cLine += ALLTRIM('')+";"	//	256	Data do aviso trabalhado quando aviso misto	Data	8	PFUNC.APMISTO_DTAVTRAB
+    cLine += ALLTRIM('')+";"	//	257	Indicativo de aviso misto	Inteiro	2	PFUNC.APMISTO
+    cLine += ALLTRIM('')+";"	//	258	Considera periodo de férias com dias úteis	Booleano	2	PFUNC.FERIASDIASUTEIS
+    cLine += ALLTRIM('')+";"	//	259	Saldo de férias para o periodo com dias úteis	Real	9	PFUNC.FERIASSALDODIASUTEIS
+    cLine += ALLTRIM('')+";"	//	260	ID dados do residente	Inteiro	2	PFUNC.IDDADOSRESID
+    cLine += ALLTRIM('')+";"	//	261	Estava Recebendo Seguro Desemp. Na Admissão (0-Não/1-Sim)	Inteiro	2	PFUNC.RECEBSEGDESEMP
+    cLine += ALLTRIM('')+";"	//	262	Número sequêncial para transferências	Inteiro	2	PFUNC.SEQUENCIATRANSF
+    cLine += ALLTRIM('')+";"	//	263	Banco de Pagamento	String	3	PFUNC.CODBANCOPAGTO2
+    cLine += ALLTRIM('')+";"	//	264	Agência Banco Pagamento	String	6	PFUNC.CODAGENCIAPAGTO2
+    cLine += ALLTRIM('')+";"	//	265	Conta Pagamento	String	15	PFUNC.CONTAPAGAMENTO2
+    cLine += ALLTRIM('')+";"	//	266	Operação bancária	String	5	PFUNC.OPBANCARIA2
+    cLine += ALLTRIM('')+";"	//	267	Tipo de conta bancária	String	1	PFUNC.TPCONTABANCARIA2
+    cLine += ALLTRIM('')+";"	//	268	Indicativo de 2Pagamento em Juizo	Inteiro	2	PFUNC.INDPAGTOJUIZO
+    cLine += ALLTRIM('')+";"	//	269	DIRF - Informar remuneração no Cód. da Receita 3533	Inteiro	2	PFUNC.CODIGORECEITA3533
+    cLine += ALLTRIM('')+";"	//	270	Data do desligamento feito antes da reintegração	Data	8	PFUNC.DTDESLIGAMENTOREINT
+    cLine += ALLTRIM(RA_CODUNIC)+";"	//	271	Matrícula do trabalhador no eSocial	String	30	PFUNC.MATRICULAESOCIAL
+    cLine += ALLTRIM('')+";"	//	272	Motivo da transferência	Inteiro	2	PFUNC.MOTIVOTRANSFERENCIA
+    cLine += ALLTRIM(PADL(RA_CC,25))+";"	//	273	Código do Centro de Custo	String	25	PFUNC.CODCCUSTO
+    cLine += ALLTRIM('')+";"	//	274	Identificador do Item Contábil	Inteiro	4	PFUNC.IDITEMCONTABIL
+    cLine += ALLTRIM('')+";"	//	275	Identificador da Classe de Valor	Inteiro	4	PFUNC.IDCLASSEVALOR
+    cLine += ALLTRIM('')+";"	//	276	Anos de Contribuição para INSS PPE	Inteiro	4	PFUNC.ANOSCONTRIBINSS
+    cLine += ALLTRIM('')+";"	//	277	Órgão Origem / Destino	Inteiro	10	PFUNC.CODORGORIDES
+    cLine += ALLTRIM('')+";"	//	278	Cod Tp Regime Jurídico	String	2	PFUNC.CODREGJURI
+    cLine += ALLTRIM('')+";"	//	279	Tipo de Regime da Jornada	Inteiro	2	PFUNC.TIPOREGIMEJORNADA
+    cLine += ALLTRIM('0')+";"	// obg	280	Desconta Aviso Prévio (0-Não/1-Sim)	Inteiro	1	PFUNC.DESCONTAAVISOPREVIO
+    cLine += ALLTRIM('')+";"	//	281	Identificador da Pessoa	Inteiro	4	PFUNC.CODPESSOA
+    cLine += ALLTRIM('')+";"	//	282	Flag Rescisão Calculada	Booleano	2	PFUNC.RESCISAOCALCULADA
+    cLine += ALLTRIM('')+";"	//	283	Previsão de disponibilidade   Atenção:   Este campo deverá ficar em branco pois o mesmo não é mais utilizado	Data	8	PFUNC.PREVDISP
+    cLine += ALLTRIM('')+";"	//	284	Código do Grupo de Quiosque	String	15	PFUNC.CODGRPQUIOSQUE
+    cLine += ALLTRIM('')+";"	//	285	Data de Vencimento do Documento de Identidade	Data	8	PPESSOA.DTVENCIDENTPT
+    cLine += ALLTRIM('')+";"	//	286	Tipo da Rua	Inteiro	2	PPESSOA.CODTIPORUA
+    cLine += ALLTRIM('')+";"	//	287	Tipo do Bairro	Inteiro	2	PPESSOA.CODTIPOBAIRRO
+    cLine += ALLTRIM('')+";"	//	288	Código do Municipio Naturalidade	String	20	PPESSOA.CODNATURALIDADE
+    cLine += ALLTRIM('')+";"	//	289	Número do registro único de cadastro	String	20	PPESSOA.NUMERORIC
+    cLine += ALLTRIM('')+";"	//	290	Orgão emissor do registro único de cadastro	String	20	PPESSOA.ORGEMISSORRIC
+    cLine += ALLTRIM('')+";"	//	291	Data de emissão do registro único de cadastro	Data	8	  PPESSOA.DTEMISSAORIC
+    cLine += ALLTRIM('')+";"	//	292	Data de emissão do registro único de cadastro	Data	8	PPESSOA.DTEMISSAOCNH
+    cLine += ALLTRIM('')+";"	//	293	Orgão emissor da carteira habilitação	String	20	PPESSOA.ORGEMISSORCNH
+    cLine += ALLTRIM('')+";"	//	294	Data de naturalização do estrangeiro no brasil	Data	8	PPESSOA.DATANATURALIZACAO
+    cLine += ALLTRIM('')+";"	//	295	  Orgão emissor do registro nacional de estrangeiros	String	20	PPESSOA.ORGEMISSORRNE
+    cLine += ALLTRIM('')+";"	//	296	Data de emissão do registro nacional de estrangeiros	Data	8	PPESSOA.DTEMISSAORNE
+    cLine += ALLTRIM('')+";"	//	297	Nome Social	String	120	PPESSOA.NOMESOCIAL
+    cLine += ALLTRIM('')+";"	//	298	Código do País de Endereço	Inteiro	2	PPESSOA.IDPAIS
+    cLine += ALLTRIM('')+";"	//	299	Deficiente intelectual	Inteiro	2	PPESSOA.DEFICIENTEINTELECTUAL
+    cLine += ALLTRIM('')+";"	//	300	Observação deficiência	String	255	PPESSOA.DEFICIENTEOBSERVACAO
+    cLine += ALLTRIM('')+";"	//	301	Data do Óbito	Data	8	PPESSOA.DATAOBITO
+    cLine += ALLTRIM('')+";"	//	302	Matrícula da Certidão de Óbito	String	50	PPESSOA.MATRICULAOBITO
+    cLine += ALLTRIM('')+";"	//	303	Falecido	Inteiro	4	PPESSOA.FALECIDO
+    cLine += ALLTRIM('')+";"	//	304	Portaria de Naturalização	String	50	PPESSOA.PORTARIANATURALIZACAO
+    cLine += ALLTRIM('')+";"	//	305	Classificação do Trabalhador Estrangeiro	String	20	PPESSOA.CODCLASSIFTRABESTRANG
+    cLine += ALLTRIM('')+";"	//	306	UF de Eemissão da Carteira de Motorista	String	2	PPESSOA.UFCNH
+    cLine += ALLTRIM('')+";"	//	307	Data da Primeira Carteira de Motorista	Data	8	PPESSOA.DATAPRIMEIRACNH
+    cLine += ALLTRIM('')+";"	//	308	Ano do Primeiro Emprego PPE	Inteiro	4	PPESSOA.ANO1EMPREGO
+    cLine += ALLTRIM(RA_EMAIL)+";"	//	309	  E-Mail pessoal	String	60	PPESSOA.EMAILPESSOAL
+    cLine += ALLTRIM('')+";"	//	310	Identificador da Imagem	Inteiro	4	PPESSOA.IDIMAGEM
+    cLine += ALLTRIM('')+";"	//	311	Investimento em Treinamentos Anteriores	Real	9	PPESSOA.INVESTTREINANT
+    cLine += ALLTRIM('')+";"	//	312	Fax	String	15	PPESSOA.FAX
+    cLine += ALLTRIM('')+";"	//	313	Código da Profissão	Inteiro	4	PPESSOA.CODPROFISSAO
+    cLine += ALLTRIM('')+";"	//	314	Código da Ocupação	String	3	PPESSOA.CODOCUPACAO
+    cLine += ALLTRIM('')+";"	//	315	Observações da pessoa	Memo	16	PPESSOA.OBSPESSOA
+    cLine += ALLTRIM('')+";"	//	316	Circunscrição do Serviço Militar	String	10	PPESSOA.CSM
+    cLine += ALLTRIM('')+";"	//	317	Data de Emissão do Certificado Militar	Data	8	PPESSOA.DTEXPCML
+    cLine += ALLTRIM('')+";"	//	318	Órgão Expedidor do Certificado Militar	String	10	PPESSOA.EXPED
+    cLine += ALLTRIM('')+";"	//	319	Região Militar	String	10	PPESSOA.RM
+    cLine += ALLTRIM('')+";"	//	320	Situação Militar	String	10	PPESSOA.SITMILITAR
+    cLine += ALLTRIM('')+";"	//	321	Data de emissão do Título de Eleitoral	Data	8	PPESSOA.DTTITELEITOR
+    cLine += ALLTRIM('')+";"	//	322	Uf do Título Eleitoral	String	2	PPESSOA.ESTELEIT
+    cLine += ALLTRIM('')+";"	//	323	Tipo Sanguíneo	String	10	PPESSOA.TIPOSANG
+    cLine += ALLTRIM('')+";"	//	324	Fiador no Totvs Incorporação	Booleano	2	PPESSOA.FIADOR_SGI
+    cLine += ALLTRIM('')+";"	//	325	Fiador no Totvs Incorporação	Booleano	2	PPESSOA.CONJUGE_SGI
+    cLine += ALLTRIM('')+";"	//	326	Deficiente Mobilidade Reduzida	Inteiro  	1	  PPESSOA.DEFICIENTEMOBREDUZIDA    
+    cLine += ALLTRIM('')+";"	//	327	Contrato trabalho em regime tempo Parcial	  Inteiro	2	PFUNC.TEMPOPARCIAL
+    cLine += ALLTRIM('')+";"	//	328	Preenche Cota de PCD	  Inteiro	2	PFUNC.COTAPCD
+    cLine += ALLTRIM('')+";"	//	329	Coligada Tomador Temporário	  Inteiro	2	PFUNC.COLTOMADORTEMP
+    cLine += ALLTRIM('')+";"	//	330	Código tomador temporário	  String	25	PFUNC.CODIGOTOMADORTEMP
+    cLine += ALLTRIM('')+";"	//	331	Justificativa contrato temporário	  String	999	PFUNC.JUSTIFICATIVATRABTEMP
+    cLine += ALLTRIM('')+";"	//	332	Tipo inclusão contrato	  Inteiro	2	PFUNC.TPINCLUSAOCONTRATO
+    cLine += ALLTRIM('')+";"	//	333	CNPJ empresa sucessora	  String	20	PFUNC.CNPJEMPRESASUCESSORA
+    cLine += ALLTRIM('')+";"	//	334	Justificativa prorrogação contrato temporário	  String	999	PFUNC.JUSTIFICATIVAPRORROGTEMP
+    cLine += ALLTRIM('')+";"	//	335	Data demissão Prevista	  Data	8	PFUNC.DTDEMISSAOPREVISTA
+    cLine += ALLTRIM('')+";"	//	336	Data Aviso prévio Trabalhado	  Data	8	  PFUNC.DTAVISOPREVIOTRAB  
+    cLine += ALLTRIM('')+";"	//	337	Contém cláusula Asseguratória	  Inteiro	  1	PFUNC.TEMCLAUASSEG
+    cLine += ALLTRIM('')+";"	//	338	CPF do Trabalhador Substituído	String	11	PFUNC.CPFSUBSTRABTEMP
+    cLine += ALLTRIM('')+";"	//	339	Tipo Inscrição Trabalhador Substituído	Inteiro	1	PFUNC.TPINSCRICAOTEMP
+    cLine += ALLTRIM('')+";"	//	340	Número Inscrição Trabalhador Substituído	 String	20	PFUNC.NROINSCRITEMP
+    cLine += ALLTRIM('')+";"	//	341	Tipo de Aviso Prévio	Inteiro	1	PFUNC.TIPOAVISOPREVIO
+    cCatEFD :='101'
+    Do Case 
+      case RA_CATEFD == ''
+        cCatEFD :='101'
+      case Empty(RA_CATEFD)
+        cCatEFD :='101'
+    EndCase
+    cLine += cCatEFD+";"	//	342	Código Categoria eSocial	Inteiro	5	PFUNC.CODCATEGORIAESOCIAL
+    cLine += ALLTRIM('')+";"	//	343	Código do Tipo de Contrato	Inteiro	1	  PFUNC.CODTIPOCONTRATO  
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	344	Data da Mudança de Salário	Data	8	PFHSTSAL.DTMUDANCA
+    cLine += ALLTRIM('1')+";"	//	345	Motivo da Mudança de Salário	String	2	PFHSTSAL.MOTIVO
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	346	Data da Mudança de Função	Data	8	PFHSTFCO.DTMUDANCA
+    cLine += ALLTRIM('1')+";"	//	347	Motivo da Mudança de Função	String	2	PFHSTFCO.MOTIVO
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	348	Data da Mudança de Situação	Data	8	PFHSTSIT.DATAMUDANCA
+    cLine += ALLTRIM('1')+";"	//	349	Motivo da Mudança de Situação	String	10	PFHSTSIT.MOTIVO
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	350	Data da Mudança de Seção	Data	8	PFHSTSEC.DTMUDANCA
+    cLine += ALLTRIM('1')+";"	//	351	Motivo da Mudança de Seção	String	2	PFHSTSEC.MOTIVO
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	352	Data da Mudança de Horário	Data	8	PFHSTHOR.DTMUDANCA
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	353	Data da Mudança das Informações SEFIP	Data	8	PHSTOCORRENCIA.DTMUDANCA
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	354	Data da Mudança da Contribuição Sindical	Data	8	PFHSTCSD.DTCONTRIBUICAO
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	355	Data da Mudança dos Dados Bancários	Data	8	PFHSTCPGTO.DTMUDANCA
+    cLine += STRTRAN(DTOC(RA_ADMISSA),"/","")+";"	//	356	Data da Mudança dos Dados Bancários Alternativo	Data	8	PFHSTCPGTO.DTMUDANCA
+    cLine += ALLTRIM('')+";"	//	357	Indicativo de função de confiança/cargo em comissão	Inteiro	2	PFUNC.ESOCIALFUNCAOCONF
+    cLine += ALLTRIM('')+";"	//	358	Código da função de confiança/cargo em comissão	String	10	PFUNC.CODFUNCAOCONF
+    cLine += ALLTRIM('1')+";"	//	359	Natureza da Atividade eSocial	Inteiro	1	PFUNC.ESOCIALNATATIVIDADE
+    cLine += ALLTRIM('')+";"	//	360	Data Mudança do Indicador de Contribuição Substituída	Data	8	PFUNC.DTMUDANCAINDSIMPLES
+    cLine += ALLTRIM('')+";"	//	361	Demissão por Desempenho Insuficiente ou Inadaptação	Inteiro	1	PFUNC.DEMISSAODESEMPISULFINAD
+    cLine += ALLTRIM('')+";"	//	362	Prefixo Período para o eSocial	String	  30	PFUNC.PREFIXOPERIODOESOCIAL
+    cLine += ALLTRIM('')+";"	//	363	Data final da quarentena	Data	8	PFUNC.DTFIMQUARENTENA
+    cLine += ALLTRIM('')+";"	//	364	Tipo de contrato do prazo determinado	Inteiro	1	PFUNC.TIPOCONTPRAZODETERMINADO
+    cLine += ALLTRIM('')+";"	//	365	Motivo da contratação por prazo determinado	String	255	PFUNC.MOTIVOCONTPRAZODETERMINADO
+    cLine += ALLTRIM('')+";"	//	366	Tipo do Contrato com prazo	String	1	PFUNC.TIPOCONTRATOPRAZO
+    cLine += ALLTRIM('')+";"	//	367	Tipo Adesão do B.E.M	String	1	PFUNC.TIPOADESAOBEM
+    cLine += ALLTRIM('')+";"	//	368	Data da Mudança do B.E.M	Data	8	PFUNC.DTMUDANCABEM
+    cLine += ALLTRIM('')+";"	//	369	Data do Acordo do B.E.M	Data	8	PFUNC.DTACORDOBEM
+    cLine += ALLTRIM('')+";"	//	370	Percentual do B.E.M	Real	6	PFUNC.PERCENTUALREDUCAOBEM
+    cLine += ALLTRIM('')+";"	//	371	Duração do Acordo do B.E.M	Inteiro	2	PFUNC.DURACAOBEM
+    cLine += ALLTRIM('')+";"	//	372	Valor Reduzido do B.E.M	Real	6	PFUNC.VALORREDUZIDOBEM
+    cLine += ALLTRIM('')+";"	//	373	Data de Cancelamento do BEM	Data	8	PFUNC.DTCANCELAMENTOBEM
+    cLine += ALLTRIM('')+";"	//	374	Data de Antecipação do BEM	Data	8	PFUNC.DTANTECIPACAOBEM
+    cLine += ALLTRIM('')+";"	//	375	Dias de prorrogação do BEM	Inteiro	2	PFUNC.DIASPRORROGACAOBEM
+    cLine += ALLTRIM('')+";"	//	376	Não calcula recibo de férias	Inteiro	2	PFUNC.NAOCALCULARECIBOFERIAS
+    cLine += ALLTRIM('')+";"	//	377	Data Prorrogação BEM	Data	8	PFUNC.DTPRORROGACAOBEM
+    cLine += ALLTRIM('')+";"	//	378	CNPJ Empresa contratante Aprendiz	String	20	PFUNC.CNPJEMPRESACONTRATANTEAPRENDIZ
+    cLine += ALLTRIM('')+";"	//	379	NRO Processo Trabalhista 	string	20	PFUNC.NROPROCESSOTRABADMISSAO
+    cLine += ALLTRIM('')+";"	//	380	Tipo de regime previdenciario 	inteiro	1	PFUNC.TIPOREGPREVDIRIGENTESINDICAL
+    cLine += ALLTRIM('')+";"	//	381	Tipo de Registro trabalhista	inteiro	1	PFUNC.TIPOREGTRABDIRIGENTESINDICAL
+    cLine += ALLTRIM('')+";"	//	382	Prazo de residência indeterminado	string	1	PPESSOA.TIPOPRAZORESIDENCIA
+    cLine += ALLTRIM('')+";"	//	383	Categoria de origen do trabalhador 	inteiro	5	PFUNC.CODCATEGORIATRABCEDIDO
+    cLine += ALLTRIM('')+";"	//	384	CNPJ da empresa cedente 	string	18	PFUNC.CNPJCEDENTE
+    cLine += ALLTRIM('')+";"	//	385	Data admissão do trabalhador no empregador de origem (Cedente)	data	8	PFUNC.DATAADMISSAOCEDENTE
+    cLine += ALLTRIM('')+";"	//	386	Ônus da cessão/requisição	string	1	PFUNC.INFOONUSCESSAO
+    cLine += ALLTRIM('')+";"	//	387	Matricula do trabalhador no mepregador de origem(cedente)	string	30	PFUNC.MATRICULACEDENTE
+    cLine += ALLTRIM('')+";"	//	388	Tipo de regime previdenciário  do trabalhador cedido	string	1	PFUNC.TIPOREGIMEPREVIDENCIARIOCEDIDO
+    cLine += ALLTRIM('')+";"	//	389	Tipo de regime trabalhista  do trabalhador cedido 	string	1	PFUNC.TIPOREGIMETRABALHISTACEDIDO
+    cLine += ALLTRIM('')+";"	//	390	Beneficiário	Inteiro	1	PFUNC.BENEFICIARIO
+    cLine += ALLTRIM('')+";"	//	391	Informa se o beneficiário é pessoa com doença incapacitante	Inteiro	1	PFUNC.BENEFICIARIOINCAPAZ
+    cLine += ALLTRIM('')+";"	//	392	CNPJ do responsável pela matrícula do servidor/militar	string	20	PFUNC.CNPJRESPONSAVELMATRICULA
+    cLine += ALLTRIM('')+";"	//	393	Data do reconhecimento da incapacidade	Data	8	PFUNC.DATAINCAPACIDADE
+    cLine += ALLTRIM('')+";"	//	394	Data de inicio do cadastro do beneficiário	Data	8	PFUNC.DATAINICIOBENEFICIARIO
+    cLine += ALLTRIM('')+";"	//	395	Matrícula do beneficiário	string	30	PFUNC.MATRICULABENEFICIARIO
+    cLine += ALLTRIM('')+";"	//	396	Função/Emprego/Cargo Acumulável	inteiro	1	PFUNC.FUNCAOACUMULAVEL
+    cLine += ALLTRIM('')+";"	//	397	Tipo de provimento estatutário	Inteiro	1	PFUNC.TIPOPROVIMENTO
+    cLine += ALLTRIM('')+";"	//	398	Data em exercício estatutário	Data	8	PFUNC.DTEXERCICIO
+    cLine += ALLTRIM('')+";"	//	399	Tipo de plano de segregação da massa do estatutário	Inteiro	1	PFUNC.TIPOPLANOSEGREGACAOMASSA
+    cLine += ALLTRIM('')+";"	//	400	Sujeito ao teto do RGPS estatutário	Inteiro	1	PFUNC.TETORGPS
+    cLine += ALLTRIM('')+";"	//	401	Recebe abono permanência estatutário	Inteiro	1	PFUNC.ABONOPERMANENCIA
+    cLine += ALLTRIM('')+";"	//	402	Data de início do abono permanência estatutário	Data	8	PFUNC.DTINICIOABONO
+    cLine += ALLTRIM('')+";"	//	403	Indicar se o servidor optou pela remuneração do cargo efetivo	Inteiro	1	PFUNC.INDICATIVOREMUNERACAOCARGO
+    cLine += ALLTRIM('')+";"	//	404	Tipo de regime trabalhista para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGTRABMANDATOELETIVO
+    cLine += ALLTRIM('')+";"	//	405	Tipo de regime previdenciário para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGPREVMANDATOELETIVO
+    cLine += ALLTRIM('')+";"	//	406	Data mudança do estatutário	Data	8	PFHSTESTATUTARIO.DTMU
+    cLine += ALLTRIM('')+";"	//	407	Tipo de regime previdenciário para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGPREVMANDATOELETIVO
+    cLine += ALLTRIM('')+";"	//	408	Tipo de regime previdenciário para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGPREVMANDATOELETIVO
+    cLine += ALLTRIM('')+";"	//	409	Tipo de regime previdenciário para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGPREVMANDATOELETIVO
+    cLine += ALLTRIM('')+";"	//	410	Tipo de regime previdenciário para servidor público com mandato eletivo	Inteiro	1	PFUNC.TIPOREGPREVMANDATOELETIVO
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say AlALLTRIM(Str(nCt),4))+" de "+AlALLTRIM(Str(nTot),4)
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+Flg), DescriÃ§Ã£o ), Tipo), Tam. ),Pos. ), Campo
+F ), Chapa ), String ), 16 ), 1 ), PFUNC.CHAPA
+F ), Nome ), String ), 120 ), 2 ), PPESSOA.NOME
+Apelido ), String ), 40 ), 3   ), PPESSOA.APELIDO
+F ), Data de Nascimento ), Data ),8 ), 4 ), PESSOA.DTNASCIMENTO
+Estado Civil), Char ), 1 ), 5       ), PPESSOA.ESTADOCIVIL
+Sexo (M/F),  Char ),  1 ), 6       ), PPESSOA.SEXO
+Nacionalidade), String ), 3 ), 7    ), PPESSOA.NACIONALIDADE
+Grau de InstruÃ§Ã£o ), String ), 8 ), PPESSOA.GRAUINSTRUCAO
+FHQ), Rua ), String ), 30 ), 9       ), PESSOA.RUA
+FHQ), NÃºmero ), String ), 8 ), 10    ), PPESSOA.NUMERO
+FHQ), Complemento), String), 16), 11 ), PPESSOA.COMPLEMENTO
+FHQ), Bairro), String), 20), 12 ),     PPESSOA.BAIRRO
+FHQ), Estado (Unidade da FederaÃ§Ã£o), String), 2), 13), PPESSOA.ESTADO
+FHQ), Cidade), String), 32), 14 ), PPESSOA.CIDADE
+FHQ), CEP), String), 15     ),PPESSOA.CEP
+FHQ), Nome do PaÃ­s), String), 16), 16 ),  PPESSOA.PAIS
+Registro Profissional), String), 15 ), 17),PPESSOA.REGPROFISSIONAL
+CPF), String), 12), 18), PPESSOA.CPF
+FQ ), Telefone 1), String), 15 ), 19 ), PPESSOA.TELEFONE1
+FQ ), Telefone 2), String), 15 ), 20 ), PPESSOA.TELEFONE2
+NÂº da Carteira de Identidade), String), 15), 21), PPESSOA.CARTIDENTIDADE
+UF - Carteira de Identidade),  String),  2), 22), PPESSOA.UFCARTIDENT
+Ã“rgÃ£o Emissor - Carteira de Identidade), String), 15), 23), PPESSOA.ORGEMISSORIDENT
+Data de EmissÃ£o - Carteira de Identidade), Data), 8 ), 24), PPESSOA.DTEMISSAOIDENT
+Data de Vencimento- Carteira de Identidade), Data), 8 ), 25), PPESSOA.DTVENCIDENT
+TÃ­tulo de Eleitor),  String), 14), 26), PPESSOA.TITULOELEITOR
+Zona de VotaÃ§Ã£o), String),  6), 27),  PPESSOA.ZONATITELEITO
+SeÃ§Ã£o de VotacÃ£o), String),  6), 28), PPESSOA.SECAOTITELEITOR
+F ), NÂº da Carteira de Trabalho), String), 10), 29), PPESSOA.CARTEIRATRAB
+F ), SÃ©rie - Carteira de Trabalho), String), 5),PPESSOA.SERIECARTTRAB
+UF - Carteira de Trabalho), String), 2 ),31), PPESSOA.UFCARTTRAB
+Data da emissÃ£o - Carteira de Trabalho), Data), 8), 32), PPESSOA.DTCARTTRAB
+Data de Vencimento - Carteira de Trabalho), Data), 8), 33), PPESSOA.DTVENCCARTTRAB
+NIT - Tipo de Carteira de Trabalho (0-NÃ£o/1-Sim), Inteiro), 1 ), 34), PPESSOA.NIT
+NÂº da Carteira de Motorista), String), 15 ), 35), PPESSOA.CARTMOTORISTA
+Tipo da Carteira de HabilitaÃ§Ã£o), String), 5 ), 36 ), PPESSOA.TIPOCARTHABILIT
+Data de Venc. Da HabilitaÃ§Ã£o), Data), 8 ), 37), PPESSOA.DTVENCHABILIT
+Nº do Certificado Reservista), String), 40 ), 38), PPESSOA.CERTIFRESERV
+Categoria Militar), String), 10), 39),  PPESSOA.CATEGMILITAR
+Naturalidade), String), 32 ),40 ),    PPESSOA.NATURALIDADE
+Estado Natal), String), 2 ), 41 ),    PPESSOA.ESTADONATAL
+Data da Chegada ao Brasil), Data ), 8 ), 42     PPESSOA.DATACHEGADA
+Carta Modelo 19 ), String ), 15 ), 43 ),   PPESSOA.CARTMODELO19
+CÃ´njuge Brasil (0-NÃ£o/1-Sim), Inteiro ), 44 ), PPESSOA.CONJUGEBRASIL
+Naturalizado (0-NÃ£o/1-Sim), Inteiro ), 1 ), 45 ),PPESSOA.NATURALIZADO
+Filhos no Brasil (0-NÃ£o/1-Sim), Inteiro ), 1 ), 46 ), PPESSOA.FILHOSBRASIL
+Nº de Filhos no Brasil), Inteiro ), 2 ), 47 ), PPESSOA.NROFILHOSBRASIL
+Nº do Registro Geral), String), 15 ), 48 ), PPESSOA.NROREGGERAL
+Nº do Decreto), String ), 15 ), 49 ), PPESSOA.NRODECRETO
+Tipo de Visto), String), 10), 50 ),  PPESSOA.TIPOVISTO
+E-Mail), String), 60 ), 51 ), PPESSOA.EMAIL
+Senha),  String), 8 ), 52 
+Nº da Ficha de Registro ), Inteiro), 10), 53),  PFUNC.NROFICHAREG
+Codigo de Recebimento),  Char),  1 ), 54 ),PFUNC.CODRECEBIMENTO
+Codigo de SituaÃ§Ã£o), Char ), 1 ), 55 ), PFUNC.CODSITUACAO
+Codigo do Tipo do FuncionÃ¡rio),  Char), 1 ), 56 ),  PFUNC.CODTIPO
+Codigo da Secao), String ), 35 ), 57 ), PFUNC.CODSECAO
+Codigo da Funcao),  String),  10), 58 ), PFUNC.CODFUNCAO
+Codigo do Sindicato),  String),  10), 59), PFUNC.CODSINDICATO
+Jornada (Formato HHH:MM), String), 6), 60 ),PFUNC.JORNADAMENSAL
+Codigo do Horario), String), 10), 61 ), PFUNC.CODHORARIO
+Numero de Dependentes de IRRF), Inteiro), 2 ), 62), PFUNC.NRODEPIRRF
+Numero de Dependentes de Salario Fami­lia), Inteiro), 2), 63), PFUNC.NRODEPSALFAM
+Data Base),  Data), 8 ), 64   ),PFUNC.DTBASE
+Salario (Formato 999999999999),99), Real), 15), 65), PFUNC.SALARIO
+Situacao de FGTS (1-Optante / 2-NÃ£o Optante), Char), 66  ),   PFUNC.SITUACAOFGTS
+Data de Opcao de FGTS), Data), 8), 67 ),     PFUNC.DTOPCAOFGTS
+Numero da Conta de FGTS),  String), 11), 68 ), PFUNC.CONTAFGTS
+Saldo do FGTS no Banco (Formato 999999999999),99), Real), 15), 69), PFUNC.SALDOFGTS
+Data do Saldo do FGTS), Data), 8 ), 70 ), PFUNC.DTSALDOFGTS
+PIS/PASEP),  String ), 11),  71  ), PFUNC.PISPASEP
+Data de Cadastro do PIS),  Data), 8 ), 72 ), PFUNC.DTCADASTROPIS
+Cad. Banco do PIS),  String), 73 ), PFUNC.CODBANCOPIS
+Contribuicao Sindical (J-Ja Desc /L-Liberal/N-Nao Desc.), Char),  1), 74), PFUNC.CONTRIBSINDICAL
+Aposentado (0-NÃ£o/1-Sim), Inteiro), 1 ), 75), PFUNC.APOSENTADO
+Tem Mais de 65 Anos (0-NÃ£o/1-Sim), Inteiro), 76), PFUNC.TEMMAIS65ANOS
+Ajuda de Custo (Formato 999999999999),99), Real), 15), 77 ), PFUNC.AJUDACUSTO
+Percentual de Adiantamento (Formato 999),99), Real), 6), 78), PFUNC.PERCENTADIANT
+Arredondamento (Formato 99999),99), Real), 8), 79), PFUNC.ARREDONDAMENTO
+Data de AdmissÃ£o), Data ), 8), 80), PFUNC.DATAADMISSAO
+Tipo de Admiss?£o), Char), 81), PFUNC.TIPOADMISSAO
+Data da Transfer?™ncia), Data), 8), 82), PFUNC.DTTRANSFERENCIA
+Motivo da Admiss?£o), String), 2), 83), PFUNC.MOTIVOADMISSAO
+Contrato tem Prazo Determinado (0-N?£o/1-Sim), Inteiro), 84), PFUNC.TEMPRAZOCONTR
+Fim do Prazo do Contrato), Data), 8), 85), PFUNC.FIMPRAZOCONTR
+Data de Demiss?£o), Data), 8), 86), PFUNC.DATADEMISSAO
+Tipo de Demiss?£o), Char), 87), PFUNC.TIPODEMISSAO
+Motivo de Demiss?£o), String), 2), 88), PFUNC.MOTIVODEMISSAO
+Data de Desligamento), Data), 8), 89), PFUNC.DTDESLIGAMENTO
+Data da ?öltima Movimenta?ß?£o), Data), 8), 90), PFUNC.DTULTIMOMOVIM
+Data de Pagamento da Rescis?£o), Data), 8), 91), PFUNC.DTPAGTORESCISAO
+C??digo de Saque de FGTS), String), 2), 92), PFUNC.CODSAQUEFGTS
+Tem Aviso Pr?©vio (0- N?£o / 1-Sim), Integer), 93), PFUNC.TEMAVISOPREVIO
+Data do Aviso Pr?©vio), Data), 8), 94), PFUNC.DTAVISOPREVIO
+N??mero de Dias de Aviso), Inteiro), 95), PFUNC.NRODIASAVISO
+Data de Venc. De F?©rias), Data), 8), 96), PFUNC.DTVENCFERIAS
+In??cio de Programa?ß?£o de F?©rias 1), Data), 8), 97), PFUNC.INICPROGFERIAS1
+Fim de Programa?ß?£o de F?©rias 1), Data), 8), 98), PFUNC.FIMPROGFERIAS1
+Quer Abono (0- N?£o / 1-Sim), Inteiro), 99), PFUNC.QUERABONO
+Quer 1¬™ Parcela de 13¬? (0- N?£o / 1-Sim), Inteiro), 100), PFUNC.QUER1APARC13O
+N¬? de dias de Adiantamento de F?©rias), Inteiro), 101), PFUNC.NRODIASADIANTFER
+Evento de Adiantamento de F?©rias), String), 4), 102), PFUNC.EVTADIANTFERIAS
+F?©rias Coletivas / Globais (0-N?£o/1-Sim), Inteiro), 103), PFUNC.FERIASCOLETIVAS
+N¬? de dias de F?©rias (Formato 9999),99), onde 1¬? d??gito ?© sinal. Se for positivo), 1¬? d??gito ?© 0), Real), 7), 104), PFUNC.NRODIASFERIAS
+N¬? de dias de Abono (Formato 999),99), Real), 6), 105), PFUNC.NRODIASABONO
+Saldo de F?©rias (Formato 999),99), Real), 6), 106), PFUNC.SALDOFERIAS
+Saldo de F?©rias Anterior (Formato 999),99), Real), 6), 107), PFUNC.SALDOFERIASANT
+Saldo de F?©rias Auxiliar (Formato 999),99), Real), 6), 108), PFUNC.SALDOFERANTAUX
+Observa?ß?£o de F?©rias), String), 80), 109), PFUNC.OBSFERIAS
+Data de Pagamento de F?©rias), Data), 8), 110), PFUNC.DTPAGTOFERIAS
+Data de Aviso de F?©rias), Data), 8), 111), PFUNC.DTAVISOFERIAS
+N¬? de Dias Licen?ßa Remunerada 1 (Formato 999),99), Real), 6), 112), PFUNC.NDIASLICREM1
+N¬? de Dias Licen?ßa Remunerada 2 (Formato 999),99), Real), 6), 113), PFUNC.NDIASLICREM2
+Data de In??cio da Licen?ßa), Data), 8), 114), PFUNC.DTINICIOLICENCA
+M?©dia Sal?°rio Maternidade (Formato 999999999999),99), Real), 15), 115), PFUNC.MEDIASALMATERN
+Situa?ß?£o RAIS), Char), 116), PFUNC.SITUACAORAIS
+C??d. Banco de Pagamento), String), 117), PFUNC.CODBANCOPAGTO
+C??d. Ag?™ncia Pagamento), String), 6), 118), PFUNC.CODAGENCIAPAGTO
+Conta de Pagamento), String), 15), 119), PFUNC.CONTAPAGAMENTO
+Membro Sindical (0-N?£o/1-Sim), Inteiro), 120), PFUNC.MEMBROSINDICAL
+V??nculo RAIS), Char), 121), PFUNC.VINCULORAIS
+Usa Vale Transporte (0-N?£o/1-Sim), Inteiro), 122), PFUNC.USAVALETRANSP
+Dias ?öteis no M?™s), Inteiro), 2), 123), PFUNC.DIASUTEISMES
+Dias ?öteis Meio Expediente), Inteiro), 2), 124), PFUNC.DIASUTMEIOEXP
+Dias ?öteis Pr??ximo M?™s), Inteiro), 2), 125), PFUNC.DIASUTPROXMES
+Dias ?öteis Pr??ximo M?™s Meio Expediente), Inteiro), 2), 126), PFUNC.DIASUTPROXMEIO
+Dias ?öteis Restantes), Inteiro), 2), 127), PFUNC.DIASUTRESTANTES
+Dias ?öteis Restantes Meio), Inteiro), 2), 128), PFUNC.DIASUTRESTMEIO
+Mudou Endere?ßo (0-N?£o/1-Sim), Inteiro), 129), PFUNC.MUDOUENDERECO
+Mudou Carteira de Trabalho (0-N?£o/1-Sim), Inteiro), 130), PFUNC.MUDOUCARTTRAB
+Antiga Carteira de Trabalho), String), 10), 131), PFUNC.ANTIGACARTTRAB
+Antiga S?©rie - Carteira de Trabalho), String), 5), 132), PFUNC.ANTIGASERIECART
+Mudou Nome (0-N?£o/1-Sim), Inteiro), 133), PFUNC.MUDOUNOME
+Antigo Nome), String), 45), 134), PFUNC.ANTIGONOME
+Mudou PIS (0-N?£o/1-Sim), Inteiro), 135), PFUNC.MUDOUPIS
+Antigo PIS), String), 11), 136), PFUNC.ANTIGOPIS
+Mudou Chapa (0-N?£o/1-Sim), Inteiro), 137), PFUNC.MUDOUCHAPA
+Antiga Chapa), String), 16), 138), PFUNC.ANTIGACHAPA
+Mudou Data de Admiss?£o (0-N?£o/1-Sim), Inteiro), 139), PFUNC.MUDOUADMISSAO
+Antiga Data de Admiss?£o), Data), 8), 140), PFUNC.ANTIGADTADM
+Antigo V??nculo), Char), 141), PFUNC.ANTIGOVINCULO
+Antigo Tipo do Funcion?°rio), Char), 142), PFUNC.ANTIGOTIPOFUNC
+Antigo Tipo de Admiss?£o), Char), 143), PFUNC.ANTIGOTIPOADM
+Mudou Data de Op?ß?£o (0-N?£o/1-Sim), Inteiro), 144), PFUNC.MUDOUDTOPCAO
+Antiga Data de Op?ß?£o), Data), 8), 145), PFUNC.ANTIGADTOPCAO
+Mudou Se?ß?£o (0-N?£o/1-Sim), Inteiro), 146), PFUNC.MUDOUSECAO
+Antiga Se?ß?£o), String), 35), 147), PFUNC.ANTIGASECAO
+Mudou Data de Nascimento (0-N?£o/1-Sim), Inteiro), 148), PFUNC.MUDOUDTNASCIM
+Antiga Data de Nascimento), Data), 8), 149), PFUNC.ANTIGADTNASCIM
+Falta Alterar FGTS (0-N?£o/1-Sim), Inteiro), 150), PFUNC.FALTAALTERFGTS
+Deduzir IRRF Mais 65 (0-N?£o/1-Sim), Inteiro), 151), PFUNC.DEDUZIRRF65
+PIS para FGTS), String), 11), 152), PFUNC.PISPARAFGTS
+C??d. Banco de FGTS), String), 153), PFUNC.CODBANCOFGTS
+Desconta Aviso Pr?©vio (0-N?£o/1-Sim), Inteiro), 154), PFUNC.DESCONTAAVISOPREVIO
+C??digo identificador da filial), Inteiro), 2), 155), PSECAO.CODFILIAL
+?ùndice de In??cio de Hor?°rio), Int), 5), 156), PFUNC.INDINICIOHOR
+Usa Sal?°rio Composto (0-N?£o/1-Sim), Inteiro), 157), PFUNC.USASALCOMPOSTO
+Funcion?°rio ?© membro da CIPA (0-N?£o/1-Sim), Inteiro), 158), PFUNC.MEMBROCIPA
+Opera?ß?£o banc?°ria), String), 5), 159), PFUNC.OPBANCARIA
+Nro vezes para desconto do empr?©stimo de f?©rias), Inteiro), 2), 160), PFUNC.NUMVEZESDESCEMPRESTIMO
+Data de in??cio para desconto do empr?©stimo de f?©rias), Data), 8), 161), PFUNC.DATAINICIODESCEMPRESTIMO
+Grupo Salarial), String), 10), 162), PFUNC.GRUPOSALARIAL
+Funcion?°rio ?© o atual? (0-N?£o/1-Sim), Inteiro), 163), PFUNC.REGATUAL
+
+Aten?ß?£o:
+
+
+
+Bitmap
+
+Este campo deve ser preenchido com 1 nos casos em que o funcion?°rio tenha apenas um v??nculo (registro) a ser importado na mesma coligada. Caso exista mais de um v??nculo), o crit?©rio de preenchimento do campo deve ser o seguinte :
+
+
+
+1 para o v??nculo com data de admiss?£o mais recente (seja este ativo ou j?° demitido)
+
+
+
+0 para os demais v??nculos
+
+
+
+Previs?£o de disponibilidade
+ 
+Aten?ß?£o:
+ 
+Este campo dever?° ficar em branco pois o mesmo n?£o ?© mais utilizado
+
+Data
+
+8
+
+164
+
+PFUNC.PREVDISP
+
+
+
+C??digo da Ocorr?™ncia), Inteiro), 2), 165), PFUNC.CODOCORRENCIA
+C??digo da Categoria), Inteiro), 2), 166), PFUNC.CODCATEGORIA
+Classe de contribui?ß?£o para o INSS), Inteiro), 8), 167), PFUNC.CLASSECONTRIB
+C??digo da equipe do funcion?°rio), String), 4), 168), PFUNC.CODEQUIPE
+Funcion?°rio tem status de supervisor? (0-N?£o/1-Sim), Inteiro), 169), PFUNC.ESUPERVISOR
+Integra?ß?£o Cont?°bil), String), 22), 170), PFUNC.INTEGRCONTABIL
+Integra?ß?£o Gerencial), String), 22), 171), PFUNC.INTEGRGERENCIAL
+Usa Controle de Saldo de Verbas? (0-N?£o/1-Sim), Inteiro), 172), PFUNC.USACONTROLEDESALDO
+C??digo Contribuinte Individual), String), 11), 173), PFUNC.CI
+Mudou C??digo Contribuinte Individual (0-N?£o/1-Sim), Inteiro), 1 174), PFUNC.MUDOUCI
+Antigo C??digo Contribuinte Individual), Inteiro), 11), 175), PFUNC.ANTIGOCI
+Per??odo de Rescis?£o), Inteiro), 2), 176), PFUNC.PERIODORESCISAO
+Cor / Ra?ßa ( 0 Ind??gena - 2 Branca - 4 Preta - 6 Amarela - 8 Parda), Inteiro), 177), PPESSOA.CORRACA
+Flag Deficiente f??sico?), Inteiro), 178), PPESSOA.DEFICIENTEFISICO
+FGTS m?™s anterior ser?° recolhido na GRFC (0-N?£o/1-Sim), Inteiro), 179), PFUNC.FGTSMESANTRECOLGRFP
+C??digo do N??vel da Tabela Salarial), String), 10), 180), PFUNC.CODNIVELSAL
+N??mero de Dias de F?©rias para a Jornada Reduzida), Inteiro), 2), 181), PFUNC.NRODIASFERIASJORNRED
+Tem alvar?° judicial p/func menor 16 anos (1-Sim/2-N?£o), String), 182), PFUNC.POSSUIALVARAMENOR16
+Situa?ß?£o do INSS), Inteiro), 183), PFUNC.SITUACAOINSS
+Data de aposentadoria), Data), 8), 184), PFUNC.DTAPOSENTADORIA
+Quer adiantamento nas f?©rias (0-N?£o/1-Sim), Inteiro), 185), PFUNC.QUERADIANTAMENTO
+Data pr??ximo per??odo aquisitivo de f?©rias), Data), 8), 186), PFUNC.DTPROXAQUISFERIAS
+Coligada do fornecedor), Inteiro), 5), 187), PFUNC.CODCOLFORNEC
+C??digo do fornecedor), String), 25), 188), PFUNC.CODFORNECEDOR
+Deficiente Auditivo), Inteiro), 189), PPESSOA.DEFICIENTEAUDITIVO
+Deficiente Fala), Inteiro), 190), PPESSOA.DEFICIENTEFALA
+Deficiente Mental), Inteiro), 191), PPESSOA.DEFICIENTEMENTAL
+Deficiente Visual), Inteiro), 192), PPESSOA.DEFICIENTEVISUAL
+C??digo Munic??pio), String), 20), 193), PPESSOA.CODMUNICIPIO
+Localidade), String), 40), 194), PPESSOA.LOCALIDADE
+Posi?ß?£o Abono (0-N?£o/1-Sim), Inteiro), 2), 195), PFUNC.POSICAOABONO
+N¬? de Dias de F?©rias Corridos), Inteiro), 2), 196), PFUNC.NRODIASFERIASCORRIDOS
+Pa??s de Origem), String), 20), 197), PPESSOA.PAISORIGEM
+Fumante (0-N?£o/1-Sim), Inteiro), 2), 198), PPESSOA.FUMANTE
+N.Passaporte), String), 15), 199), PPESSOA.NPASSAPORTE
+Telefone 3), String), 15), 200), PPESSOA.TELEFONE3
+Data de Emiss?£o do Passaporte), Data), 8), 201), PPESSOA.DTEMISSPASSAPORTE
+Data validade do Passaporte), Data), 8), 202), PPESSOA.DTVALPASSAPORTE
+Tipo de Aposentadoria (1-Tempo Serv./2-Idade/3-Especial), Inteiro), 203), PFUNC.TIPOAPOSENTADORIA
+Reposi?ß?£o de Vaga (N-N?£o/S-Sim), String), 204), PFUNC.REPOEVAGA
+Saldo de FGTS Real), Real), 15), 205), PFUNC.SALDOFGTSREAL
+BR-PDH (0-N?£o Aplic?°vel/1-BR/2-PDH), Inteiro), 5), 206), PPESSOA.BRPDH
+Carregou Dados do Aviso Pr?©vio), Inteiro), 2), 207), PFUNC.CARREGOUAVISOPREVIO
+Situa?ß?£o IRRF (0-N?£o Calcula./1-Calcula), Inteiro), 208), PFUNC.SITUACAOIRRF
+C??digo da coligada origem), String), 2), 209), PFUNC.CODCOLIGADAORIGEM
+Chapa Origem), String), 16), 210), PFUNC.CHAPAORIGEM
+F?©rias finalizadas para o pr??ximo m?™s), Booleano), 2), 211), PFUNC.FERIASFINALIZADASPROXMES
+N??mero do Cart?£o SUS), String), 100), 212), PFUNC.NUMEROCARTAOSUS
+Tipo de redu?ß?£o do aviso: dias ou jornada), Inteiro), 2), 213), PFUNC.TIPOREDUCAOAVISO
+Forma de redu?ß?£o do aviso: inicio ou fim), Inteiro), 214), PFUNC.FORMAREDUCAOAVISO
+Indicador de Contribui?ß?£o Substitu??da), Inteiro), 2), 215), PFUNC.INDSIMPLES
+Tipo de conta banc?°ria), String), 216), PFUNC.TPCONTABANCARIA
+Preencher com o n??mero do processo judicial), String), 20), 217), PFUNC.NRPROCJUD
+Indicar se a resid?™ncia pertence ao trabalhador), Inteiro), 2), 218), PFUNC.RESIDENCIAPROPRIA
+Indicar se foi adquirido o im??vel pr??prio foi adquirido com recursos do FGTS), Inteiro), 2), 219), PFUNC.RESIDENCIARECURSOSFGTS
+Tipo de regime previdenci?°rio), String), 220), PFUNC.TPREGIMEPREV
+Indicativo de Admiss?£o), Inteiro), 2), 221), PFUNC.INDADMISSAO
+Tipo da Reintegra?ß?£o), Inteiro), 2), 222), PFUNC.TIPOREINTEGRACAO
+Data da Reintegra?ß?£o), Data), 8), 223), PFUNC.DATAREINTEGRACAO
+Data do Efetivo Retorno ao Trabalho), Data), 8), 224), PFUNC.DATARETORNOEFETIVO
+N??mero da Lei de Anistia), String), 20), 225), PFUNC.NROLEIANISTIA
+N??mero do Processo Judicial), String), 20), 226), PFUNC.NROPROCESSOJUDICIAL
+Natureza do Est?°gio), String), 227), PFUNC.NATUREZAESTAGIO
+N??vel do Est?°gio), String), 228), PFUNC.CODNIVELESTAGIO
+?ùrea de Atua?ß?£o do Estagi?°rio), String), 50), 229), PFUNC.AREAATUACAOESTAGIO
+Nr. Ap??lice de Seguro), String), 230), PFUNC.NUMEROAPOLICEESTAGIO
+Data Prevista para o T?©rmino do Est?°gio), Data), 8), 231), PFUNC.DTPREVTERMINOESTAGIO
+C??digo da Institui?ß?£o de Ensino), String), 16), 232), PFUNC.CODINSTITUICAOENSINOESTAGIO
+C??digo do Agente de Integra?ß?£o), String), 16), 233), PFUNC.CODAGENTEINTEGRACAOESTAGIO
+CPF do Coordenador do Est?°gio), String), 11), 234), PFUNC.CPFCOORDENADORESTAGIO
+Nome do Coordenador do Est?°gio), String), 80), 235), PFUNC.NOMECOORDENADORESTAGIO
+CNPJ empressa anterior), String), 20), 236), PFUNC.CNPJEMPRESAANTERIOR
+Data de Admiss?£o do Dirigente Sindical na Empresa de Origem), Data), 8), 237), PFUNC.DTADMISSAOEMPRESAORIGEM
+Matr??cula do Trabalhador na Empresa de Origem), String), 238), PFUNC.MATRICULAEMPRESAORIGEM
+C??digo Correspondente ?† Categoria de Origem do Dirigente Sindical), Inteiro), 2), 239), PFUNC.CODCATEGORIAEMPRESAORIGEM
+Motivo de Contrata?ß?£o do Trabalhador Tempor?°rio), Inteiro), 2), 240), PFUNC.MOTIVOTRABTEMP
+Chapa do ex-funcionario que o trabalhador tempor?°rio esta substituindo), String), 16), 241), PFUNC.CHAPASUBSTRABTEMP
+Motivo cancelamento do Aviso Pr?©vio), Inteiro), 2), 242), PFUNC.MOTIVOCANCELAMENTOAVISO
+Data do cancelamento do aviso pr?©vio visando), Data), 8), 243), PFUNC.DTCANCELAMENTOAVISO
+N??mero que identifica o registro do Atestado de ?ìbito), String), 244), PFUNC.NROATESTADOOBITO
+N??mero que identifica o processo trabalhista), String), 20), 245), PFUNC.NROPROCESSOTRAB
+Observa?ß?£o sobre o desligamento do trabalhador), String), 255), 246), PFUNC.OBSERVACAORESCISAO
+Observa?ß?£o do aviso pr?©vio), String), 255), 247), PFUNC.OBSERVACAOAVISOPREVIO
+Descri?ß?£o do Sal?°rio Vari?°vel), String), 90), 248), PFUNC.DESCRICAOSALVARIAVEL
+Observa?ß?£o cancelamento Aviso Pr?©vio), String), 255), 249), PFUNC.OBSCANCELAMENTOAVISO
+Indicativo sucess?£o de v??nculo), Inteiro), 2), 250), PFUNC.SUCESSAOVINCULO
+CNPJ da Empresa de Origem do Dirigente Sindical), String), 14), 251), PFUNC.CNPJEMPRESAORIGEM
+Matr??cula anterior), String), 252), PFUNC.MATRICULAANTERIOR), 
+Data in??cio do v??nculo), Data), 8), 253), PFUNC.DTINICIOVINCULO
+Observa?ß?£o da sucess?£o), String), 255), 254), PFUNC.OBSERVACAOSUCESSAO
+Transfer?™ncia por sucess?£o), Inteiro), 2), 255), PFUNC.TRANSFERENCIASUCESSAO
+Data do aviso trabalhado quando aviso misto), Data), 8), 256), PFUNC.APMISTO_DTAVTRAB
+Indicativo de aviso misto), Inteiro), 2), 257), PFUNC.APMISTO
+Considera periodo de f?©rias com dias ??teis), Booleano), 2), 258), PFUNC.FERIASDIASUTEIS
+Saldo de f?©rias para o periodo com dias ??teis), Real), 259), PFUNC.FERIASSALDODIASUTEIS
+ID dados do residente), Inteiro), 2), 260), PFUNC.IDDADOSRESID
+Estava Recebendo Seguro Desemp. Na Admiss?£o (0-N?£o/1-Sim), Inteiro), 2), 261), PFUNC.RECEBSEGDESEMP
+N??mero sequ?™ncial para transfer?™ncias), Inteiro), 2), 262), PFUNC.SEQUENCIATRANSF
+Banco de Pagamento), String), 263), PFUNC.CODBANCOPAGTO2
+Ag?™ncia Banco Pagamento), String), 6), 264), PFUNC.CODAGENCIAPAGTO2
+Conta Pagamento), String), 15), 265), PFUNC.CONTAPAGAMENTO2
+Opera?ß?£o banc?°ria), String), 5), 266), PFUNC.OPBANCARIA2
+Tipo de conta banc?°ria), String), 267), PFUNC.TPCONTABANCARIA2
+Indicativo de 2Pagamento em Juizo), Inteiro), 2), 268), PFUNC.INDPAGTOJUIZO
+DIRF - Informar remunera?ß?£o no C??d. da Receita 3533), Inteiro), 2), 269), PFUNC.CODIGORECEITA3533
+Data do desligamento feito antes da reintegra?ß?£o), Data), 8), 270), PFUNC.DTDESLIGAMENTOREINT
+Matr??cula do trabalhador no eSocial), String), 271), PFUNC.MATRICULAESOCIAL
+Motivo da transfer?™ncia), Inteiro), 2), 272), PFUNC.MOTIVOTRANSFERENCIA
+C??digo do Centro de Custo), String), 25), 273), PFUNC.CODCCUSTO
+Identificador do Item Cont?°bil), Inteiro), 4), 274), PFUNC.IDITEMCONTABIL
+Identificador da Classe de Valor), Inteiro), 4), 275), PFUNC.IDCLASSEVALOR
+Anos de Contribui?ß?£o para INSS PPE), Inteiro), 4), 276), PFUNC.ANOSCONTRIBINSS
+?ìrg?£o Origem / Destino), Inteiro), 10), 277), PFUNC.CODORGORIDES
+Cod Tp Regime Jur??dico), String), 2), 278), PFUNC.CODREGJURI), 
+Tipo de Regime da Jornada), Inteiro), 2), 279), PFUNC.TIPOREGIMEJORNADA
+Desconta Aviso Pr?©vio (0-N?£o/1-Sim), Inteiro), 280), PFUNC.DESCONTAAVISOPREVIO
+Identificador da Pessoa), Inteiro), 4), 281), PFUNC.CODPESSOA
+Flag Rescis?£o Calculada), Booleano), 2), 282), PFUNC.RESCISAOCALCULADA
+
+
+
+Previs?£o de disponibilidade
+ 
+Aten?ß?£o:
+ 
+Este campo dever?° ficar em branco pois o mesmo n?£o ?© mais utilizado
+
+Data), 8), 283), PFUNC.PREVDISP
+C??digo do Grupo de Quiosque), String), 15), 284), PFUNC.CODGRPQUIOSQUE
+Data de Vencimento do Documento de Identidade), Data), 8), 285), PPESSOA.DTVENCIDENTPT
+Tipo da Rua), Inteiro), 2), 286), PPESSOA.CODTIPORUA
+Tipo do Bairro), Inteiro), 2), 287), PPESSOA.CODTIPOBAIRRO
+C??digo do Municipio Naturalidade), String), 20), 288), PPESSOA.CODNATURALIDADE
+N??mero do registro ??nico de cadastro), String), 20), 289), PPESSOA.NUMERORIC
+Org?£o emissor do registro ??nico de cadastro), String), 20), 290), PPESSOA.ORGEMISSORRIC
+Data de emiss?£o do registro ??nico de cadastro), Data), 8), 291), PPESSOA.DTEMISSAORIC
+Data de emiss?£o do registro ??nico de cadastro), Data), 8), 292), PPESSOA.DTEMISSAOCNH
+Org?£o emissor da carteira habilita?ß?£o), String), 20), 293), PPESSOA.ORGEMISSORCNH
+Data de naturaliza?ß?£o do estrangeiro no brasil), Data), 8), 294), PPESSOA.DATANATURALIZACAO
+Org?£o emissor do registro nacional de estrangeiros), String), 20), 295), PPESSOA.ORGEMISSORRNE
+Data de emiss?£o do registro nacional de estrangeiros), Data), 8), 296), PPESSOA.DTEMISSAORNE
+Nome Social), String), 120. 297), PPESSOA.NOMESOCIAL), 
+C??digo do Pa??s de Endere?ßo), Inteiro), 2), 298), PPESSOA.IDPAIS
+Deficiente intelectual), Inteiro), 2), 299), PPESSOA.DEFICIENTEINTELECTUAL
+Observa?ß?£o defici?™ncia), String), 255), 300  
+PPESSOA.DEFICIENTEOBSERVACAO. Data do ?ìbito), Data), 8), 301), PPESSOA.DATAOBITO
+Matr??cula da Certid?£o de ?ìbito), String), 50), 302), PPESSOA.MATRICULAOBITO
+Falecido), Inteiro), 4), 303), PPESSOA.FALECIDO),
+Portaria de Naturaliza?ß?£o), String), 50), 304), PPESSOA.PORTARIANATURALIZACAO
+Classifica?ß?£o do Trabalhador Estrangeiro), String), 20), 305), PPESSOA.CODCLASSIFTRABESTRANG
+UF de Eemiss?£o da Carteira de Motorista), String), 2), 306), PPESSOA.UFCNH
+Data da Primeira Carteira de Motorista), Data), 8), 307), PPESSOA.DATAPRIMEIRACNH
+Ano do Primeiro Emprego PPE), Inteiro), 4), 308), PPESSOA.ANO1EMPREGO
+E-Mail pessoal), String), 60), 309), PPESSOA.EMAILPESSOAL
+Identificador da Imagem), Inteiro), 4), 310), PPESSOA.IDIMAGEM
+Investimento em Treinamentos Anteriores), Real), 311), PPESSOA.INVESTTREINANT
+Fax), String), 15), 312), PPESSOA.FAX
+C??digo da Profiss?£o), Inteiro), 4), 313), PPESSOA.CODPROFISSAO
+C??digo da Ocupa?ß?£o), String), 314), PPESSOA.CODOCUPACAO
+Observa?ß?µes da pessoa), Memo), 16), 315), PPESSOA.OBSPESSOA
+Circunscri?ß?£o do Servi?ßo Militar), String), 10), 316), PPESSOA.CSM
+Data de Emiss?£o do Certificado Militar), Data), 8), 317), PPESSOA.DTEXPCML
+?ìrg?£o Expedidor do Certificado Militar), String), 10), 318), PPESSOA.EXPED
+Regi?£o Militar), String), 10), 319), PPESSOA.RM
+Situa?ß?£o Militar), String), 10), 320), PPESSOA.SITMILITAR
+Data de emiss?£o do T??tulo de Eleitoral), Data), 8), 321), PPESSOA.DTTITELEITOR
+Uf do T??tulo Eleitoral), String), 2), 322), PPESSOA.ESTELEIT
+Tipo Sangu??neo), String), 10), 323), PPESSOA.TIPOSANG
+Fiador no Totvs Incorpora?ß?£o), Booleano), 2), 324), PPESSOA.FIADOR_SGI
+Fiador no Totvs Incorpora?ß?£o), Booleano), 2), 325), PPESSOA.CONJUGE_SGI
+Deficiente Mobilidade Reduzida), Inteiro), 326), PPESSOA.DEFICIENTEMOBREDUZIDA
+Contrato trabalho em regime tempo Parcial), Inteiro), 2), 327), PFUNC.TEMPOPARCIAL
+Preenche Cota de PCD), Inteiro), 2), 328), PFUNC.COTAPCD
+Coligada Tomador Tempor?°rio), Inteiro), 2), 329), PFUNC.COLTOMADORTEMP
+C??digo tomador tempor?°rio), String), 25), 330), PFUNC.CODIGOTOMADORTEMP
+Justificativa contrato tempor?°rio), String), 999), 331), PFUNC.JUSTIFICATIVATRABTEMP
+Tipo inclus?£o contrato), Inteiro), 2), 332), PFUNC.TPINCLUSAOCONTRATO
+CNPJ empresa sucessora), String), 20), 333), PFUNC.CNPJEMPRESASUCESSORA
+Justificativa prorroga?ß?£o contrato tempor?°rio), String), 999), 334), PFUNC.JUSTIFICATIVAPRORROGTEMP
+Data demiss?£o Prevista), Data), 8), 335), PFUNC.DTDEMISSAOPREVISTA
+Data Aviso pr?©vio Trabalhado), Data), 8), 336), PFUNC.DTAVISOPREVIOTRAB
+ Cont?©m cl?°usula Assegurat??ria), Inteiro), 337), PFUNC.TEMCLAUASSEG
+CPF do Trabalhador Substitu??do), String), 11), 338), PFUNC.CPFSUBSTRABTEMP
+Tipo Inscri?ß?£o Trabalhador Substitu??do), Inteiro), 339), PFUNC.TPINSCRICAOTEMP
+N??mero Inscri?ß?£o Trabalhador Substitu??do), String), 20), 340), PFUNC.NROINSCRITEMP
+Tipo de Aviso Pr?©vio), Inteiro), 341), PFUNC.TIPOAVISOPREVIO 
+C??digo Categoria eSocial), Inteiro), 5), 342), PFUNC.CODCATEGORIAESOCIAL
+C??digo do Tipo de Contrato), Inteiro), 343), PFUNC.CODTIPOCONTRATO
+ Data da Mudan?ßa de Sal?°rio), Data), 8), 344), PFHSTSAL.DTMUDANCA
+Motivo da Mudan?ßa de Sal?°rio), String), 2), 345), PFHSTSAL.MOTIVO
+Data da Mudan?ßa de Fun?ß?£o), Data), 8), 346), PFHSTFCO.DTMUDANCA
+Motivo da Mudan?ßa de Fun?ß?£o), String), 2), 347), PFHSTFCO.MOTIVO
+Data da Mudan?ßa de Situa?ß?£o), Data), 8), 348), PFHSTSIT.DATAMUDANCA
+Motivo da Mudan?ßa de Situa?ß?£o), String), 10), 349), PFHSTSIT.MOTIVO
+Data da Mudan?ßa de Se?ß?£o), Data), 8), 350), PFHSTSEC.DTMUDANCA
+Motivo da Mudan?ßa de Se?ß?£o), String), 2), 351), PFHSTSEC.MOTIVO
+Data da Mudan?ßa de Hor?°rio), Data), 8), 352), PFHSTHOR.DTMUDANCA
+Data da Mudan?ßa das Informa?ß?µes SEFIP), Data), 8), 353), PHSTOCORRENCIA.DTMUDANCA
+Data da Mudan?ßa da Contribui?ß?£o Sindical), Data), 8), 354), PFHSTCSD.DTCONTRIBUICAO
+Data da Mudan?ßa dos Dados Banc?°rios), Data), 8), 355), PFHSTCPGTO.DTMUDANCA
+Data da Mudan?ßa dos Dados Banc?°rios Alternativo), Data), 8), 356), PFHSTCPGTO.DTMUDANCA
+Indicativo de fun?ß?£o de confian?ßa/cargo em comiss?£o), Inteiro), 2), 357), PFUNC.ESOCIALFUNCAOCONF
+C??digo da fun?ß?£o de confian?ßa/cargo em comiss?£o), String), 10), 358), PFUNC.CODFUNCAOCONF
+Natureza da Atividade eSocial), Inteiro), 359), PFUNC.ESOCIALNATATIVIDADE
+Data Mudan?ßa do Indicador de Contribui?ß?£o Substitu??da), Data), 8), 360), PFUNC.DTMUDANCAINDSIMPLES
+Demiss?£o por Desempenho Insuficiente ou Inadapta?ß?£o), Inteiro), 361), PFUNC.DEMISSAODESEMPISULFINAD
+Prefixo Per??odo para o eSocial), String), 362), PFUNC.PREFIXOPERIODOESOCIAL
+Data final da quarentena), Data), 8), 363), PFUNC.DTFIMQUARENTENA
+Tipo de contrato do prazo determinado), Inteiro), 364), PFUNC.TIPOCONTPRAZODETERMINADO
+Motivo da contrata?ß?£o por prazo determinado), String), 255), 365), PFUNC.MOTIVOCONTPRAZODETERMINADO
+Tipo do Contrato com prazo), String), 366), PFUNC.TIPOCONTRATOPRAZO
+Tipo Ades?£o do B.E.M), String), 367), PFUNC.TIPOADESAOBEM
+Data da Mudan?ßa do B.E.M), Data), 8), 368), PFUNC.DTMUDANCABEM
+Data do Acordo do B.E.M), Data), 8), 369), PFUNC.DTACORDOBEM
+Percentual do B.E.M), Real), 6), 370), PFUNC.PERCENTUALREDUCAOBEM
+Dura?ß?£o do Acordo do B.E.M),	Inteiro), 2), 371), PFUNC.DURACAOBEM
+Valor Reduzido do B.E.M), Real), 6), 372), PFUNC.VALORREDUZIDOBEM
+Data de Cancelamento do BEM), Data), 8), 373), PFUNC.DTCANCELAMENTOBEM
+Data de Antecipa?ß?£o do BEM),	Data),	8), 374),	PFUNC.DTANTECIPACAOBEM
+Dias de prorroga?ß?£o do BEM),	Inteiro), 2), 75),	PFUNC.DIASPRORROGACAOBEM
+N?£o calcula recibo de f?©rias), Inteiro), 2), 376), PFUNC.NAOCALCULARECIBOFERIAS
+Data Prorroga?ß?£o BEM), Data), 8), 377), PFUNC.DTPRORROGACAOBEM
+CNPJ Empresa contratante Aprendiz), String), 20), 378), PFUNC.CNPJEMPRESACONTRATANTEAPRENDIZ
+NRO Processo Trabalhista), string), 20), 379), PFUNC.NROPROCESSOTRABADMISSAO
+Tipo de regime previdenciario), inteiro), 380), PFUNC.TIPOREGPREVDIRIGENTESINDICAL
+Tipo de Registro trabalhista), inteiro), 381), PFUNC.TIPOREGTRABDIRIGENTESINDICAL
+Prazo de resid?™ncia indeterminado), string), 382),	PPESSOA.TIPOPRAZORESIDENCIA
+Categoria de origen do trabalhador), inteiro), 5), 383), PFUNC.CODCATEGORIATRABCEDIDO
+CNPJ da empresa cedente), string), 18), 384), PFUNC.CNPJCEDENTE
+Data admiss?£o do trabalhador no empregador de origem (Cedente), data), 8), 385), PFUNC.DATAADMISSAOCEDENTE
+?înus da cess?£o/requisi?ß?£o), string), 386), PFUNC.INFOONUSCESSAO
+Matricula do trabalhador no mepregador de origem(cedente), string), 387),	PFUNC.MATRICULACEDENTE
+Tipo de regime previdenci?°rio  do trabalhador cedido), string),	388), PFUNC.TIPOREGIMEPREVIDENCIARIOCEDIDO
+Tipo de regime trabalhista  do trabalhador cedido), string), 389), PFUNC.TIPOREGIMETRABALHISTACEDIDO
+Benefici?°rio), Inteiro), 390), PFUNC.BENEFICIARIO
+Informa se o benefici?°rio ?© pessoa com doen?ßa incapacitante), Inteiro), 391), PFUNC.BENEFICIARIOINCAPAZ
+CNPJ do respons?°vel pela matr??cula do servidor/militar),	string),	20),	392), PFUNC.CNPJRESPONSAVELMATRICULA
+Data do reconhecimento da incapacidade), Data), 8), 393),	PFUNC.DATAINCAPACIDADE
+Data de inicio do cadastro do benefici?°rio), Data), 8), 394), PFUNC.DATAINICIOBENEFICIARIO
+Matr??cula do benefici?°rio), string), 395), PFUNC.MATRICULABENEFICIARIO
+Fun?ß?£o/Emprego/Cargo Acumul?°vel), inteiro), 396), PFUNC.FUNCAOACUMULAVEL
+Tipo de provimento estatut?°rio), Inteiro), 397), PFUNC.TIPOPROVIMENTO
+Data em exerc??cio estatut?°rio), Data), 8), 398), PFUNC.DTEXERCICIO
+Tipo de plano de segrega?ß?£o da massa do estatut?°rio), Inteiro), 399), PFUNC.TIPOPLANOSEGREGACAOMASSA
+Sujeito ao teto do RGPS estatut?°rio), Inteiro), 400), PFUNC.TETORGPS
+Recebe abono perman?™ncia estatut?°rio), Inteiro), 401), PFUNC.ABONOPERMANENCIA
+Data de in??cio do abono perman?™ncia estatut?°rio), Data), 8), 402), PFUNC.DTINICIOABONO
+Indicar se o servidor optou pela remunera?ß?£o do cargo efetivo), Inteiro	1),	403	),PFUNC.INDICATIVOREMUNERACAOCARGO
+
+Tipo de regime trabalhista para servidor p??blico com mandato eletivo
+
+Inteiro	1	404	PFUNC.TIPOREGTRABMANDATOELETIVO
+
+Tipo de regime previdenci?°rio para servidor p??blico com mandato eletivo
+
+Inteiro	1	405	PFUNC.TIPOREGPREVMANDATOELETIVO
+
+Data mudan?ßa do estatut?°rio	Data	8	406	PFHSTESTATUTARIO.DTMUDANCA
+*/

@@ -1,0 +1,284 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 19/05/01
+
+User Function Sf2460i()        // incluido pelo assistente de conversao do AP5 IDE em 19/05/01
+	
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³ Declaracao de variaveis utilizadas no programa atraves da funcao    ³
+	//³ SetPrvt, que criara somente as variaveis definidas pelo usuario,    ³
+	//³ identificando as variaveis publicas do sistema utilizadas no codigo ³
+	//³ Incluido pelo assistente de conversao do AP5 IDE                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	
+	SetPrvt("_CALIAS,_CRECNO,CFO,CRECSD2,MDOC,MSER")
+	SetPrvt("CRECSF2,MPROD,MNPED,MITEM,NCHAPA,NUMP")
+	SetPrvt("VALPARC,NUMPED,DTEMISSAO,MOEDA,TAXA,TIPOCLI")
+	
+	// adaptacoes para mil : Franciney Alves
+	_calias := Alias()
+	_crecno := recno()
+	nOrdSC5 := 0
+	nOrdSc6 := 0         
+    nTotal := 0           
+    
+	 // Complemento exportacao 
+	 IF SA1->A1_EST == "EX"
+	  Tela1()               
+	 ENDIF 
+	 Tela2()
+	 
+	 
+	  
+Return()        // incluido pelo assistente de conversao do AP5 IDE em 19/05/01
+
+
+
+	        
+Static Function Tela1()
+    cUFEMB  := Space(02)
+    cLOCEMB := Space(60) 
+     @0,0 TO 380,520 DIALOG oDlg1 TITLE "Complemento Nota Fiscal Exportaçao"
+	 @60,5 TO 165,255
+	 @075,010 Say "Este programa tem como objetivo complementar "
+	 @085,010 Say "os seguintes dados da nota fiscal de exportacao  "
+	 @105,010 Say "UF Embarque :"
+	 @115,010 Say "Local Embarque:"
+	 @105,070 GET cUFEMB 
+	 @115,070 GET cLOCEMB 
+	 
+	 
+	 @172,160 BMPBUTTON TYPE 1 ACTION OkProc1()// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==>  @172,160 BMPBUTTON TYPE 1 ACTION Execute(OkProc)
+	 @172,190 BMPBUTTON TYPE 2 ACTION Close(oDlg1)
+	 ACTIVATE DIALOG oDlg1
+	 
+Return                    
+
+
+Static Function OkProc1()
+	Close(oDlg1)
+	// Processa( {|| RunProc1() }  )// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==> Processa( {|| Execute(RunProc) } )
+	Processa({|| RunProc1() }, "Aguarde...", "Gerando dados na CDL ", .T. )
+		MsgInfo("Processo finalizado com sucesso!","Final")
+	
+Return NIL
+
+// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==> Function RunProc
+Static Function RunProc1()
+	_calias:=Alias()
+	_crecno:=recno()      
+	
+	// Percorrer SD2 
+	DbSelectArea("SD2")    
+	nOrdSD2 := Indexord()
+	nRegSD2 := Recno()  
+	
+	cDoc := SF2->F2_DOC 
+	cSerie := SF2->F2_SERIE
+	cCliente := SF2->F2_CLIENTE 
+	cChave := cDoc+cSerie+cCliente     
+	
+	DbSelectArea("SA1") 
+	DbSetOrder(1)
+	DbSeek(xfilial("SA1")+SF2->F2_CLIENTE+SF2->F2_LOJA) 
+	
+	DbSelectArea("SD2")
+	nTotal := 0
+	 
+	DbSetOrder(3) // D2_FILIAL+D2_DOC+D2_SERIE+D2_CLIENTE+D2_LOJA+D2_COD+D2_ITEM                                                                                                     
+	IF Dbseek(xFilial("SD2")+SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE+SF2->F2_LOJA) 
+	  Do While !EOF() .and.  SF2->F2_DOC+SF2->F2_SERIE+SF2->F2_CLIENTE == cChave 
+	     GravarCDL()
+	     DbSelectArea("SD2") 
+	     DbSkip()
+	  Enddo
+	Else 
+	  Alert("Erro posicionamento na SD2 ") 
+	  
+	Endif     
+	// Atualiza SF2 
+	   
+	
+    DbSelectArea("SD2")    
+	DbSetOrder(nOrdSd2) 
+	dbGoto(nRegSD2)
+
+	dbSelectArea(_calias)
+	dbGoto(_crecno)
+Return
+
+Static Function GravarCDL()
+	DbSelectArea("CDL") 
+	DbSetOrder(2) // CDL_FILIAL+CDL_DOC+CDL_SERIE+CDL_CLIENT+CDL_LOJA+CDL_ITEMNF+CDL_NUMDE+CDL_DOCORI+CDL_SERORI+CDL_FORNEC+CDL_LOJFOR+CDL_NRREG                                     
+	IF !DbSeek(xFilial("CDL")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_ITEM)  
+		Reclock("CDL",.T.) 
+		CDL_FILIAL := xFilial("CDL")  // caracter 2     
+        CDL_DOC := SD2->D2_DOC // caracter 9
+        CDL_SERIE := SD2->D2_SERIE //  caracter 3
+        CDL_ESPEC := SF2->F2_ESPECIE // caracter 5
+	    CDL_CLIENT := SD2->D2_CLIENTE //  caracter 6
+	    CDL_LOJA :=  SD2->D2_LOJA  // caracter 2
+        CDL_PRODNF := SD2->D2_COD //  caracter 15
+	    CDL_ITEMNF := SD2->D2_ITEM // caracter 4
+        CDL_PAIS  :=  SA1->A1_PAIS  // caracter 5
+        CDL_UFEMB := cUFEMB  // caracter 2
+        CDL_LOCEMB := cLOCEMB    // caracter 60
+    Else 
+      // Alert("Chave já encontrada na CDL : "+xFilial("CDL")+SD2->D2_DOC+SD2->D2_SERIE+SD2->D2_CLIENTE+SD2->D2_LOJA+SD2->D2_ITEM) 
+          
+    Endif 
+    MsUnlock()
+Return	 
+
+Static Function RecalcTot()
+   RecLock("SD2",.F.) 
+      D2_TOTAL := D2_PRCVEN * D2_QUANT 
+   MsUnlock()
+
+Return
+
+Static Function Tela2()
+@0,0 TO 380,520 DIALOG oDlg2 TITLE "Dados Complementares da Nota Fiscal"
+	 // @10,10 BITMAP SIZE 110,40 FILE "F:\SIGAADV\WINADS\RDDEMO.BMP"
+	 @60,5 TO 165,255
+	 @075,010 Say " Este programa tem como objetivo complementar "
+	 @085,010 Say " os seguintes dados da nota fiscal de saida   "
+	 @095,010 Say " Placa  da  Cavalo e da Carreta               "
+	 @105,010 Say " e Numero e Serie do Selo  Fiscal             "
+	 @172,120 BMPBUTTON TYPE 5 ACTION Pergunte("DADCNF    ",.T.)  // busca pergunta no SX1
+	 @172,160 BMPBUTTON TYPE 1 ACTION OkProc2()// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==>  @172,160 BMPBUTTON TYPE 1 ACTION Execute(OkProc)
+	 @172,190 BMPBUTTON TYPE 2 ACTION Close(oDlg2)
+	 ACTIVATE DIALOG oDlg2
+	 
+Return 
+
+
+Static Function OkProc2()
+	Close(oDlg2)
+	Pergunte("DADCNF    ",.F.)
+	
+	Processa( {|| RunProc2() } )// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==> Processa( {|| Execute(RunProc) } )
+Return NIL
+
+// Substituido pelo assistente de conversao do AP5 IDE em 19/05/01 ==> Function RunProc
+Static Function RunProc2()
+	_calias:=Alias()
+	_crecno:=recno()
+	
+	Pergunte("DADCNF    ",.F.)
+	dbSelectArea('SF2')
+	  if Reclock("SF2",.f.)//rlock()
+		if !empty(mv_par01).and.!empty(mv_par02)
+		Alert("Atualizando placa do veiculo")
+			replace F2_PLACACV with mv_par01
+			replace F2_ESTCV   with mv_par02
+			replace F2_PLACACT with mv_par03
+			replace F2_ESTCT   with mv_par04
+			
+		Endif
+		// condicao par trocar a placa do veiculo em branco
+		if mv_par05==1
+			replace F2_PLACACV with mv_par01
+			replace F2_ESTCV   with mv_par02
+			replace F2_PLACACT with mv_par03
+			replace F2_ESTCT   with mv_par04
+		endif
+		if !empty(mv_par06).and.!empty(mv_par07)
+			replace F2_NUSELOF with mv_par06
+			replace F2_SERIESF with mv_par07
+		endif
+		if !empty(mv_par08).and.!empty(mv_par09)
+			REPLACE F2_DATASNF WITH mv_par08
+			REPLACE F2_HORASNF WITH mv_par09
+		endif
+		if !empty(mv_par10) // Numero de Containers
+			REPLACE f2_ncontai WITH mv_par10+mv_par11+mv_par12
+		endif    
+	 	
+		msUnlock()
+	  endif
+	
+	dbSelectArea("SC6")
+	nOrdSc6 := indexord()
+	DbSetOrder(4)
+	DbSeek(xFilial("SC6")+SF2->F2_DOC+SF2->F2_SERIE)
+	
+	IF FOUND()
+	
+	  NumPed:=SC6->C6_NUM
+	  
+	  dbSelectArea("SC5")
+	  nOrdSC5 := Indexord()
+	  DbSetOrder(1)
+	  DbSeek(xFilial("SC5")+NumPed)
+	  TAXA:= 0.000
+	                                          `
+	  IF FOUND()
+	    DtEmissao := DATE()
+	    MOEDA:=0
+        TIPOCLI:=Alltrim(SC5->C5_TIPOCLI)
+	    DtEmissao:=SC5->C5_EMISSAO
+        MOEDA:=SC5->C5_MOEDA
+	    
+	    dbSelectArea("SM2")
+	    DbSetOrder(1)
+	    DbSeek(DtEmissao)
+	    TAXA:= 0.000
+	
+	    IF FOUND()
+	       DO CASE
+	          CASE TIPOCLI=='X'
+                TAXA:=SM2->M2_MOEDA3
+	       ENDCASE
+	    ELSE
+	      TAXA:=0
+	    ENDIF  
+
+          dbSelectArea("SF2")	      
+	      if Reclock("SF2",.f.)
+	         REPLACE F2_TXCAMB WITH TAXA
+	         REPLACE F2_INVOICE WITH MV_PAR13
+	         msUnlock()
+	      ENDIF
+	  
+	  ENDIF
+
+	Endif
+
+	IF MV_PAR13!=""
+		dbSelectArea("SE1")
+		dbSetOrder(1)
+		dbGoTop()   
+    	dbSeek(xFilial("SE1")+SF2->F2_SERIE+SF2->F2_DOC)
+		While !Eof()
+			If SE1->E1_SERIE = SF2->F2_SERIE .and. SE1->E1_NUM = SF2->F2_DOC
+				Reclock("SE1",.f.)
+				REPLACE E1_INVOICE WITH MV_PAR13      
+				
+				msUnlock()
+			Endif
+			dbSkip()
+		enddo
+    Endif
+	// trocando nome fantasia por razao no nome cliente no financeiro
+    dbSelectArea("SE1")
+	dbSetOrder(1)
+	dbGoTop()   
+    dbSeek(xFilial("SE1")+SF2->F2_SERIE+SF2->F2_DOC)
+	While !Eof()
+	  If SE1->E1_SERIE = SF2->F2_SERIE .and. SE1->E1_NUM = SF2->F2_DOC
+			Reclock("SE1",.f.)
+			REPLACE E1_NOMCLI WITH SA1->A1_NOME      
+			msUnlock()
+	  Endif
+	  dbSkip()
+	Enddo
+	dbSelectArea("SC5")
+	dbSetOrder(nOrdSC5)
+	
+	dbSelectArea("SC6")
+	dbSetOrder(nOrdSC6)
+	
+	dbSelectArea(_calias)
+	dbGoto(_crecno)
+	
+Return
+

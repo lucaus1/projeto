@@ -1,0 +1,90 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2fichfinct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+/*M1
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("FICHAFINCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("FICHAFINIT.TXT")
+Endcase
+*/
+
+// M2
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("FICHAFIN0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("FICHAFIN0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("FICHAFIN0201.TXT")
+Endcase 
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - FICHA FINANCEIRA ")
+DbselectArea("SRD")
+nTot := RECCOUNT()
+DbSetOrder(1)
+DbSeek(Xfilial("SRD")+"",.T.)
+While !EOF() .AND. RD_FILIAL == SM0->M0_CODFIL 
+      DbSelectArea("SRV")
+      dbSetOrder(1)
+      if !DbSeek(xFilial("SRV")+SRD->RD_PD)
+         DbSelectArea("SRD")
+         DBSKIP()
+         Loop
+      Endif 
+    DbSelectArea("SRD")
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    cLine := PADR(RD_MAT,16) + ";"	//	1	Chapa do Funcionário	String	16	PFFINANC.CHAPA
+    cLine += PADL(left(alltrim(RD_DATARQ),4),04) + ";"	//	2	Ano de Competência	Inteiro	4	PFFINANC.ANOCOMP
+    cMes:=RD_MES
+    do case 
+       case rd_mes == "13"
+          cMes:=  "12"
+    endcase 
+    cLine += PADL(cMES,02) + ";"	//	3	Mês de Competência	Inteiro	2	PFFINANC.MESCOMP
+    cPeriodo := "02"
+    Do case 
+       Case rd_roteir == "ADI"
+        cperiodo := '01'
+       Case rd_mes =="12" .and. (rd_mes="13" .or. rd_roteir == "132" .or. rd_roteir =="131")
+        cperiodo := "03"
+    EndCase 
+    cLine += PADL(cPeriodo,02) + ";"	//	4	Número do Período	Inteiro	2	PFFINANC.NROPERIODO
+    cLine += PADL(RD_PD,04) + ";"	//	5	Código do Evento	String	4	PFFINANC.CODEVENTO
+    cLine += PADL(STRTRAN(DTOC(RD_DATPGT),"/",""),08) + ";"	//	6	Data de Pagamento	Data	8	PFFINANC.DTPAGTO
+    cLine += '00:00:00' + ";"	//	7	Hora	String	6	PFFINANC.HORA
+    cLine += STRTRAN(alltrim(STR(RD_HORAS)),".",",") + ";"	//	8	Referência	Real	6	PFFINANC.REF
+    cLine += STRTRAN(alltrim(STR(RD_VALOR)),".",",") + ";"	//	9	Valor	Real	15	PFFINANC.VALOR
+    cLine += STRTRAN(alltrim(STR(RD_VALOR)),".",",") + ";"	//	10	Valor original	Real	15	PFFINANC.VALORORIGINAL
+    cLine += PADL('0',02) + ";"	//	11	Indica o recálculo do evento de férias	Booleano	2	PFFINANC.VERBAFERIAS
+    cLine += ""+ ";"	//	12	Origem do Movimento	Inteiro	2	PFFINANC.ORIGEMMOV
+
+
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

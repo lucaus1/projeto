@@ -1,0 +1,323 @@
+Group pwi
+   Version=7.0
+   VSSDB=
+   HasProperties=1
+   Properties
+      BeforeApply=
+      AfterApply=
+      Icon=
+      ID=
+      Version=
+      PalmName=
+      OutPut=
+   End
+   ProjectsCount=8
+   Project RH
+      FoldersCount=2
+      Folder Fontes
+         VSSPath=Fontes
+         FilesCount=5
+         File \projetos\protheus10\pwi\rh\sigagpe.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\rh\PTGPR80.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\rh\IMPGREC.PRX
+             Type=T
+         End
+         File \projetos\protheus10\pwi\rh\IMPRESH.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\rh\cadsrf.prw
+             Type=T
+         End
+      End
+      Folder Definições
+         VSSPath=Definições
+         FilesCount=1
+         File \projetos\protheus10\pwi\rh\PTGPR80.CH
+             Type=T
+         End
+      End
+   End
+   Project compras
+      FoldersCount=1
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=4
+         File \projetos\protheus10\pwi\compras\MAPCMP.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\compras\PTMACO.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\compras\Pcompra_HTML.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\compras\Sf1100I.PRW
+             Type=T
+         End
+      End
+   End
+   Project NFE
+      FoldersCount=1
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=9
+         File \projetos\protheus10\pwi\NFE\40\danfeii.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\danfeiii.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\nfesefaz.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\19-04-17_FIS_RDMAKE_NFE_P12.1.17\nfesefaz.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\25-04-19-PACOTE_DE_CORRECAO_5168965_DSERTSS1-11434_12.1.17\nfesefaz.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\PACOTE_DE_CORRECAO_4753732_DSERTSS1-10670_12.1.17 FAT\nfesefaz.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\PACOTE_DE_CORRECAO_4753732_DSERTSS1-10670_12.1.17 FAT\correcao\nfesefaz.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\danfeii 13062019\danfeii.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\NFE\40\nfesefaz 24062019\nfesefaz.prw
+             Type=T
+         End
+      End
+   End
+   Project contabilidade
+      FoldersCount=2
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=4
+         File \TOTVS\Microsiga\Protheus\my projects\contabilidade\PCTBR070.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\gen\Ccusto.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\gen\CCONTACTB.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\ativo\ATFR\P_ATFR030.PRX
+             Type=T
+         End
+      End
+      Folder ifrs
+         VSSPath=Nova Pasta2
+         FilesCount=24
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\CADIFR.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\CADOLS.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\ENCCON.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\ENCIFR.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\MOVCON.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\MOVINT.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\MOVOLS.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\MOVTRA.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\ROTINAS\PTC2ZT4.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWA\PWABSE.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWA\PWADIF.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWA\PWAINT.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWA\TReport\PPWADIF.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWA\TReport\PPWAINT.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWB\PWPBSE.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWB\PWPDIF.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWB\TReport\PPWPDIF.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWB\TReport\PPWPINT.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWE\BKEBSE.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWE\BKEDIF.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWE\BKEINT.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWE\TReport\PBKEDIF.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWE\TReport\PBKEINT.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\IFRS\RELATORIOS\PWB\PWPINT.prw
+             Type=T
+         End
+      End
+   End
+   Project faturamento
+      FoldersCount=1
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=14
+         File \projetos\protheus10\pwi\faturamento\CON006.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\CPAG02.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\CPAGAR.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\Fin003.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\FIN004.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\FINR490.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\flxCx01.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\MANSZ1IN.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\MANSZ1PR.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\NfsMil.prx
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\POSEST.PRX
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\Sf2460i_MIL.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\tabespe.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\faturamento\XMLTOSC5.prw
+             Type=T
+         End
+      End
+   End
+   Project financeiro
+      FoldersCount=2
+      Folder pwb
+         VSSPath=Nova Pasta1
+         FilesCount=8
+         File \projetos\protheus10\pwb\Financeiro\flxCx01.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwb\Financeiro\CPAG02.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwb\Fin003.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwb\FIN004.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwb\CPAGAR.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwb\Financeiro\FINR490.PRW
+             Type=T
+         End
+         File \projetos\protheus10\pwb\Financeiro\PWBR002.PRW
+             Type=T
+         End
+         File \TOTVS\Microsiga\Protheus\my projects\Financeiro\FA080POS.PRW
+             Type=T
+         End
+      End
+      Folder pwi
+         VSSPath=Nova Pasta2
+         FilesCount=3
+         File \projetos\protheus10\pwi\fonte finr150\ptFINR150.PRX
+             Type=T
+         End
+         File \projetos\protheus10\pwi\fonte finr150\F080BENEF.prw
+             Type=T
+         End
+         File \projetos\protheus10\pwi\Financeiro\PTFINR480.PRX
+             Type=T
+         End
+      End
+   End
+   Project compras-brt
+      FoldersCount=1
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=7
+         File \projetos\protheus10\breitener\compras\BRTEmail.prw
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\MSC1110D.PRW
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\MT097END.prw
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\PM110DEL.prw
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\VLDTRPB.PRW
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\MT110CFM.PRW
+             Type=T
+         End
+         File \projetos\protheus10\breitener\compras\MT110GRV.PRW
+             Type=T
+         End
+      End
+   End
+   Project mdt
+      FoldersCount=1
+      Folder fontes
+         VSSPath=Nova Pasta1
+         FilesCount=1
+         File \projetos\protheus10\pwi\mdt\ptmdtr725.prx
+             Type=T
+         End
+      End
+   End
+End

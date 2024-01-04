@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Renomear recurso &quot;pwi/ATVVO&quot; a &quot;ativo&quot;" description="Renomear recurso &quot;ATVVO&quot;" flags="7" id="org.eclipse.ltk.core.refactoring.rename.resource" input="ATVVO" name="ativo" stamp="1576697779988" updateReferences="true"/>
+</session>

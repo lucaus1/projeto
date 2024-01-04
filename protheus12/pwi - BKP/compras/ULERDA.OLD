@@ -1,0 +1,1625 @@
+#include "FIVEWIN.CH"
+#include "FOLDER.CH"
+#include "TCBROWSE.CH"
+#include "SIGASQL.CH"
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ LERDA    ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±³          ³ ULERDA   ³ Autor ³ Jose Norberto Macedo  ³ Data ³ 11/11/05 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Linguagem Estruturada de Recuperacao de Dados              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ SIGA Advanced for Windows                                  ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+Last change:  FG   25 Mar 96    3:35 pm
+*/
+USER Function uLerda()
+Local oLerdaWnd
+Local oTabs
+Local nButtonSize := 35
+Local oBrowse
+Local nAlias
+Local cFilter := ""
+
+Private aBrowse:={}
+Private aBancos:={}
+Private aCampos:={}
+Private aUsados:={}
+Private aReturn := {},aRet:={}
+Private _MACEDOCAMPOS:=""
+
+Private cFiltro:=""
+
+aReturn := { "Zebrado", 1,"Administracao", 2, 2, 1,"",1}
+
+CursorWait()
+
+uAlias := LerdaSelect(oLerdaWnd,oTabs,.F.)
+
+If uAlias == NIL
+	Return
+EndIf
+
+DEFINE MSDIALOG oLerdaWnd TITLE OemToAnsi(STR0001) FROM 9,0 TO 28,79.5 OF oMainWnd  // "Consulta Gen‚rica"
+
+If ValType(uAlias) == "C"
+
+	@ 8, 0 TABS oTabs PROMPT uAlias OF oLerdaWnd ACTION LerdaShow(oTabs,oLerdaWnd)
+
+	// Monta o Primeiro Browse do Primeiro TAB
+	oBrowse := UMontaBrowse(oLerdaWnd,uAlias,{16, 2, 310, 115},,,aCampos)
+
+	//---------------------------------------- Primeiro Tab ja Selecionado
+	oLerdaWnd:cCaption += Iif(SX2->(DbSeek(uAlias))," - "+Capital( AllTrim( X2Nome() ) ),"")
+	AADD(aBrowse,{oBrowse,uAlias,ACLONE(aCampos),ACLONE(aUsados)})
+	oTabs:SetOption(1)
+	If ( ValType(oBrowse) == 'O' )
+		oBrowse:Gotop()
+		oBrowse:Refresh()
+		SetFocus(oBrowse:hWnd)
+	EndIf
+	//---------------------------------------------------------------------
+Else
+
+	@ 8, 0 TABS oTabs PROMPT uAlias[1][1] OF oLerdaWnd ACTION LerdaShow(oTabs,oLerdaWnd)
+	cFilter := uAlias[1][3] //seta variavel de filtro
+
+EndIf
+
+TButton():New( 1, 1+((1-1)*nButtonSize), OemToAnsi(STR0002), oLerdaWnd , {|| uAlias:=LerdaSelec(oLerdaWnd,oTabs,.T.),If(ValType(uAlias)="A",(RestConsulta(uAlias,@oTabs,oLerdaWnd,@oBrowse),cFilter := uAlias[1][3]),nil)} , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Arquivo"
+TButton():New( 1, 1+((2-1)*nButtonSize), OemToAnsi(STR0003), oLerdaWnd , {|| LerdaPesq(oLerdaWnd,oBrowse)} , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, )   // "&Pesquisa"
+TButton():New( 1, 1+((3-1)*nButtonSize), OemToAnsi(STR0004), oLerdaWnd , {|| cFilter:=LerdaFiltro(oLerdaWnd,oBrowse,oTabs)} , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Filtro"
+TButton():New( 1, 1+((4-1)*nButtonSize), OemToAnsi(STR0005), oLerdaWnd , {|| LerdaDic(oLerdaWnd,oBrowse,oTabs,aBrowse)},nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Dicion rio"
+TButton():New( 1, 1+((5-1)*nButtonSize), OemToAnsi(STR0006), oLerdaWnd , {|| LerdaImpr(oLerdaWnd,oTabs,cFilter) }  , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Impress„o"
+TButton():New( 1, 1+((6-1)*nButtonSize), OemToAnsi(STR0007), oLerdaWnd , {|| LerdaVisual(oLerdaWnd)}  , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Visualizar"
+TButton():New( 1, 1+((7-1)*nButtonSize), OemToAnsi(STR0008), oLerdaWnd , {|| oLerdaWnd:End()}  , nButtonSize, 12,,oLerdaWnd:oFont, .F., .T., .F.,, .F.,, ) // "&Sair"
+If !Empty(oBrowse)
+	oBrowse:Refresh()
+	SetFocus(oBrowse:hWnd)
+EndIf
+ACTIVATE MSDIALOG oLerdaWnd ON INIT (RestConsulta(uAlias,@oTabs,oLerdaWnd,@oBrowse,.T.),PlaceBottom(oLerdaWnd,oTabs),CursorArrow() )
+
+#ifndef PROTHEUS
+	LerdaFim(oLerdaWnd,oTabs)		//??
+#endif
+
+
+Return nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaVisua³ Autor ³ Gilson Nascimento     ³ Data ³ 15/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Visualiza o Registro                                       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaVisual(oWin)
+Local i
+Private cCadastro:= oWin:cTiTle
+Private aRotina := { { "","", 0 , 2 } }
+
+oWin:DISABLE()
+AxVisual(ALIAS(),RECNO(),1,aUsados,,)
+oWin:ENABLE()
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³RestConsul³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Restaura as consultas atraves do arquivo .C4W              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function RestConsulta(aCons,oTabs,oWin,oBrowse,lDiv)
+Local i
+DEFAULT lDiv := .F.
+
+CursorWait()
+
+If ValType(aCons) != "A"
+	Return .t.
+EndIf
+
+For i:=1 to Len(aCons)
+
+	// Posiciona no Arquivo
+	DbSelectArea(aCons[i][1])
+	// Muda o Ordem
+	DbSetOrder(aCons[i][2])
+	// Set o Filtro
+	cFiltro:= aCons[i][3]
+
+	Set Filter To &cFiltro
+
+	If Len(oTabs:aPrompts) < i
+		// Adiciona novo TAB
+		oTabs:AddItem(aCons[i][1])
+	Else
+		oTabs:aPrompts[i] := aCons[i][1]
+	EndIf
+
+	// Monta o Browse para este TAB
+	LerdaBrowse(oWin,aCons[i][1],oTabs,aCons[i][4],@oBrowse,.F.)
+
+Next i
+
+// Posiciona no primeiro TAB
+DbSelectArea(aCons[1][1])
+oTabs:SetOption(1)
+aBrowse[1][1]:Refresh(.F.)
+
+CursorArrow()	
+SysRefresh()
+
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaFim  ³ Autor ³ Gilson Nascimento     ³ Data ³ 08/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Encerra consulta e retorna o arquivo sem filtros           ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaFim(oWin,oTabs)
+Local i
+
+For i:=1 to Len(oTabs:aPrompts)
+
+	DbSelectArea(oTabs:aPrompts[i])
+	Set Filter To
+
+Next i
+
+oWin:End()
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaSelec³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Seleciona arquivos                                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaSelect(oWin,oTabs,lSalva)
+Local oDlg,oLbx,oDel
+Local oSav,nOAt:=0
+Local lOK := .f., cRet
+Local aConsulta,cLine,nPosLbx
+Local cPesq:=Space(20),oPesq,nPosArq
+cLine := ReadSqlMnu()	
+
+// Monta array com os dados do SX2
+If Len(aBancos) == 0
+	DbSelectArea("SX2")
+	DbGoTop()
+
+	If Substr(cLine,1,1) = "." .or. Empty(cLine)
+		While !Eof()
+		
+			If ( __lPymeSX2 ) .And. ( SX2->X2_PYME == 'N' )
+				DbSkip()
+				Loop
+			EndIf
+		
+			If SX2->X2_CHAVE $ cFOPENED
+				AADD(aBancos,{SX2->X2_CHAVE,AllTrim( X2Nome() ),.F.})
+			EndIf
+			DbSkip()
+		End
+	Else	
+		While !Eof()
+		
+			If ( __lPymeSX2 ) .And. ( SX2->X2_PYME == 'N' )
+				DbSkip()
+				Loop
+			EndIf
+		
+			If X2_CHAVE  $  cLine
+				AADD(aBancos,{SX2->X2_CHAVE,AllTrim( X2Nome() ),.F.})
+			EndIf		
+			DbSkip()	
+		End
+	EndIf
+EndIf
+
+DEFINE MSDIALOG oDlg ;
+	FROM  150,5 TO 358,361 ;
+	TITLE OemToAnsi(STR0009) PIXEL  // "Selecione o Arquivo"
+
+@ 6,7 LISTBOX oLbx FIELDS HEADER "" , ;
+	OemToAnsi(STR0010) SIZE 165, 63 ;  // "Bases de Dados"
+	ON CHANGE OnOffButton(aBancos,oLbx:nAt,oDel) OF oDlg PIXEL  ;
+ON DBLCLICK ( If(ValidaUso(aBancos[oLbx:nAt,1]),;
+( lOk := ValidSelect(@aBancos,oLbx:nAt,oDel),nPosLbx:=oLbx:nAt,oDlg:End() )	,))
+
+oLbx:SetArray(aBancos)
+oLbx:bLine := { || {aBancos[oLbx:nAt,1],aBancos[oLbx:nAt,2]}}
+
+@ 75,10  SAY OemToAnsi(STR0028) SIZE 25, 7 OF oDlg PIXEL
+@ 75,40 MSGET oPesq  VAR cPesq  SIZE 80,10 OF oDlg PIXEL PICTURE "@!" ;
+	VALID (nPosArq:=If(!Empty(cPesq),ASCAN(aBancos,{|z|AllTrim(cPesq)$z[1].OR.AllTrim(cPesq)$z[2]}),oLbx:nAt),If(nPosArq#0,oLbx:nAt:=nPosArq,MsgStop(OemtoAnsi(STR0029))),oLbx:Refresh(),If(nPosArq#0,nPosLbx:=nPosArq,),(nPosArq#0))
+
+// Define Botao Busca Grava Consulta
+DEFINE SBUTTON oSav FROM 90, 032 TYPE 13 ENABLE OF oDlg ACTION (lOk :=.F. , LerdaSavCon(oTabs) , oDlg:End() )
+If !lSalva
+	oSav:SetDisable()
+EndIf
+
+// Define Botao Busca Restaura Consulta
+DEFINE SBUTTON FROM 90, 060 TYPE 14 ENABLE OF oDlg ACTION (lOk :=.T. , aConsulta:=LerdaRest(oDlg) ,If(aConsulta=nil,lOk:=.F.,nil) ,oDlg:End() )
+
+// Define Botao Apagar
+DEFINE SBUTTON oDel FROM 90, 088 TYPE 3 ENABLE OF oDlg ACTION (lOk := ExclSelect(@aBancos,@aBrowse,oLbx,oTabs,oWin,oDel),oDlg:End() )
+oDel:SetDisable()
+
+// Define Botao Confirma
+DEFINE SBUTTON FROM 90, 116 TYPE 1 ENABLE OF oDlg ;
+ ACTION ( If(ValidaUso(aBancos[oLbx:nAt,1]),;
+( lOk := ValidSelect(@aBancos,oLbx:nAt,oDel),nPosLbx:=oLbx:nAt,oDlg:End() )	,))
+
+// Define Botao Cancelar
+DEFINE SBUTTON FROM 90, 144 TYPE 2 ENABLE OF oDlg ACTION ( lOk := .f.,oDlg:End())
+
+ACTIVATE MSDIALOG oDlg CENTERED VALID (nOAt := oLbx:nAt,.T.)
+
+If lOK
+
+	// Monta os TABS da Consulta … Restaurar
+	If aConsulta # nil
+		If oTabs # nil
+			// Apaga todos os outros TABS se existirem
+			For i:=Len(oTabs:aPrompts) To 1 STEP -1
+
+				// Posiciona no TAB
+				oTabs:SetOption(i)
+				// Apaga o TAB
+				oTabs:DelItem()
+				// Atualiza flag de TAB
+				oTabs:nOption := Len(oTabs:aPrompts)
+
+				// Destroi o Browse utilizado pelo arquivo
+				aBrowse[i][1]:End()
+				// Retira o Browse da Pilha
+				aDel(aBrowse,i)
+				// Ajusta o tamanho da pilha
+				aSize(aBrowse,Len(aBrowse)-1)
+				// Ativa para ser escolhida novamente na Selecao
+				aBancos[nOAt][3] := .F.		// nPosLbx
+			Next
+
+		EndIf
+		Return aConsulta
+
+	Else
+		// VerIfica o Total de Tabs ja abertos
+		If Len(aBrowse)+1 > 20
+			Help(" ",1,"SOVINTE")
+		Else
+			// Pega o Alias escolhido
+			cRet := aBancos[nPosLbx,1]
+
+			If !Eof() .and. (cRet)->(Recno()) == 0
+				(cRet)->(DbGoTop())
+			EndIf
+
+			If oTabs # NIL
+
+				// Monta o Browse para este TAB
+				LerdaBrowse(oWin,cRet,oTabs)
+
+				// Adiciona novo TAB
+				oTabs:AddItem( cRet )
+
+				// Set na opcao do TAB deste arquivo
+				oTabs:SetOption(Len(aBrowse))
+
+			EndIf
+
+		EndIf
+	EndIf
+
+EndIf
+Return cRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³OnOffButto³ Autor ³ Gilson Nascimento     ³ Data ³ 06/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ativa/Desativa botao excluir do TAB                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function OnOffButton(aBancos,nPos,oDel)
+
+// Se ja existe Tab para este arquivo,
+If aBancos[nPos][3] .and. Len(aBrowse) > 1
+	// Ativa o Botao
+	oDel:SetEnable()
+Else
+	// senao, desativa o botao
+	oDel:SetDisable()
+EndIf
+// Estabiliza o Botao
+oDel:Refresh()
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ValidSelec³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Valida a Selecao nos alias para nao duplicar os TABS       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ValidSelect(aBancos,nPos,oDel)
+Local lRet := .T.
+// Se ja foi selecionado, nao permite novamente
+If aBancos[nPos][3]
+	oDel:SetEnable()
+	lRet := .F.
+EndIf
+aBancos[nPos][3] := .T.
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ExclSelect³ Autor ³ Gilson Nascimento     ³ Data ³ 06/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Elimina o Arquivo Selecionado dos TABs                     ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function ExclSelect(aBancos,aBrowse,oLbx,oTab,oWin,oDel)
+Local nPosTab
+
+// Busca o Tab Referente a este arquivo
+nPosTab := Ascan(oTab:aPrompts,{|X| X == aBancos[oLbx:nAt][1]})
+// Posiciona no Tab deste arquivo
+oTab:SetOption(nPosTab)
+oTab:nOption := nPosTab
+// Colocar o Foco no TAB mais a esquerda
+If oTab:nOption # 1
+	nTabEsq := (oTab:nOption-1)
+Else
+	nTabEsq := oTab:nOption
+EndIf
+// Se existe mais de um TAB
+If Len(aBrowse) # 1
+	// Apaga o Tab deste arquivo
+	oTab:DelItem()
+	oTab:nOption := Len(oTab:aPrompts)
+	// Destroi o Browse utilizado pelo arquivo
+	aBrowse[nPosTab][1]:End()
+	// Retira o Browse da Pilha e ajusta o tamanho da pilha
+	aDel(aBrowse,nPosTab)
+	aSize(aBrowse,Len(aBrowse)-1)
+	// Ativa para ser escolhida novamente na Selecao
+	aBancos[oLbx:nAt][3] := .F.
+	// Desativa o Botao
+	oDel:SetDisable()
+	// Muda para o alias deste Tab
+	DbSelectArea(oTab:aPrompts[oTab:nOption])
+	// Show nos Browses
+	LerdaShow( oTab, oWin )
+	// Coloca o Foco na Selecao novamente
+	SetFocus(oLbx:hWnd)
+EndIf
+// Estabiliza as Janelas
+oDel:Refresh()
+oLbx:Refresh()
+oTab:Refresh()
+oWin:Refresh()
+Return .F.
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MontaBrows³ Autor ³ Gilson Nascimento     ³ Data ³ 08/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Monta Browse tanto para alteracao do dicionario com outros ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+STATIC Function UMontaBrowse(oWin,cAlias,aCoord,oBrow,lDic,aCampos)
+Local oBrowse
+Local nAlias
+Local i
+Local lUsado
+Local lVazio := .F.,cField, cBranch
+
+nAlias := Select(cAlias)
+
+DEFAULT aCoord := {32, 4, 620, 230}
+DEFAULT lDic := .T.
+
+// Se nao veio da alteracao do dicion rio,
+If lDic
+
+	// Posiciona Alias
+	DbSelectArea(cAlias)
+	If LastRec() = 0
+		Tone(3000,1)
+		Help(" ",1,"NORECS")
+	EndIf
+
+	nAlias := Select()
+
+	// Cria Objeto BROWSE
+	cField := Iif(Empty(cFilial),Nil,cAlias+"->"+PrefixoCpo(cAlias)+"_FILIAL")		
+	cBranch:= Iif(cField!=Nil,xFilial(cAlias),Nil)
+	oBrowse   := TcBrowse():New( aCoord[1], aCoord[2], aCoord[3], aCoord[4], , , , oWin ,cField,cBranch,cBranch,,{|| LerdaVisual(oWin)},,oWin:oFont,,,,, .F.,cAlias, .T.,, .F., , ,.f. )
+	oBrowse:lLineDrag	:= .T.
+	//oBrowse   := oBrowse:GetBrowse()
+	// Posiciona Dicionario
+	DbSelectArea("SX3")
+	DbSetOrder(1)
+	// Busca Arquivo
+	DbSeek(cAlias)
+
+	// Limpa Array de Usados
+	aUsados := {}
+
+	If Empty(aCampos)
+		lVazio := .T.
+	EndIf
+
+	// Monta array com os campos do arquivo
+	While !EOF() .And. (x3_arquivo == cAlias)
+	
+		If ( __lPymeSX3 ) .And. ( SX3->X3_PYME == 'N' )
+			DbSkip()
+			Loop
+		EndIf
+	
+		If cNivel < X3_NIVEL  .or. X3_CONTEXT == "V"
+			DbSkip()
+			Loop
+		EndIf
+		If lVazio
+			lUsado := x3Uso(X3_USADO)
+		Else
+			lUsado := !(Ascan(aCampos,X3_CAMPO)>0)
+		EndIf
+		If lUsado
+			oBrowse:AddColumn( TCColumn():New( Trim(X3Titulo()), FieldWBlock( x3_campo, nAlias ),AllTrim(X3_PICTURE),,, If(X3_TIPO=="N","RIGHT","LEFT"), CalcFieldSize(X3_TIPO,X3_TAMANHO,X3_DECIMAL,X3_PICTURE,X3Titulo()), .F., .F.,,,, .F., ) )
+			AADD(aUsados,X3_CAMPO)
+		EndIf
+
+		AADD(aCampos,{X3_CAMPO,X3Titulo(),lUsado,X3_ORDEM,X3_TAMANHO,AllTrim(X3_PICTURE),X3_TIPO,X3_DECIMAL})
+		DbSkip()
+
+	End
+
+Else
+
+	// Atribui o browse de fundo no atual
+	oBrowse := oBrow
+
+	// Adiciona as colunas no Browse conforme o Uso
+	For i:=1 to len(aCampos)
+		If aCampos[i][3]
+			oBrowse:AddColumn( TCColumn():New( Trim(aCampos[i][2]), FieldWBlock( aCampos[i][1], nAlias ),aCampos[i][6],,, If(aCampos[i][7]=="N","RIGHT","LEFT"), CalcFieldSize(aCampos[i][7],aCampos[i][5],aCampos[i][8],aCampos[i][6],aCampos[i][2]), .F., .F.,,,, .F., ) )
+		EndIf
+	Next i
+
+EndIf
+
+// Posiciona no Browse
+DbSelectArea(cAlias)
+
+Return oBrowse
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaBrows³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Monta Browse                                               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaBrowse(oWin , cAlias,oTabs,aCampos,oBrow,lDiv )
+Local i,nElem,nSoma := 0
+Local lUsado,lVazio:=.F.
+Local nDiv := Iif( aCampos = NIL, 1 ,2 )
+Local aRestCampos,cPict45,cField, cBranch
+
+DEFAULT aCampos := {}, lDiv := .T.
+
+aRestCampos:=Iif(Len(aCampos)>0,aClone(aCampos),{})
+
+// Se !Empty, Esta restaurando uma consulta.
+If !Empty(aRestCampos)
+	aCampos:={}
+EndIf
+
+If Empty(aCampos)
+	lVazio := .T.
+EndIf
+
+DbSelectArea(cAlias)
+
+If RecCount() == 0 .and. lVazio
+	Tone(3000,1)
+	Help(" ",1,"NORECS")
+EndIf
+
+nAlias := Select()
+
+DbSelectArea("SX3")
+DbSetOrder(1)
+DbSeek(cAlias)
+While !EOF() .And. (x3_arquivo == cAlias)
+
+	If ( __lPymeSX3 ) .And. ( SX3->X3_PYME == 'N' )
+		DbSkip()
+		Loop
+	EndIf
+
+	If cNivel < X3_NIVEL  .or. X3_CONTEXT == "V"
+		DbSkip()
+		Loop
+	EndIf
+	If lVazio .and. Len(aRestCampos) == 0
+		lUsado := x3Uso(X3_USADO)
+		nElem := X3_ORDEM
+	Else
+		nElem := Ascan(aRestCampos,X3_CAMPO)
+		lUsado := (nElem > 0)
+		If !lUsado
+			nSoma++
+			nElem := RetAsc(Str(Len(ARestCampos)+nSoma),2,.T.)
+		Else
+			nElem := RetAsc(Str(nElem),2,.T.)
+		EndIf
+	EndIf
+
+	AADD(aCampos,{X3_CAMPO,X3Titulo(),lUsado,If(!lDiv,nElem,X3_ORDEM),X3_TAMANHO,Trim(X3_PICTURE),X3_TIPO,X3_DECIMAL})
+
+	DbSkip()
+End
+
+DbSelectArea(cAlias)
+
+ASORT(aCampos,,,{|x,y| x[4] < y[4] })
+cField := Iif(Empty(cFilial),Nil,cAlias+"->"+PrefixoCpo(cAlias)+"_FILIAL")		
+cBranch:= Iif(cField!=Nil,xFilial(cAlias),Nil)
+
+#ifndef PROTHEUS
+	oBrow := TcBrowse():New( 32, 4, 620, 230,,,, oWin,cField,cBranch,cBranch,,{|| LerdaVisual(oWin)},,oWin:oFont,,,,, .F.,cAlias, .T.,, .F., , ,.f. )
+#else
+	oBrow := TcBrowse():New( 16, 2, 310, 115,,,, oWin,cField,cBranch,cBranch,,{|| LerdaVisual(oWin)},,oWin:oFont,,,,, .F.,cAlias, .T.,, .F., , ,.f. )
+#endif
+aRet := {}
+For i := 1 to Len(aCampos)
+	If aCampos[i][3]
+		oBrow:AddColumn( TCColumn():New( Trim(aCampos[i][2]), FieldWBlock( aCampos[i][1], nAlias ),aCampos[i][6],,, If(aCampos[i][7]=="N","RIGHT","LEFT"), CalcFieldSize(aCampos[i][7],aCampos[i][5],aCampos[i][8],aCampos[i][6],aCampos[i][2]), .F., .F.,,,, .F., ) )
+		AADD(aUsados,aCampos[i][1])
+		cPict45 := aCampos[i,6]+Space(45-Len(aCampos[i,6]))
+		AADD(aRet,StrZero(i,2)+" "+aCampos[i,2]+" "+"["+If(aCampos[i,3],"x"," ")+"]"+cPict45+aCampos[i,1]+StrZero(aCampos[i,5],3))
+	EndIf
+Next i
+
+// Adiciona na Pilha
+AADD(aBrowse,{oBrow,cAlias,aCampos,aUsados})
+
+// Coloca o Foco
+SetFocus(oBrow:hWnd)
+
+// Posiciona no Arquivo
+DbSelectArea(cAlias)
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaImpr ³ Autor ³ Gilson Nascimento     ³ Data ³ 07/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Impressao da Consulta                                      ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaImpr(oWin,oTab,cFilter)
+Local nRegCorrente := RECNO()
+Local cAlias := ALIAS()
+Local titulo :=Iif(SX2->(DbSeek(cAlias)),Capital( AllTrim( X2Nome() ) ),"")
+Local tamanho:= " "
+Local limite := 132
+Local cDesc1
+Local cDesc2 := ""
+Local cDesc3 := ""
+Local nTamanho,cCampo,cPicture,cTitulo,i
+Local aOrd   := {}
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Desativa a Janela pai                                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oWin:DISABLE()
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Salva a Integridade dos Dados                                         ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If ( __Language == 'PORTUGUESE' )
+	cDesc1 := If(Upper(Substr(titulo,2,8))=="CADASTRO","Emissao do ","Relacao de ")+titulo
+Else
+	cDesc1 := titulo
+EndIf
+
+cOrd   := If(SIX->(DbSeek(cAlias+STR(INDEXORD()))),Capital(SixDescricao())," ")
+
+
+Private aLinha := { }
+Private nOrdem := indexord()
+
+SIX->(DbSeek(cAlias+"1"))
+While SIX->INDICE == cAlias
+	AADD(aOrd,Capital(SixDescricao()))
+	SIX->(DbSkip())
+End
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Preenche campos utilizados para emissao dos Relatorios                ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+Private nomeprog := "LERDA",nLastKey := 0
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Carrega aReturn para passagem para SetPrint                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+aReturn[7] := cFilter
+aReturn[8] := nOrdem
+
+If Len(aRet) > 0
+	For i:=1 to Len(aRet)
+		AADD(aReturn,aRet[i])
+	NEXT i
+EndIf
+
+cbtxt    := SPACE(10)
+cbcont   := 0
+wnrel    :="LERDA"
+cabec1   := cDesc1
+cabec2   := Replicate("-",limite)
+cabec3   := " "
+cString  := cAlias
+li:=80
+m_pag:=1
+nTam:=0
+
+Private AParDef := {}
+
+wnrel := SetPrint(cString,wnrel,,@Titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,,,,.T.)
+
+If nLastKey = 27
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Ativa a Janela Pai                                                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oWin:ENABLE()
+
+	Return
+EndIf
+
+SetDefault(aReturn,cString)
+
+If nLastKey = 27
+
+	//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+	//³Ativa a Janela Pai                                                    ³
+	//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+	oWin:ENABLE()
+
+	Return
+EndIf
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Controle para regua de processamento                        ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+RptStatus({|lEnd| Imp(@lEnd,Cabec1,Cabec2,Cabec3,limite,tamanho,cbCont,wnrel)},Titulo)
+
+DbGoTo(nRegCorrente)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³Ativa a Janela Pai                                                    ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+oWin:ENABLE()
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³Impr      ³ Autor ³ Gilson Nascimento     ³ Data ³ 07/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Impressao da Consulta - ImpCadast()                        ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function Imp(lEnd,Cabec1,Cabec2,Cabec3,limite,tamanho,cbCont,wnrel)
+Local nChar
+
+DbSelectArea(cString)
+
+If Len(aReturn) > 8
+	Mont_dic(cString)
+Else
+	Mont_Array(cString)
+EndIf
+
+/*
+nChar := Iif(aReturn[4]==1,15,18) // Comprimido ou Normal
+ImpCadast(Cabec1,Cabec2,Cabec3,NomeProg,Tamanho,Limite,cString,@lEnd,nChar)
+If li != 80
+	roda(cbcont,cbtxt,"M")
+EndIf
+DbSelectArea(cString)
+If aReturn[5] = 1
+	Set Printer TO
+	Commit
+	ourspool(wnrel)
+EndIf
+MS_FLUSH()
+*/
+
+//For i:=1 to len(aCampos)
+//	If aCampos[i][3]
+//        ALERT(aCampos[i][1])
+//		oBrowse:AddColumn( TCColumn():New( Trim(aCampos[i][2]), FieldWBlock( aCampos[i][1], nAlias ),aCampos[i][6],,, If(aCampos[i][7]=="N","RIGHT","LEFT"), CalcFieldSize(aCampos[i][7],aCampos[i][5],aCampos[i][8],aCampos[i][6],aCampos[i][2]), .F., .F.,,,, .F., ) )
+//	EndIf
+//Next i
+
+_MACEDOCAMPOS:=LEFT(_MACEDOCAMPOS,(LEN(_MACEDOCAMPOS)-1))
+DbSelectArea(cString)
+DBGOTOP()
+IF EMPTY(_MACEDOCAMPOS)
+   COPY TO ULERDA.DBF 
+  ELSE
+   COPY TO ULERDA.DBF 
+
+//   ALERT(_MACEDOCAMPOS)
+//   COPY TO ULERDA.DBF FIELDS &_MACEDOCAMPOS
+//   COPY TO ULERDA.DBF FIELDS SED->ED_CODIGO,SED->ED_DESCRIC
+//   COPY STRUCTURE FIELDS &_MACEDOCAMPOS TO ULERDA
+//   COPY STRUCTURE FIELDS SED->ED_CODIGO,SED->ED_DESCRIC TO ULERDA
+ENDIF    
+_arquivo:="G:\SIGAADV\ULERDA.DBF"
+If !File(_arquivo)
+    _arquivo:="F:\SIGAADV\ULERDA.DBF"
+    If !File(_arquivo)
+       _arquivo:="E:\PROTHEUS_DATA\SIGAADV\ULERDA.DBF"   // SERVIDOR PWAMAZON
+    endif   
+EndIf
+Winexec("C:\Arquivos de programas\Microsoft Office\OFFICE11\EXCEL.EXE"+" "+_arquivo  )
+
+
+If aReturn[5] = 1
+	Set Printer TO
+	Commit
+//	ourspool(wnrel)
+EndIf
+MS_FLUSH()
+
+Return nil
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³PlaceBotto³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Movimenta Tabs da Janela                                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function PlaceBottom( oWnd ,oTabs )
+#ifndef PROTHEUS 		//??
+	Local oRect := oWnd:GetCliRect()
+	oTabs:Move( oRect:nBottom - 21, 0, oRect:nRight, 21, .t. )
+#else
+	oTabs:Move( oWnd:nClientHeight - 21, 0, oWnd:nClientWidth, 21, .t.)
+#endif
+Return Nil
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaShow ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Ativa o Browse da TAB corrente                             ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaShow( oTab, oWnd )
+Local i
+Local cTitle := OemToAnsi(STR0001) // "Consulta Gen‚rica"
+If oTab:nOption > 0
+	// Esconde os outros browses
+	For i:=1 to Len(aBrowse)
+		aBrowse[i][1]:Hide()
+	Next
+	// Posiciona no arquivo
+	DbSelectArea(aBrowse[oTab:nOption][2])
+	// Atualiza array aCampos
+	aCampos:=aBrowse[oTab:nOption][3]
+	aUsados:={}
+	For i:=1 to Len(aCampos)
+		// Se o campo est  em uso
+		If aCampos[i][3]
+			AADD(aUsados,aCampos[i][1])
+		EndIf
+	Next i
+	
+	// Mostra o browse correto
+	aBrowse[oTab:nOption][1]:Show()
+	// Coloca o Foco no browse
+	SetFocus(aBrowse[oTab:nOption][1]:hWnd)
+	aBrowse[oTab:nOption][1]:Hide()
+	aBrowse[oTab:nOption][1]:Show()
+	aBrowse[oTab:nOption][1]:Refresh()
+	
+	// Muda o Titulo da Janela
+	oWnd:cTitle(cTiTle + Iif(SX2->(DbSeek(aBrowse[oTab:nOption][2]))," - "+Capital( AllTrim( X2Nome() ) ),""))
+EndIf
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaPesq ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Pesquisa dentro do arquivo que esta sEndo  mostrando       ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaPesq(oWnd,oBrow)
+
+// Executa a Pesquisa
+AxPesqui()
+// Estabiliza Janela
+oBrow:nRowPos := 1                    // Fernando Ramalho - 21/08/98
+SetFocus(oBrow:hWnd)
+oWnd:Refresh()
+// Coloca o Foco no Browse
+Return
+
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaFiltr³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Monta/Executa um filtro no arquivo corrente                ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaFiltro(oWnd,oBrowse,oTabs)
+Local cRet
+
+// Constroi a Expressao para o Filtro.
+cRet := BuildExpr(,oWnd)
+
+// Se existe Expressao montada.
+If .not. EMPTY(cRet)
+	// Filtra a arquivo
+	Set Filter To &(cRet)
+Else
+	// Limpa o Filtro do arquivo
+	Set Filter To
+EndIf
+// Posiciona no primeiro
+
+oBrowse:Gotop()
+aBrowse[oTabs:nOption][1]:Refresh()
+	
+// Coloca o Foco no Browse
+SetFocus(oBrowse:hWnd)
+// Estabiliza Janela
+oWnd:Refresh()
+CursorArrow()
+
+Return cRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaDic  ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Seleciona campos no arquivo para o Browse                  ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaDic(oWin,oBrowse,oTab,aBrowse)
+Local lOk:=.F.,cField, cBranch
+Local nNew,nBkp:=01,lAll := .F.
+Local i
+Local nPosAlias
+Local cAlias := Alias()
+Local oUsado
+Local oUso
+Local oOrdem
+Local oDlg
+Local oOk := LoadBitmap( GetResources(), "LBOK" )
+Local oNo := LoadBitmap( GetResources(), "LBNO" )
+Local cPict45,cOrdem
+
+
+
+DEFINE MSDIALOG oDlg ;
+	FROM  48,1 TO 248,375 ;
+	TITLE OemToAnsi(STR0011)  PIXEL  // "Selecione os Campos"
+
+@ 6, 103 TO 38, 180 OF oDlg  PIXEL
+
+aCampos := aBrowse[oTab:nOption][3]
+
+//@ 7,7 LISTBOX oUso FIELDS HEADER "","","" SIZE 89, 79 ON CHANGE (oOrdem:SetText(aCampos[oUso:nAt,4]),lUsado:=If(aCampos[oUso:nAt,3],1,2),oUsado:Refresh(),oOrdem:Enable()) ON DBLCLICK (aCampos[oUso:nAt,3] := !aCampos[oUso:nAt,3],lUsado:=aCampos[oUso:nAt,3],oUsado:Refresh()) OF oDlg PIXEL
+cOrdem := aCampos[1,4]
+oUso := TWBrowse():New( 7, 7, 89, 79, ,{"","",""},, oDlg,,,,{|| (cOrdem := aCampos[oUso:nAt,4],oOrdem:SetText(cOrdem),lUsado:=aCampos[oUso:nAt,3],oOrdem:Enable(),oOrdem:Refresh(),oUsado:Refresh(),oUso:Refresh())},{|nRow,nCol,nFlags|(aCampos[oUso:nAt,3] := !aCampos[oUso:nAt,3],lUsado:=aCampos[oUso:nAt,3],oOrdem:Refresh(),oUsado:Refresh(),oUso:Refresh())},,,,,,, .F.,, .T.,, .F.,,,)
+oUso:SetArray(aCampos)
+oUso:bLine := { || {If(aCampos[oUso:nAt,3],oOk,oNo),aCampos[oUso:nAt,4],aCampos[oUso:nAt,2] }}
+oUso:bGotFocus := { || cOrdem := aCampos[oUso:nAt,4] }
+
+@ 14 , 109 SAY OemToAnsi(STR0012) SIZE 53, 7  OF oDlg PIXEL  // "&Ordem:"
+
+@ 23, 109 MSGET oOrdem VAR cOrdem OF oDlg SIZE 60, 10 VALID (lOk := ( VAL(RetAsc(cOrdem,2,.F.)) > 0 .and. VAL(RetAsc(cOrdem,2,.F.)) <= Len(aCampos) ),nNew := Val(RetAsc(cOrdem,2,.F.)),If(lOk,aCampos := SortOrder(aCampos,Val(RetAsc(aCampos[oUso:nAt,4],2,.F.)),Val(RetAsc(cOrdem,2,.F.))),.f.),If(lOk,oUso:Skip(nNew-Val(RetAsc(aCampos[oUso:nAt,4],2,.F.))),lOk),If(lOk,oUso:Refresh(),.f.),lOk) PICTURE "@!"  PIXEL
+oOrdem:Disable()
+//oOrdem:bGotFocus := { || nBkp := Val(RetAsc(aCampos[oUso:nAt,4],2,.F.))}
+
+lUsado := If(aCampos[oUso:nAt,3],.T.,.F.)
+
+@ 48, 103 CHECKBOX oUsado VAR lUsado PROMPT OemtoAnsi(STR0013) SIZE 76, 10 OF oDlg ON CHANGE (aCampos[oUso:nAt,3] := lUsado,oUso:Refresh(.f.)) PIXEL
+oUsado:oFont := oDlg:oFont
+
+@ 62, 103 CHECKBOX oChk VAR lAll PROMPT OemtoAnsi(STR0027) SIZE 76, 10 OF oDlg PIXEL ON CLICK (AEval(aCampos,{|x| x[3]:=lAll}),lUsado:=lAll,oUsado:Refresh(),oUso:Refresh())
+oChk:oFont := oDlg:oFont
+
+DEFINE SBUTTON FROM 82, 124 TYPE 1 ENABLE OF oDlg ACTION ( lOk := ValidDic() ,If(lOk,oDlg:End(),nil) )
+DEFINE SBUTTON FROM 82, 152 TYPE 2 ENABLE OF oDlg ACTION ( lOk := .F.,oDlg:End())
+
+ACTIVATE MSDIALOG oDlg CENTERED
+
+_MACEDOCAMPOS:=""
+If lOk
+
+	// Retorna a selecao atual para o browse
+	aBrowse[oTab:nOption][3]:=aCampos
+	// Retorno a selecao dos campos ativos para o browse
+	aBrowse[oTab:nOption][4]:={}
+	// Zera o Array aUsados para colocar somente os campos Ativos
+	aUsados := {}
+	// Limpa Array que ser  usado no aReturn
+	aRet:={}
+	// Varre os campos do Dicionario
+	For i:=1 to Len(aCampos)
+
+		// Se o campo est  em uso
+		If aCampos[i][3]
+            _MACEDOCAMPOS:=_MACEDOCAMPOS+ALLTRIM(aCampos[i][1])+","
+			AADD(aBrowse[oTab:nOption][4],aCampos[i][1])
+			AADD(aUsados,aCampos[i][1])
+			cPict45 := aCampos[i,6]+Space(45-Len(aCampos[i,6]))
+			AADD(aRet,RetAsc(i,2,.T.)+" "+aCampos[i,2]+" "+"["+If(aCampos[i,3],"x"," ")+"]"+cPict45+aCampos[i,1]+StrZero(aCampos[i,5],3))
+		EndIf
+
+	Next i
+
+	// Destroi o browse anterior
+	aBrowse[oTab:nOption][1]:Hide()
+	aBrowse[oTab:nOption][1]:End()
+	aBrowse[oTab:nOption][1] := NIL
+	// Constroi o novo browse
+	cField := Iif(Empty(cFilial),Nil,cAlias+"->"+PrefixoCpo(cAlias)+"_FILIAL")		
+	cBranch:= Iif(cField!=Nil,xFilial(cAlias),Nil)
+	#ifndef PROTHEUS
+		aBrowse[oTab:nOption][1] := TcBrowse():New( 32, 4, 620, 230 ,,,, oWin ,cField,cBranch,cBranch,,{|| LerdaVisual(oWin)},,oWin:oFont,,,,, .F.,cAlias, .T.,, .F., , ,.f. )
+	#else
+		aBrowse[oTab:nOption][1] := TcBrowse():New( 16, 2, 310, 115 ,,,, oWin ,cField,cBranch,cBranch,,{|| LerdaVisual(oWin)},,oWin:oFont,,,,, .F.,cAlias, .T.,, .F., , ,.f. )
+	#endif
+	//aBrowse[oTab:nOption][1] := aBrowse[oTab:nOption][1]:GetBrowse()
+	// Coloca o novo Browse na Pilha
+	aBrowse[oTab:nOption][1] := UMontaBrowse(oWin,Alias(),,aBrowse[oTab:nOption][1],.F.,aCampos)
+	// Show nos Browses
+	LerdaShow( oTab, oWin )
+
+EndIf
+
+DeleteObject(oOk)
+DeleteObject(oNo)
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ValidDic  ³ Autor ³ Gilson Nascimento     ³ Data ³ 12/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Valida Dicionario. Deve existir apenas um campo marcado    ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function ValidDic()
+Local nPos := Ascan(aCampos,{|x|X[3]==.T.})
+Local lRet:=.F.
+If nPos # 0
+	lRet := .T.
+Else
+	Help(" ",1,"APENASUM")
+EndIf
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaOpt  ³ Autor ³ Gilson Nascimento     ³ Data ³ 11/12/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Salva / Restaura consulta corrente                         ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaSavCon(oTab)
+
+Local lOk:=.T.
+Local nButtonSize := 35
+Local oDlg
+Local oArquivo,cArq:=Space(8)
+Local oDescricao,cDescr:=Space(30)
+
+DEFINE MSDIALOG oDlg ;
+	FROM  100,5 TO 228,261 ;
+	TITLE OemToAnsi(STR0016) PIXEL  // "Salvar"
+
+@ 5  , 10 SAY OemToAnsi(STR0002)+":" SIZE 83, 7  OF oDlg PIXEL  // "&Arquivo"
+@ 13 , 10 GET oArquivo VAR cArq OF oDlg SIZE 100, 10  PICTURE "XXXXXXXX" VALID (AT(".",cArq)=0) PIXEL
+
+@ 26 , 10 SAY OemToAnsi(STR0017) SIZE 83, 7  OF oDlg PIXEL  // "&Descri‡Æo:"
+@ 34 , 10 GET oDescricao VAR cDescr OF oDlg SIZE 100, 10 PICTURE "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXX" PIXEL
+
+// Define Botao Confirma
+DEFINE SBUTTON FROM 50, 057 TYPE 1 ENABLE OF oDlg ACTION ( lOk := .f.,LerdaSalv(oTab,oArquivo,oDescricao,aBrowse),oDlg:End() )
+
+// Define Botao Cancelar
+DEFINE SBUTTON FROM 50, 085 TYPE 2 ENABLE OF oDlg ACTION ( lOk := .f.,oDlg:End())
+
+ACTIVATE MSDIALOG oDlg CENTERED
+
+If lOk
+	oDlg:End()
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaSalv ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Grava os dados da consulta no arquivo ???.C4W              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaSalv(oTabs,oArq,oDescr,aBrowse)
+Local aConsulta:={}
+Local n,j,i,cAlias,nOrdem,cFiltro,cTamFil,cTotCpo
+Local cFile:=oArq:cText
+Local cDescr:=oDescr:cText
+
+// Monta array com Todos TABS.
+For i:=1 to Len(oTabs:aPrompts)
+
+	cAlias:=oTabs:aPrompts[i]
+	DbSelectArea(cAlias)
+	nOrdem  := IndexOrd()
+	cFiltro := DBFilter()
+	AADD(aConsulta,{cAlias,nOrdem,cFiltro,aBrowse[i][4]})
+
+Next
+
+If !Empty(cFile)
+	// Define nome do Arquivo
+	cFile := AllTrim(cFile)+".C4W"
+	nHdl := FCreate(cFile)
+	If nHdl == -1
+		Help(" ",1,"SAVECONS")
+		Return
+	Else
+		// Grava a Descricao da Consulta
+		FWrite(nHdl,PADR(cDescr,30," "),30)
+
+		// Varre todos os TABS
+		For i := 1 to Len(aConsulta)
+
+			// Grava Alias
+			FWrite(nHdl,aConsulta[i][1])
+			// Grava Ordem
+			FWrite(nHdl,StrZero(aConsulta[i][2],2))
+			// Grava o Tamanho do Filtro
+			FWrite(nHdl,I2Bin(Len(aConsulta[i][3])))
+			// Grava Filtro
+			FWrite(nHdl,aConsulta[i][3])
+			// Grava o Numero de Campos
+			FWrite(nHdl,I2Bin(Len(aConsulta[i][4])))
+			// Grava os Campos Ativos do Browse
+			For j:=1 to len(aConsulta[i][4])
+
+				FWrite(nHdl,aConsulta[i][4][j])
+			Next j
+
+		Next i
+
+		FClose(nHdl)
+	EndIf
+	MsgInfo(OemToAnsi(STR0018+cFile),OemToAnsi(STR0019)) // "Consulta salva no arquivo " ### "Informa‡„o"
+EndIf
+
+Return
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³LerdaRest ³ Autor ³ Gilson Nascimento     ³ Data ³ 27/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Restaura consulta salva no arquivo ?????.C4W               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+Static Function LerdaRest(oWin)
+Local oDlg,oLbx,oDel
+Local lOK := .f.
+Local aArquivos := Directory("*.C4W")
+Local aArq := {}
+Local i,xBuffer:=Space(30)
+Local cDescr,aConsulta
+
+// Busca os Arquivos de consulta no diretorio
+If Len(aArquivos) == 0
+	Help(" ",1,"SEMARQUIVOS")
+	Return
+Else
+	aArquivos := aSort (aArquivos,,,{ |x,y| Upper(x[1]) < Upper(y[1])})	
+	For i:=1 to Len(aArquivos)
+		// Abre arquivo
+		nHdl:=FOPEN(aArquivos[i,1],2+64)
+		If nHdl > 0
+			FSEEK(nHdl,0,0)
+			FREAD(nHdl,@xBuffer,30)
+			// Monta o Array para o ListBox
+			AADD(aArq,{aArquivos[i,1],xBuffer})
+		EndIf
+		// Fecha o Arquivo
+		FCLOSE(nHdl)
+	Next i
+EndIf
+
+DEFINE MSDIALOG oDlg ;
+	FROM  170,205 TO 348,561 ;
+	TITLE OemToAnsi(STR0020) OF oWin PIXEL  // "Restaurar Consulta"
+
+@ 6,7 LISTBOX oLbx FIELDS HEADER  ;
+	OemToAnsi(STR0021),OemToAnsi(STR0022) ;
+	SIZE 165, 63 OF oDlg PIXEL ;
+	ON DBLCLICK ( lOk := .T.,aConsulta:=MontaCon(aArquivos,oLbx:nAT),oDlg:End() ) // "Arquivo" ### "Descri‡Æo"
+
+oLbx:SetArray(aArq)
+oLbx:bLine := { || {aArq[oLbx:nAt,1],aArq[oLbx:nAt,2]}}
+
+// Define Botao Apagar
+DEFINE SBUTTON FROM 76, 088 TYPE 3 ENABLE OF oDlg ACTION ( lOk:=ExclArq(oLbx,@aArq),Iif(lOk,oDlg:End(),nil))
+// Define Botao Confirma
+DEFINE SBUTTON FROM 76, 116 TYPE 1 ENABLE OF oDlg ACTION ( lOk := .T.,aConsulta:=MontaCon(aArquivos,oLbx:nAT),oDlg:End() )
+// Define Botao Cancelar
+DEFINE SBUTTON FROM 76, 144 TYPE 2 ENABLE OF oDlg ACTION ( lOk := .F.,oDlg:End())
+
+ACTIVATE MSDIALOG oDlg
+Return aConsulta
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³ExclArq   ³ Autor ³ Gilson Nascimento     ³ Data ³ 13/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Exclui arquivo de Consutla Arquivo ?????.C4W               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function ExclArq(oLbx,aArq)
+Local cFile := aArq[oLbx:nAT][1]
+Local lRet := .F.,nRet
+
+If MsgYesNo(OemToAnsi(STR0023+Trim(cFile),OemToAnsi(STR0024)))  // "Deseja excluir arquivo de consulta " ### "AtencÆo"
+	// Apaga o arquivo
+	nRet := FERASE(aArq[oLbx:nAt][1])
+	If ( nRet # -1 )
+		// Envia mensagem de aviso
+		MsgInfo(OemToAnsi(STR0025),("Informa‡„o"))  // "Arquivo exclu¡do!"
+		// Ajusta tamanho do array
+		ADEL(aArq,oLbx:nAt)
+		ASIZE(aArq,Len(aArq)-1)
+	Else
+		MsgStop(OemtoAnsi(STR0026)+aArq[oLbx:nAt][1],oemtoansi(STR0024)) // 'NÆo foi poss¡vel excluir o arquivo '
+	EndIf
+EndIf
+
+If Len(aArq) > 0
+
+	oLbx:SetArray(aArq)
+	oLbx:bLine := { || {aArq[oLbx:nAt,1],aArq[oLbx:nAt,2]}}
+
+	// Estabiliza Tela
+	oLbx:Refresh()
+
+	// Coloca o Foco
+	SetFocus(oLBX:hWnd)
+Else
+	lRet := .T.
+
+	aArq := {{"",""}}
+	oLbx:SetArray(aArq)
+	oLbx:bLine := { || {aArq[oLbx:nAt,1],aArq[oLbx:nAt,2]}}
+
+	// Estabiliza Tela
+	oLbx:Refresh()
+
+	// Coloca o Foco
+	SetFocus(oLBX:hWnd)
+
+EndIf
+
+Return lRet
+
+/*
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Fun‡…o    ³MontaCon  ³ Autor ³ Gilson Nascimento     ³ Data ³ 13/11/95 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ Restaura Consulta salva no arquivo ?????.C4W               ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³ Uso      ³ LERDA                                                      ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+*/
+
+Static Function MontaCon(aArquivos,nPos)
+Local aConsulta:={}
+Local nhdl := FOPEN(aArquivos[nPos][1],64)
+Local nTamArq := aArquivos[nPos][2]
+Local xBuffer:=Space(30),nLidos := 30,nBytes,i
+
+If nHdl > 0
+
+	FSEEK(nHdl,0,0)
+	FREAD(nHdl,@xbuffer,30)
+
+	While  nLidos < nTamArq
+
+		// Alias
+		xBuffer := Space(3)
+		FREAD(nHdl,@xBuffer,3)
+		AADD(aConsulta,{xBuffer,0,"",{}})
+
+		// Ordem
+		xBuffer := Space(2)
+		FREAD(nHdl,@xBuffer,2)
+		aConsulta[Len(aConsulta)][2] := Val(xBuffer)
+
+		// Tamanho do Filtro
+		xBuffer := Space(2)
+		FREAD(nHdl,@xBuffer,2)
+		nBytes := Bin2i(xBuffer)
+
+		// Expressao do Filtro
+		xBuffer := Space(nBytes)
+		FREAD(nHdl,@xBuffer,nBytes)
+		aConsulta[Len(aConsulta)][3] := xBuffer
+
+		nlidos += nBytes + 9
+
+		// Total de Campos
+		xBuffer := Space(2)
+		FREAD(nHdl,@xBuffer,2)
+		nBytes := Bin2i(xBuffer)
+
+		aConsulta[Len(aConsulta)][4] := ARRAY(nBytes)
+
+		// Adiciona os campos
+		xBuffer := Space(10)
+		For i:=1 to nBytes
+
+			FREAD(nHdl,@xbuffer,10)     // Nome dos Campos
+			aConsulta[Len(aConsulta)][4][i] := xBuffer
+
+			nLidos += 10
+
+		Next i
+
+	End
+
+EndIf
+FClose(nHdl)
+
+Return aConsulta
+
+
+Static Function LerdaConsul()
+Local cFile := Space(8), cDescr := Space(30)
+Local nOpt:= 1, nHdl, cBuffer,aFiles := Directory("*.CGN"),i
+Local lSalv:= .f.,lRest:= .f.,aCons,lOk := .f.
+Local oSalv,oRest,oBtnOk,oLbx
+
+aCons := Array(Len(aFiles))
+For i:= 1 to Len(aFiles)
+	nHdl := FOpen(aFiles[i,1],64)
+	cBuffer := Space(30)
+	FRead(nHdl,@cBuffer,30)
+	aCons[i] := cBuffer + Space(30-Len(cBuffer)) + aFiles[i,1]
+	FClose(nHdl)
+Next
+
+// Solicitada a apresentacao da descricao dos arquivos em ordem alfabetica
+aCons := aSort (aCons,,,{ |x,y| Upper(x) < Upper(y)})	
+
+DEFINE MSDIALOG oDlg FROM  37,30 TO 268,369 TITLE "Configuração de Senhas" PIXEL
+
+@ 6, 6 TO 55, 131 LABEL "" OF oDlg  PIXEL
+@ 62, 6 TO 111, 131 LABEL "" OF oDlg  PIXEL
+
+@ 12,10 CHECKBOX oSalv VAR lSalv PROMPT "Salvar"  SIZE 31,10  Of oDlg PIXEL
+oSalv:oFont:=oDlg:oFont
+
+@ 67,10 CHECKBOX oRest VAR lRest PROMPT "Restaurar" SIZE 38,10 Of oDlg PIXEL
+oRest:oFont:=oDlg:oFont
+
+@ 25, 28 SAY "Arquivo" SIZE 53, 7 OF oDlg PIXEL
+@ 38, 28 SAY "Descricao" SIZE 53, 7 OF oDlg PIXEL
+
+@ 67,61 LISTBOX oLbx FIELDS HEADER "Arquivos"  SIZE 77, 33 OF oDlg PIXEL
+oLbx:SetArray(aCons)
+oLbx:bLine := { || {Substr(aCons[oLbx:nAt],1,30)}}
+
+@ 24, 68 MSGET cFile PICTURE "@!" Valid !Empty(cFile) SIZE 54, 10 OF oDlg PIXEL
+@ 38, 68 MSGET cDescr VALID !Empty(cDescr) SIZE 54, 10 OF oDlg PIXEL
+
+DEFINE SBUTTON oBtnOk TYPE 1 FROM 82,139 ENABLE OF oDlg PIXEL
+DEFINE SBUTTON TYPE 2 FROM 96,139 ENABLE OF oDlg PIXEL
+
+
+ACTIVATE MSDIALOG oDlg ON INIT oBtnOk:SetEnable(.f.)
+
+If  lSalv .and. lOk
+	If "."$cFile
+		cFile := Substr(cFile,1,AT(".",cFile)-1)
+	EndIf
+	cFile := AllTrim(cFile)+".CGN"
+	nHdl := MSFCREATE(cFile)
+	If nHdl == -1
+		Help(" ",1,"SAVECONS")
+	Else
+		FWrite(nHdl,cDescr,30)                          //Descricao
+		FWrite(nHdl,aDicion[nFile,1],3)                 //Alias
+		FWrite(nHdl,Str(aDicion[nFile,2],3,0),3)        //Ordem
+		FWrite(nHdl,Str(aDicion[nFile,5,1],2,0),2)      //nT
+		FWrite(nHdl,Str(aDicion[nFile,5,2],2,0),2)      //nL
+		FWrite(nHdl,Str(aDicion[nFile,5,3],2,0),2)      //nB
+		FWrite(nHdl,Str(aDicion[nFile,5,4],2,0),2)      //nR
+		FWrite(nHdl,I2Bin(Len(aDicion[nFile,7])),2)     //Tamanho do Filtro
+		FWrite(nHdl,aDicion[nFile,7],Len(aDicion[nFile,7])) //Filtro
+		FWrite(nHdl,I2Bin(Len(aDicion[nFile,8])),2)     //Numero de Campos
+		For i:= 1 to Len(aDicion[nFile,8])
+			cBuffer := aDicion[nFile,8,i,1]             //Titulo
+			cBuffer += aDicion[nFile,8,i,2]             //Nome do Campo
+			cBuffer += If(aDicion[nFile,8,i,3],"T","F") //Usado
+			cBuffer += aDicion[nFile,8,i,4]             //Tipo
+			cBuffer += aDicion[nFile,8,i,5]             //Tamanho
+			cBuffer += aDicion[nFile,8,i,6]             //Picture
+			FWrite(nHdl,cBuffer,72)
+		Next
+		FClose(nHdl)
+	EndIf
+EndIf
+If lRest .and. lOk
+	If Ascan(aDicion,{|x| x[9] == aCons[nOpt]}) > 0
+		nFile := Ascan(aDicion,{|x| AllTrim(x[9]) == Capital(aCons[nOpt])})
+		Return nil
+	EndIf
+	nOpt := Ascan(aFiles,{|x| x[1] $ Upper(Substr(aCons[nOpt],30))})
+	aCons := Array(10)
+	nHdl := Fopen(aFiles[nOpt,1],64)
+	cBuffer := Space(30)
+	FRead(nHdl,@cBuffer,30)
+	aCons[9] := Capital(cBuffer)
+	cBuffer := Space(3)
+	FRead(nHdl,@cBuffer,3)
+	aCons[1] := cBuffer
+	cBuffer := Space(3)
+	FRead(nHdl,@cBuffer,3)
+	aCons[2] := Int(Val(cBuffer))
+	aCons[3] := ""
+	aCons[4] := ""
+	aCons[5] := Array(4)
+	For i:= 1 to 4
+		cBuffer := Space(2)
+		FRead(nHdl,@cBuffer,2)
+		aCons[5,i] := Int(Val(cBuffer))
+	Next
+	aCons[6] := 1
+	cBuffer := Space(2)
+	FRead(nHdl,@cBuffer,2)
+	nLen := Bin2I(cBuffer)
+	cBuffer := Space(nLen)
+	FRead(nHdl,@cBuffer,nLen)
+	aCons[7] := cBuffer
+	cBuffer := Space(2)
+	FRead(nHdl,@cBuffer,2)
+	nLen := Bin2i(cBuffer)
+	aCons[8] := Array(nLen,6)
+	For i:= 1 to nLen
+		cBuffer := Space(72)
+		FRead(nHdl,@cBuffer,72)
+		aCons[8,i,1] := Substr(cBuffer,1,12)
+		aCons[8,i,2] := Substr(cBuffer,13,10)
+		aCons[8,i,3] := If(Substr(cBuffer,23,1)=="T",.t.,.f.)
+		aCons[8,i,4] := Substr(cBuffer,24,1)
+		aCons[8,i,5] := Substr(cBuffer,25,3)
+		aCons[8,i,6] := Substr(cBuffer,28,45)
+	Next
+	aCons[10] := 0
+	AADD(aDicion,aCons)
+	nFile := Len(aDicion)
+	FClose(nHdl)
+EndIf
+
+Return	
+
+Static Function ReadSqlMnu()
+Local cLine := ""
+Local lLine := .F.
+Ft_Fuse(cArqMnu)
+FT_FGOTOP()
+While !Ft_Feof()
+	cLine:=FT_FREADLN()
+	If "LERDA" $ Upper(cLine)
+		cLine := Substr(cLine,32,90)
+		lLine := .T.
+		Exit
+	EndIf
+	Ft_fSkip()
+End
+If !lLine
+	cLine := ""
+EndIf
+Ft_fUse()
+Return cLine
+
+Static Function ValidaUso(alias)
+Local lUsado 	:= .F.
+Local cAlias	:= Alias()
+Local nOrdSX3	:= 0
+
+DbSelectArea("SX3")
+nOrdSX3	:= IndexOrd()
+DbSetOrder(1)
+DbGoTop()
+
+DbSeek(alias)
+While ( X3_ARQUIVO == alias )
+	If(x3uso(x3_usado),lUsado := .T.,)
+	DbSkip()
+End
+If !lUsado
+	Help(" ",1,"NAO_USADO")
+EndIf
+
+DbSelectArea( 'SX3' )
+DbSetOrder( nOrdSX3 ) 
+
+If ( ! Empty( cAlias ) )
+	DbSelectArea(cAlias)
+EndIf
+
+Return  lUsado

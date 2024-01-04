@@ -1,0 +1,60 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmturnosct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADTURNOCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADTURNOIT.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - TURNOS  ")
+DbselectArea("SR6")
+nTot := RECCOUNT()
+dbGotop()
+
+
+While  !EOF()
+    
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    cLine := PADR(R6_TURNO,03) + ";"	
+    cLine += PADR(R6_DESC,40) + ";"	
+    cLine += PADL(R6_HRNORMA,07) + ";"	
+    cLine += PADL(R6_HRDESC,08) + ";"	
+    cLine += PADR(R6_INIHNOT,05) + ";"
+    cLine += PADR(R6_FIMHNOT,05) + ";"
+    cLine += PADR(R6_MINHNOT,05) + ";"
+    // DADOS HORARIO 
+    DbSelectArea("SPJ")
+    Dbseek(xFilial("SPJ")+SR6->R6_TURNO+"01"+"2")
+    cLine += PADR("1A ENT:"+STR(PJ_ENTRA1),12) + ";"
+    cLine += PADR("1A SAI:"+STR(PJ_SAIDA1),12) + ";"
+    cLine += PADR("2A ENT:"+STR(PJ_ENTRA2),12) + ";"
+    cLine += PADR("2A SAI:"+STR(PJ_SAIDA2),12) + ";"
+    DbselectArea("SR6")
+
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

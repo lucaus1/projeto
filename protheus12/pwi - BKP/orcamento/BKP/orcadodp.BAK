@@ -1,0 +1,51 @@
+#INCLUDE "rwmake.ch"
+user function orcadodp(cconta,decc,atecc,periodo,moeda,ano)
+Private cArea := Alias()
+Private nReg := Recno()
+Private nValor:= 0
+Private nOrdem:= DbSetOrder()
+  DbSelectArea("SIA")
+  DbSetOrder(1)  // filial + custo + conta + moeda
+  Dbgotop()
+  DbSeek(xFilial("SIA")+cconta)
+  Do While ia_conta == cconta .and. !eof()
+     if Alltrim(IA_CC) < DECC .OR. alltrim(IA_CC)> ATECC .OR. IA_MOEDA <> STR(MOEDA);
+     .OR. IA_ANO <> ano
+       DbSkip()
+       Loop
+     Endif  
+    Do Case
+        Case periodo = 1
+          nValor:= SIA->IA_VLORC01 
+        Case periodo = 2
+          nValor:= SIA->IA_VLORC02 
+        Case periodo = 3
+          nValor:= SIA->IA_VLORC03 
+        Case periodo = 4
+          nValor:= SIA->IA_VLORC04 
+        Case periodo = 5
+          nValor:= SIA->IA_VLORC05 
+        Case periodo = 6
+          nValor:= SIA->IA_VLORC06 
+        Case periodo = 7
+          nValor:= SIA->IA_VLORC07
+        Case periodo = 8
+          nValor:= SIA->IA_VLORC08
+        Case periodo = 9
+          nValor:= SIA->IA_VLORC09
+        Case periodo = 10
+          nValor:= SIA->IA_VLORC10
+        Case periodo = 11
+          nValor:= SIA->IA_VLORC11
+        Case periodo = 12
+          nValor:= SIA->IA_VLORC12
+    EndCase
+    DbSkip()      
+  Enddo     
+DbSelectArea(cArea)
+DbGoto(nReg)
+DbSetOrder(nOrdem)  
+Return(nValor)
+
+// OrcadoCC(conta,CCcusto,Periodo,Moeda,Dat_Conversao)
+

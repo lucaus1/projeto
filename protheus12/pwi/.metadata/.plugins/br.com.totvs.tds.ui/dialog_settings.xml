@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<section name="Workbench">
+	<section name="importWizardPage">
+		<item value="C:\projetos\protheus10\pwi\estoque" key="filterPath"/>
+	</section>
+	<section name="rpoInspectorDialog">
+		<item value="C:\Users\Administrator\Desktop" key="filterPath"/>
+	</section>
+	<section name="selectImportSmartClientServersWizardPage">
+		<item value="D:\TOTVS-12TESTE\Protheus\bin\smartclient" key="filterPath"/>
+	</section>
+	<section name="applyPathPage">
+		<item value="D:\TOTVS-MIL12\protheus_data\@patch\2020\20-05-18-LIB_LABEL_04052020_P12_LOBO-TTTP120" key="filterPath"/>
+	</section>
+</section>

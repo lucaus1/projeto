@@ -1,0 +1,278 @@
+#Include "PROTHEUS.CH"
+#Include "TopConn.CH"
+
+User Function PBKEINT()
+	Local oReport
+    
+  	Private cPerg  := "BKEINT"
+  	Private cRel   := "Relatorio InteCompany"
+	Private _DataC := GetMV("MV_DATAOLS") 
+	
+	Private _cTot    := ""
+    Private _TOConRs := 0
+	Private _TOIntRs := 0
+	Private _TOBKERs := 0
+    Private	_SUConRs := 0
+	Private	_SUIntRs := 0
+	Private	_SUBKERs := 0
+    Private	_EXConRs := 0                     //???  -  2101-8182 / Serginho - Proview
+	Private	_EXIntRs := 0
+	Private	_EXBKERs := 0
+	Private TOGrupo := 0
+	Private _cSeq := ""
+	
+	Pergunte(cPerg, .F.)
+	
+	oReport := imprime()
+	oReport:PrintDialog()      
+Return           
+
+Static Function imprime()
+	Local oReport
+	Local oSection
+	Local oSubSec1
+	
+	oReport := TReport():New( cPerg, cRel, cPerg, { |oReport| PrintReport( oReport ) }, "Relatorio InteCompany" )    
+	//oReport:SetLandScape(.T.)
+	
+	
+	oSubSec1 := TRSection():New(oReport, OemToAnsi("Relatorio InteCompany"), {"qTGRUPO"} )	
+	//oSubSec1:SetHeaderPage(.F.)
+
+	TRCell():New(oSubSec1, "ZT5_DESC"  , "qTGRUPO", "Description"  , "@!"            , , .T. )
+	TRCell():New(oSubSec1, "ZT5_CONTA" , "qTGRUPO", "MembCode"     , "@!"            , , .T. )
+	TRCell():New(oSubSec1, "SLDDBKE"   , "qTGRUPO", "Consolidated" , "@E 999,999,999,999,999", , .T. )
+	TRCell():New(oSubSec1, "SLDCBKE"   , "qTGRUPO", "Intercompany" , "@E 999,999,999,999,999", , .T. )
+	TRCell():New(oSubSec1, "AJUDBKE"   , "qTGRUPO", "BK Energia"   , "@E 999,999,999,999,999", , .T. )
+Return oReport
+
+Static Function PrintReport( oReport )
+	//Local oSection1 := oReport:Section( 1 )
+	Local oSubSec1 := oReport:Section(1)
+	Local _cQuery := ""
+	Local _nQuant := 0
+
+	_cQuery := " SELECT COUNT(*) AS QUANT "
+    _cQuery += " FROM ZT4060 WHERE ZT4060.D_E_L_E_T_ <> '*' AND ZT4_GRUPO BETWEEN '" + MV_PAR03 + "' AND '" + MV_PAR04 + "' "
+	TcQuery _cQuery Alias qQTD new
+
+	dbSelectArea("qQTD")
+	if !qQTD->(EOF())
+		_nQuant := qQTD->QUANT
+	EndIf
+
+	_cQuery := " SELECT ZT4_SEQ, ZT4_GRUPO, ZT4_TIPO, ZT4_CLAS "
+    _cQuery += " FROM ZT4060 WHERE ZT4060.D_E_L_E_T_ <> '*' AND ZT4_GRUPO BETWEEN '" + MV_PAR03 + "' AND '" + MV_PAR04 + "' "
+    _cQuery += " ORDER BY ZT4_CLAS, ZT4_SEQ ASC "
+	TcQuery _cQuery Alias qLGRUPO new
+	            
+	oReport:SetMeter( _nQuant )
+	
+	Do While !qLGRUPO->(EOF())
+		If oReport:Cancel()
+			Exit
+		EndIf
+	
+		_cSeq := qLGRUPO->ZT4_SEQ
+		oSubSec1:Init()
+
+		If Alltrim(qLGRUPO -> ZT4_TIPO) != "T" .and. Alltrim(qLGRUPO -> ZT4_TIPO) != ""
+		    _cQuery := " SELECT ZT5060.*, ISNULL((SELECT SUM(ZT2_CTAVAL) FROM ZT2060 WHERE LTRIM(ZT5060.ZT5_CONTA)=LTRIM(ZT2_CTADEB) AND ZT2_DATA "
+			_cQuery += " BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT2_FILIAL='03' AND ZT2060.ZT2_CTADEB<>'' AND ZT2060.D_E_L_E_T_<>'*' GROUP BY ZT2_CTADEB),0) AS INTEDEB, "
+	
+			_cQuery += " ISNULL((SELECT SUM(ZT2_CTAVAL) FROM ZT2060 WHERE LTRIM(ZT5060.ZT5_CONTA)=LTRIM(ZT2_CTACRE) AND ZT2_DATA "
+			_cQuery += " BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT2_FILIAL='03' AND ZT2060.ZT2_CTACRE<>'' AND ZT2060.D_E_L_E_T_<>'*' GROUP BY ZT2_CTACRE),0) AS INTECRE, "
+	
+			_cQuery += " ISNULL((SELECT SUM(CT2_VALOR) FROM CT2030,CT1030 WHERE LTRIM(ZT5060.ZT5_CONTA)=LTRIM(CT1_IFRS) AND "
+			_cQuery += " CT1_CONTA=CT2_DEBITO AND CT1030.D_E_L_E_T_<>'*' AND CT2030.D_E_L_E_T_<>'*' AND "
+			_cQuery += " CT2_FILIAL='01' AND CT1_FILIAL='01'   AND CT1_CLASSE='2' AND "
+			_cQuery += " CT2_DATA BETWEEN '" + _DataC + "' AND '"+DTOS(MV_PAR02)+"'), 0) AS SLDDBKE, "
+	
+			_cQuery += " ISNULL((SELECT SUM(CT2_VALOR) FROM CT1030,CT2030 WHERE LTRIM(ZT5060.ZT5_CONTA)=LTRIM(CT1_IFRS) AND "
+			_cQuery += " CT1_CONTA=CT2_CREDIT AND CT1030.D_E_L_E_T_<>'*' AND CT2030.D_E_L_E_T_<>'*' AND "
+			_cQuery += " CT2_FILIAL='01' AND CT1_FILIAL='01'   AND CT1_CLASSE='2' AND  "
+			_cQuery += " CT2_DATA BETWEEN '" + _DataC + "' AND '"+DTOS(MV_PAR02)+"'), 0) AS SLDCBKE, "
+	
+			_cQuery += " ISNULL((SELECT SUM(ZT3_VALOR) FROM ZT3060 WHERE LTRIM(ZT5060.ZT5_CONTA) = LTRIM(ZT3_DEBITO) AND ZT3_EMPRES = '03' " 
+			_cQuery += " AND ZT3_DATA BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT3_FILIAL='03' AND ZT3060.D_E_L_E_T_<>'*' GROUP BY ZT3_DEBITO), 0) AS AJUDBKE, "
+	
+			_cQuery += " ISNULL((SELECT SUM(ZT3_VALOR) FROM ZT3060 WHERE LTRIM(ZT5060.ZT5_CONTA) = LTRIM(ZT3_CREDIT) AND ZT3_EMPRES = '03' " 
+			_cQuery += " AND ZT3_DATA BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT3_FILIAL='03' AND ZT3060.D_E_L_E_T_<>'*' GROUP BY ZT3_CREDIT), 0) AS AJUCBKE "
+	
+			_cQuery += " FROM ZT5060 WHERE ZT5060.D_E_L_E_T_<>'*' AND ZT5_GRUPO='"+ qLGRUPO->ZT4_GRUPO + "' "
+			//comente aqui
+			TcQuery _cQuery Alias qTGRUPO new
+
+						
+			//Inicio da Impressão					
+			While ( !qTGRUPO->(Eof()) )
+				SUGrupo := qTGRUPO->ZT5_GRUPO 
+				//oSubSec1:Init()
+			
+             	//DESCRIÇÃO
+             	if Alltrim(qLGRUPO->ZT4_TIPO) == "E" 				 	   
+			    	oSubSec1:Cell("ZT5_DESC"):setValue("EX - " + PadR(qTGRUPO->ZT5_DESC,50))
+		       	else
+			    	oSubSec1:Cell("ZT5_DESC"):setValue(PadR(qTGRUPO->ZT5_DESC,50))
+		       	endif
+		    	
+		    	//CONTA
+		    	oSubSec1:Cell("ZT5_CONTA"):setValue( PadR(qTGRUPO->ZT5_CONTA,6) )
+
+				//MOVIMENTOS CONSOLIDADOS
+		    	oSubSec1:Cell("SLDDBKE"):setValue( (qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE) )
+	
+				//INTERCOMPANY
+		    	oSubSec1:Cell("SLDCBKE"):setValue( (qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE) )
+
+				//MOIVMENTOS CONTABEIS BKE
+		    	oSubSec1:Cell("AJUDBKE"):setValue( ((qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE)  ) * mv_par05 )
+
+			    oSubSec1:Cell("ZT5_DESC"):show()
+			    oSubSec1:Cell("ZT5_CONTA"):show()
+			    oSubSec1:Cell("SLDDBKE"):show()
+			    oSubSec1:Cell("SLDCBKE"):show()
+			    oSubSec1:Cell("AJUDBKE"):show()
+				oSubSec1:PrintLine()
+
+				if Alltrim(qLGRUPO->ZT4_TIPO) != "E" 				 	   
+					_SUConRS += (((qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE)  ) + (qTGRUPO->INTEDEB - qTGRUPO->INTECRE)) * mv_par05
+					_SUIntRs += (qTGRUPO->INTEDEB - qTGRUPO->INTECRE)*mv_par05
+					_SUBKERs += ((qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE)) * mv_par05
+				endif
+		        
+		        qTGRUPO->(dbSkip())
+		    End	
+		    
+		    //oSubSec1:ThinLine()
+		    
+		    if Alltrim(qLGRUPO->ZT4_TIPO) != "E"
+		    	//--------------------------------------------------------------------------------
+		    	oReport:ThinLine()
+		    	//--------------------------------------------------------------------------------
+		    	//DESCRIÇÃO
+		    	oSubSec1:Cell("ZT5_DESC"):setValue( _cSeq + " - " + PadR (Posicione("ZT1",1,xFilial()+SUGrupo,"ZT1_DESC"),50))
+		    	//CONTA
+		    	oSubSec1:Cell("ZT5_CONTA"):setValue( PadR(SUGrupo,6) )
+				//MOVIMENTOS CONSOLIDADOS
+		    	oSubSec1:Cell("SLDDBKE"):setValue( _SUConRs )
+				//INTERCOMPANY
+		    	oSubSec1:Cell("SLDCBKE"):setValue( _SUIntRs )
+				//MOIVMENTOS CONTABEIS BKE
+		    	oSubSec1:Cell("AJUDBKE"):setValue( _SUBKERs )
+		        
+			    oSubSec1:Cell("ZT5_DESC"):show()
+			    oSubSec1:Cell("ZT5_CONTA"):show()
+			    oSubSec1:Cell("SLDDBKE"):show()
+			    oSubSec1:Cell("SLDCBKE"):show()
+			    oSubSec1:Cell("AJUDBKE"):show()
+				oSubSec1:PrintLine()
+
+		    	//--------------------------------------------------------------------------------
+		    	oReport:ThinLine()
+		    	//--------------------------------------------------------------------------------
+	
+				_SUConRS := 0
+				_SUIntRs := 0
+				_SUBKERs := 0
+            EndIf
+
+		    //oSubSec1:ThinLine()
+	    
+		    //oSubSec1:finish()
+			//oReport:SkipLine()
+
+			qTGRUPO->(dbCloseArea())
+			//finaliza comentario
+		Elseif Alltrim(qLGRUPO -> ZT4_TIPO) == 'T'
+			_cQuery := " SELECT ZT5060.*,ZT1_CONTA, "
+            _cQuery += " (SELECT SUM(ZT2_CTAVAL) FROM ZT2060 WHERE ZT1060.ZT1_CONTA=ZT2_CTADEB AND ZT2_DATA "
+            _cQuery += " BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"'  AND ZT2_FILIAL='03' AND ZT2060.ZT2_CTADEB<>'' AND ZT2060.D_E_L_E_T_<>'*' GROUP BY ZT2_CTADEB) AS INTEDEB, "
+
+            _cQuery += " (SELECT SUM(ZT2_CTAVAL) FROM ZT2060 WHERE ZT1060.ZT1_CONTA=ZT2_CTACRE AND ZT2_DATA "
+            _cQuery += " BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"'  AND ZT2_FILIAL='03' AND ZT2060.ZT2_CTACRE<>'' AND ZT2060.D_E_L_E_T_<>'*' GROUP BY ZT2_CTACRE) AS INTECRE, "
+
+            _cQuery += " (SELECT SUM(CT2_VALOR) FROM CT2030,CT1030 WHERE LTRIM(ZT1060.ZT1_CONTA)=LTRIM(CT1_IFRS) AND "
+            _cQuery += " CT1_CONTA=CT2_DEBITO AND CT1030.D_E_L_E_T_<>'*' AND CT2030.D_E_L_E_T_<>'*' AND "
+            _cQuery += " CT2_FILIAL='01' AND CT1_FILIAL='01'   AND CT1_CLASSE='2' AND "
+            _cQuery += " CT2_DATA BETWEEN '" + _DataC + "' AND '"+DTOS(MV_PAR02)+"')AS SLDDBKE, "
+
+            _cQuery += " (SELECT SUM(CT2_VALOR) FROM CT1030,CT2030 WHERE LTRIM(ZT1060.ZT1_CONTA)=LTRIM(CT1_IFRS) AND "
+            _cQuery += " CT1_CONTA=CT2_CREDIT AND CT1030.D_E_L_E_T_<>'*' AND CT2030.D_E_L_E_T_<>'*' AND "
+            _cQuery += " CT2_FILIAL='01' AND CT1_FILIAL='01'   AND CT1_CLASSE='2' AND  "
+            _cQuery += " CT2_DATA BETWEEN '" + _DataC + "' AND '"+DTOS(MV_PAR02)+"')AS SLDCBKE, "
+
+            _cQuery += " (SELECT SUM(ZT3_VALOR) FROM ZT3060 WHERE LTRIM(ZT1060.ZT1_CONTA) = LTRIM(ZT3_DEBITO) AND ZT3_EMPRES = '03' "
+            _cQuery += " AND ZT3_DATA BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT3_FILIAL='03' AND ZT3060.D_E_L_E_T_<>'*' GROUP BY ZT3_DEBITO) AS AJUDBKE, "
+
+            _cQuery += " (SELECT SUM(ZT3_VALOR) FROM ZT3060 WHERE LTRIM(ZT1060.ZT1_CONTA) = LTRIM(ZT3_CREDIT) AND ZT3_EMPRES = '03' "
+            _cQuery += " AND ZT3_DATA BETWEEN '"+DTOS(MV_PAR01)+"' AND '"+DTOS(MV_PAR02)+"' AND ZT3_FILIAL='03' AND ZT3060.D_E_L_E_T_<>'*' GROUP BY ZT3_CREDIT) AS AJUCBKE "
+
+            _cQuery += " FROM ZT5060,ZT1060 WHERE ZT5_CONTA=ZT1_CTASUP AND ZT5_GRUPO='"+ qLGRUPO->ZT4_GRUPO + "' "
+			TcQuery _cQuery Alias qTGRUPO new         
+			
+			//Inicio da Impressão			
+			While (!qTGRUPO->(Eof()))                                           
+	 	        TOGrupo := qTGRUPO->ZT5_GRUPO 
+			
+				//oSubSec1:Init()
+			
+		 	    _TOConRS +=(((qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE)  )+(qTGRUPO->INTEDEB - qTGRUPO->INTECRE))*mv_par05
+		 	    _TOIntRs +=(qTGRUPO->INTEDEB - qTGRUPO->INTECRE)*mv_par05
+                _TOBKERs +=(((qTGRUPO->SLDDBKE - qTGRUPO->SLDCBKE)+(qTGRUPO->AJUDBKE - qTGRUPO->AJUCBKE)  ))*mv_par05
+		        
+		        qTGRUPO->(dbSkip())
+		    End	                   
+	    	//--------------------------------------------------------------------------------
+	    	oReport:ThinLine()
+	    	//--------------------------------------------------------------------------------
+	    
+           	//DESCRIÇÃO
+	    	oSubSec1:Cell("ZT5_DESC"):setValue( _cSeq + " - " + PadR (Posicione("ZT1",1,xFilial() + TOGrupo,"ZT1_DESC"),50) )
+	    	
+	    	//CONTA
+	    	oSubSec1:Cell("ZT5_CONTA"):setValue( PadR(TOGrupo,6) )
+
+			//MOVIMENTOS CONSOLIDADOS
+	    	oSubSec1:Cell("SLDDBKE"):setValue( _TOConRs )
+
+			//INTERCOMPANY
+	    	oSubSec1:Cell("SLDCBKE"):setValue( _TOIntRs )
+
+			//MOIVMENTOS CONTABEIS BKE
+	    	oSubSec1:Cell("AJUDBKE"):setValue( _TOBKERs )
+	    	
+	    	oSubSec1:Cell("ZT5_DESC"):show()
+	    	oSubSec1:Cell("ZT5_CONTA"):show()
+	    	oSubSec1:Cell("SLDDBKE"):show()
+	    	oSubSec1:Cell("SLDCBKE"):show()
+	    	oSubSec1:Cell("AJUDBKE"):show()
+			oSubSec1:PrintLine()
+
+	    	//--------------------------------------------------------------------------------
+	    	oReport:ThinLine()
+	    	//--------------------------------------------------------------------------------
+
+            
+	        _TOConRS := 0
+	 	    _TOIntRs := 0
+	 	    _TOEliRS := 0
+            _TOBKERs := 0
+
+		    
+		    //oSubSec1:finish()
+			//oReport:SkipLine()
+            
+			qTGRUPO->(dbCloseArea())		
+		EndIf
+		
+		qLGRUPO->( dbSkip() )
+		
+		oReport:IncMeter()
+	EndDo
+	oSubSec1:finish()
+	
+	//Finalizando Query
+	qQTD->(dbCloseArea())
+	qLGRUPO->(dbCloseArea())
+Return nil

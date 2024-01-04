@@ -1,0 +1,89 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmvlfer()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+/* M1
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("cadvferCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("cadvferIT.TXT")
+Endcase 
+*/
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("cadvfer0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("cadvfer0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("cadvfer0201.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - valores de FERIAS  ")
+DbselectArea("SRR")
+nTot := RECCOUNT()
+DbSetOrder(1)
+DbSeek(Xfilial("SRR")+"",.T.)
+While !EOF() // .AND. RR_FILIAL == SM0->M0_CODFIL
+  IF SRR->RR_ROTEIR <> 'FER'
+    Dbskip()
+    LOOP 
+  ENDIF   
+
+  DbSelectArea('SRH')
+  DbSetOrder(4) // MAT + PERIODO + ROTEIRO 
+  IF !DBSEEK(Xfilial("SRH")+SRR->RR_MAT+SRR->RR_PERIODO+SRR->RR_ROTEIR)
+    DbselectArea("SRR")
+    Dbskip()
+    LOOP
+  ENDIF
+
+  DbselectArea("SRR")
+            // Formula	            	Posição	Descrição	Tipo	Tamanho		Campo	CAMPO
+    DbSelectArea("SRF")
+    DbSetOrder(1)
+    IF Dbseek(Xfilial("SRF")+SRH->RH_MAT+DTOS(SRH->RH_DATABAS))
+      Do Case 
+      Case (RF_DATAFIM) > (RF_DATABAS+364)
+        cLine := PADR(SRR->RR_MAT,16) + ";" 	    //	1	Chapa do Funcionário	String	16		PFUFERIASVERBAS.CHAPA	PFHSTAFT.CHAPA
+        cLine += PADL(STRTRAN(DTOC(RF_DATABAS+364),"/",""),08) + ";" 	//	2	Data final do período aquisitivo	Data	8	2	PFUFERIASRECIBO.FIMPERAQUIS	PFHSTAFT.DTINICIO
+      OTHERWISE 
+        cLine := PADR(SRR->RR_MAT,16) + ";" 	    //	1	Chapa do Funcionário	String	16		PFUFERIASVERBAS.CHAPA	PFHSTAFT.CHAPA
+        cLine += PADL(STRTRAN(DTOC(RF_DATAFIM),"/",""),08) + ";" 	//	2	Data final do período aquisitivo	Data	8	2	PFUFERIASRECIBO.FIMPERAQUIS	PFHSTAFT.DTINICIO
+      EndCase 
+    Else 
+      DbselectArea("SRR")
+      // Recibo de Férias não tem correspondência com Período de Gozo.
+      Exit 
+      Loop 
+    ENDIF
+    DbselectArea("SRR")
+    cLine += PADL(STRTRAN(DTOC(SRH->RH_DTRECIB),"/",""),08) + ";" 	//	3	Data de pagamento das férias	Data	8		PFUFERIASVERBAS.DATAPAGTO	PFHSTAFT.DTFINAL
+    cLine += PADL(RR_PD,4)+";"	//	4	Código do evento	String	4		PFUFERIASVERBAS.CODEVENTO	PFHSTAFT.TIPO
+    cLine += STRTRAN(ALLTRIM(STR(RR_HORAS)),".",",") + ";"	//	5	Quantidade de hora do evento	Inteiro	4		PFUFERIASVERBAS.HORA	PFHSTAFT.MOTIVO
+    cLine += STRTRAN(ALLTRIM(STR(RR_VALOR)),".",",") + ";"	//	6	Valor referência do evento	Real	9		PFUFERIASVERBAS.REF	PFHSTAFT.OBSERVACAO
+    cLine += STRTRAN(ALLTRIM(STR(RR_VALOR)),".",",") + ";"	//	7	Valor da verba	Real	9		PFUFERIASVERBAS.VALOR	PFHSTAFT.ESTTEMPOSERVICO
+    cLine += ""+";"	//	8	Ind. de evento alterado pelo usuário	Booleano	2		PFUFERIASVERBAS.ALTERADOMANUAL	PFHSTAFT.CODCOLTOMADOR
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM valores de FERIAS")
+Return 

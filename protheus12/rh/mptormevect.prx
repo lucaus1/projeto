@@ -1,0 +1,290 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmevct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+// CT/IT 
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADEVENCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADEVENIT.TXT")
+Endcase 
+*/
+// ARMOR 
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADEVENT0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADFEVENT0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADEVENT0201.TXT")
+Endcase 
+
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - Eventos ")
+DbselectArea("SRV")
+nTot := RECCOUNT()
+dbGotop()
+
+While nLin < nTot .and. !EOF() 
+    // Formula 		                    Posição	Descrição	Tipo	Tamanho		Campo
+    cLine := PADR(LTRIM(RV_COD),04)+";"	    //	1	Código Identificador do Evento	String	4		PEVENTO.CODIGO
+    cLine += PADR(LTRIM(RV_DESC),40)+";"	    //	2	Descrição do Evento	String	40		PEVENTO.DESCRICAO
+    cLine += PADR(LTRIM(''),2)+";"	            //	3	Totalizador do Evento	String	2		PEVENTO.TOTALIZADOR
+    cLine += PADR(LTRIM(''),1)+";"	            //	4	Indicador de Estado do Evento	String	1		PEVENTO.CHAVE
+    cLine += PADR(LTRIM(''),2)+";"	            //	5	Indicativo de Composição de Comissão	Inteiro	2		PEVENTO.COMPOECOMISSAO
+    cTipoCod:="P"
+    Do case 
+      case RV_TIPOCOD == "1" // Provento 
+           cTipoCod :="P"
+      case RV_TIPOCOD == "2" // Desconto 
+           cTipoCod :="D"
+      case RV_TIPOCOD == "3"  // Base Provento
+           cTipoCod :="B"
+      OTHERWISE 
+           cTipoCod :="B"
+           
+    Endcase 
+    cLine += PADR(LTRIM(cTIPOCOD),1)+";"	    //	6	Provento/Desconto	String	1		PEVENTO.PROVDESCBASE
+    cLine += PADR(LTRIM(RV_TIPO),1)+";"	    //	7	Valor/Hora/Dia/Referência	String	1		PEVENTO.VALHORDIAREF
+    cLine += PADL((RV_PERC),9)+";"	    //	8	Porcentagem de Incidência	Real	9		PEVENTO.PORCINCID
+    cLine += PADR(LTRIM(''),2)+";"	            //	9	Código de Cálculo	Inteiro	2		PEVENTO.CODIGOCALCULO
+    cLine += PADR(LTRIM(''),2)+";"	            //	10	Prioridade do Evento	Inteiro	2		PEVENTO.PRIORIDADE
+    cLine += PADR(LTRIM(''),8)+";"	    //	11	Código da Fórmula de Valor	String	8		PEVENTO.FORMULAVALOR
+    cLine += PADR(LTRIM(''),8)+";"	            //	12	Código da Fórmula de Hora	String	8		PEVENTO.FORMULAHORA
+    cLine += PADR(LTRIM(''),8)+";"	            //	13	Código da Fórmula de Referência	String	8		PEVENTO.FORMULAREF
+    cLine += PADR(LTRIM(''),8)+";"	            //	14	Código da Fórmula de Crédito	String	8		PEVENTO.FORMULACRITICA
+    cIncinss :="0"
+    Do case 
+    case RV_INSS =="S".AND. RV_REF13 =="N"
+     cIncinss :="1"
+    OTHERWISE
+     cIncinss :="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncinss),2)+";"	    //	15	Incidência de Inss	Booleano	2		PEVENTO.INCINSS
+    cIncIR :="0"
+    Do case 
+    case RV_IR =="S" .AND. RV_REFFER == "N" .AND. RV_REF13 =="N"
+     cIncIR :="1"
+    OTHERWISE
+     cIncIR :="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncIR),2)+";"	        //	16	Incidência de Irrf	Booleano	2		PEVENTO.INCIRRF
+    cIncFGTS:="0"
+    Do case 
+    case RV_FGTS =="S"
+     cIncFGTS :="1"
+    OTHERWISE
+     cIncFGTS :="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncFGTS),2)+";"	    //	17	Incidência de Fgts	Booleano	2		PEVENTO.INCFGTS
+    cIncRAIS:="1"
+    Do case 
+    case "N" $ (RV_RAIS)
+     cIncRAIS :="0"
+    OTHERWISE
+     cIncRAIS :="1"
+    Endcase 
+    cLine += PADR(LTRIM(cIncRAIS),2)+";"	    //	18	Incidência de Rais	Booleano	2		PEVENTO.INCRAIS
+    cIncDIRF:="1"
+    Do case 
+    case ALLTRIM(RV_DIRF) =="N"
+     cIncDIRF :="0"
+    OTHERWISE
+     cIncDIRF :="1"
+    Endcase 
+    cLine += PADR(LTRIM(cIncDIRF),2)+";"	    //	19	Incidência no Informe de Rendimentos	Booleano	2		PEVENTO.INCINFREND
+    cIncDSRHE:="1"
+    Do case 
+    case ALLTRIM(RV_DSRHE) =="N"
+     cIncDSRHE :="0"
+    OTHERWISE
+     cIncDSRHE :="1"
+    Endcase 
+    cLine += PADR(LTRIM(cIncDSRHE),2)+";"	    //	20	Incidência do Dsr	Booleano	2		PEVENTO.INCDSR
+    cLine += PADR(LTRIM(''),2)+";"	            //	21	Incidência em Vale-Transporte	Booleano	2		PEVENTO.INCVALETRANSP
+    cIncIRFER:="1"
+    Do case 
+    case ALLTRIM(RV_REFFER) =="S"
+     cIncIRFER :="1"
+    OTHERWISE
+     cIncIRFER :="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncIRFER),2)+";"	    //	22	Incidência de Irrf nas Férias	Booleano	2		PEVENTO.INCIRRFFERIAS
+    cLine += PADR(LTRIM(''),2)+";"	            //	23	Incidência no Terço de Férias	Booleano	2		PEVENTO.INCTERCOFERIAS
+    cIncSALFAMI:="1"
+    Do case 
+    case ALLTRIM(RV_SALFAMI) =="N"
+     cIncSALFAMI :="0"
+    OTHERWISE
+     cIncSALFAMI:="1"
+    Endcase 
+    cLine += PADR(LTRIM(cIncSALFAMI),2)+";"	    //	24	Incidência em Salário-Família	Booleano	2		PEVENTO.INCSALFAMILIA
+    cIncIns13:="0"
+    Do case 
+    case ALLTRIM(RV_REF13) =="S"
+     cIncIns13 :="1"
+    OTHERWISE
+     cIncIns13:="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncIns13),2)+";"	    //	25	Incidência de Inss no 13. Salário	Booleano	2		PEVENTO.INCINSS13
+    cIncIR13:="0"
+    Do case 
+    case ALLTRIM(RV_REF13) =="S"
+     cIncIRs13 :="1"
+    OTHERWISE
+     cIncIR13:="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncIR13),2)+";"	    //	26	Incidência de Irrf no 13. Salário	Booleano	2		PEVENTO.INCIRRF13
+    cLine += PADR(LTRIM(''),100)+";"	        //	27	Incremento de Acumuladores	String	100		PEVENTO.INCACUMULADOR
+    cIncSalario :="0"
+    Do case 
+    case ALLTRIM(RV_INCORP) =="S"
+     cIncSalario:="1"
+    OTHERWISE
+     cIncSalario:="0"
+    Endcase 
+    cLine += PADR(LTRIM(cIncSalario),2)+";"	    //	28	Incidência de Salário	Booleano	2		PEVENTO.INCSALARIO
+    cLine += PADR(LTRIM(''),2)+";"	            //	29	Prop. de Acordo com a Admissão	Booleano	2		PEVENTO.PROPORCADMISSAO
+    cLine += PADR(LTRIM(''),2)+";"	            //	30	Proporcionalizar de Acordo com a Licença	Booleano	2		PEVENTO.PROPORCLICENCA
+    cLine += PADR(LTRIM(''),2)+";"	            //	31	Proporcionalizar de Acordo com as Férias	Booleano	2		PEVENTO.PROPORCFERIAS
+    cLine += PADR(LTRIM(''),2)+";"	            //	32	Dedutível de Irrf	Booleano	2		PEVENTO.DEDUTIVELIRRF
+    cLine += PADR(LTRIM(''),2)+";"	            //	33	Estorna Somente em Irrf de Férias	Booleano	2		PEVENTO.ESTIRRFFERIAS
+    cLine += PADR(LTRIM(''),2)+";"	            //	34	Indicativo de Est. de Base de Sal. Fam.	Booleano	2		PEVENTO.ESTCALCSALFAM
+    cLine += PADR(LTRIM(''),2)+";"	            //	35	Indicativo de Est da Base de Vale-Transp	Booleano	2		PEVENTO.ESTCALCVALETR
+    cLine += PADR(LTRIM(''),2)+";"	            //	36	Indicativo de Est.De Inss no 13. Sal.	Booleano	2		PEVENTO.ESTINSS13
+    cLine += PADR(LTRIM(''),2)+";"	            //	37	Grupo Aas	Inteiro	2		PEVENTO.GRUPOAAS
+    cLine += PADR(LTRIM(''),4)+";"	            //	38	Indicativo de Evento a Lançar	String	4		PEVENTO.EVTALANCAR
+    cLine += PADR(LTRIM(''),22)+";"	        //	39	Número da Conta para Crédito	String	22		PEVENTO.CONTACREDITO
+    cLine += PADR(LTRIM(''),22)+";"	        //	40	Número da Conta para Débito	String	22		PEVENTO.CONTADEBITO
+    cLine += PADR(LTRIM(''),10)+";"	    //	41	Número do Histórico Padrão	String	10		PEVENTO.NROHISTPADRAO
+    cLine += PADR(LTRIM(''),60)+";"	        //	42	Complemento do Histórico	String	60		PEVENTO.COMPLHISTORICO
+    cLine += PADR(LTRIM(''),22)+";"	        //	43	No Conta Gerencial para Crédito	String	22		PEVENTO.CGCREDITO
+    cLine += PADR(LTRIM(''),22)+";"	        //	44	No Conta Gerencial para Débito	String	22		PEVENTO.CGDEBITO
+    cLine += PADR(LTRIM(''),4)+";"	            //	45	Evento de Diferença de Salário	String	4		PEVENTO.CODEVENTODIF
+    cLine += PADR(LTRIM(''),8)+";"	            //	46	Código do Rateio que o Evento Segue	String	8		PEVENTO.CODRATEIO
+    cLine += PADR(LTRIM(''),16)+";"	        //	47	Sal.Composto Base de Calc. do Evento	String	16		PEVENTO.BASESALCOMPOSTO
+    cLine += PADR(LTRIM(''),2)+";"	            //	48	Se o Evento Será Descont.No Mês Seguinte	Booleano	2		PEVENTO.DESCONTOPERDOADO
+    cLine += PADR(LTRIM(''),2)+";"	            //	49	Segue Rateio de Tomador de Serviço	Booleano	2		PEVENTO.PROPPORTOMADOR
+    cLine += PADR(LTRIM(''),2)+";"	            //	50	Indic. de Evento para Pag. Obrigatório	Booleano	2		PEVENTO.PAGOBRIGATORIO
+    cLine += PADR(LTRIM(''),2)+";"	            //	51	Existe Intgr Contábil Conta Crédito	Booleano	2		PEVENTO.TEMINTCONTCC
+    cLine += PADR(LTRIM(''),2)+";"	            //	52	Existe Intgr Contábil Conta Dédito	Booleano	2		PEVENTO.TEMINTCONTCD
+    cLine += PADR(LTRIM(''),2)+";"	            //	53	Existe Intgr Contábil Conta Ger Crédito	Booleano	2		PEVENTO.TEMINTCONTGC
+    cLine += PADR(LTRIM(''),2)+";"	            //	54	Existe Intgr Contábil Conta Ger Dédito	Booleano	2		PEVENTO.TEMINTCONTGD
+    cLine += PADR(LTRIM(''),2)+";"	            //	55	Existe Intgr Func Contab Conta Crédito	Booleano	2		PEVENTO.TEMINTFUNCCC
+    cLine += PADR(LTRIM(''),2)+";"	            //	56	Existe Intgr Func Contab Conta Dédito	Booleano	2		PEVENTO.TEMINTFUNCCD
+    cLine += PADR(LTRIM(''),2)+";"	            //	57	Existe Intgr Func Ger Conta Crédito	Booleano	2		PEVENTO.TEMINTFUNCGC
+    cLine += PADR(LTRIM(''),2)+";"	            //	58	Existe Intgr Func Ger Conta Débito	Booleano	2		PEVENTO.TEMINTFUNCGD
+    cLine += PADR(LTRIM(''),2)+";"	            //	59	Indicativo para Contab. Parcial	Booleano	2		PEVENTO.CONTPARCIAL
+    cLine += PADR(LTRIM(''),2)+";"	            //	60	Evento Incide em Adic. Substituição	Booleano	2		PEVENTO.INCSUBSTITUICAO
+    cLine += PADR(LTRIM(''),2)+";"	            //	61	Indicativo de Est. da Base de Fgts 13O.	Booleano	2		PEVENTO.ESTFGTS13
+    cLine += PADR(LTRIM(''),2)+";"	            //	62	Indicativo de Est. da Base de Irrf 13O.	Booleano	2		PEVENTO.ESTIRRF13
+    cLine += PADR(LTRIM(''),4)+";"	            //	63	Evento de Insuficiência de Saldos	String	4		PEVENTO.CODEVENTOINSUF
+    cLine += PADR(LTRIM(''),2)+";"	            //	64	Evento incide em pensão	Inteiro	2		PEVENTO.INCPENSAO
+    cLine += PADR(LTRIM(''),2)+";"	            //	65	Evento incide em pensão de férias	Inteiro	2		PEVENTO.INCPENSAOFERIAS
+    cLine += PADR(LTRIM(''),2)+";"	            //	66	Evento incide em pensão de 13º salário	Inteiro	2		PEVENTO.INCPENSAO13SAL
+    cLine += PADR(LTRIM(''),2)+";"	            //	67	Evento incide em pensão de part. Lucros	Inteiro	2		PEVENTO.INCPENSAOPARTICIP
+    cLine += PADR(LTRIM(''),8)+";"	            //	68	Fórmula para compor Compl. Histórico	String	8		PEVENTO.FORMCOMPLHIST
+    cLine += PADR(LTRIM(''),2)+";"	            //	69	Período de cálculo do rateio de eventos	Inteiro	2		PEVENTO.PERCALCRATEIO
+    cLine += PADR(LTRIM(''),2)+";"	            //	70	Estorna FGTS	Inteiro	2		PEVENTO.ESTFGTS
+    cLine += PADR(LTRIM(''),2)+";" 	        //	71	Estorna INSS	Inteiro	2		PEVENTO.ESTINSS
+    cLine += PADR(LTRIM(''),2)+";"	            //	72	Estorna IRRF	Inteiro	2		PEVENTO.ESTIRRF
+    cLine += PADR(LTRIM(''),2)+";" 	        //	73	Incide FGTS 13	Inteiro	2		PEVENTO.INCFGTS13
+    cLine += PADR(LTRIM('0'),2)+";"	            //	74	Proporcionalizar de acordo com demissão.	Booleano	2		PEVENTO.PROPORCDEMISSAO
+    cLine += PADR(LTRIM('0'),2)+";"	            //	75	Exibir Evento na Entrada de Mov. via Web	Booleano	2		PEVENTO.EVENTOEXIBIDOENTRADADADOSWEB
+    cLine += PADR(LTRIM(''),25)+";"	        //	76	Código do centro de custo do evento	String	25		PEVENTO.CCUSTO
+    cLine += PADR(LTRIM(''),3)+";"	            //	77	Codigo de rubrica	String	3		PEVENTO.CODRUBRICA
+    cLine += PADR(LTRIM(''),16)+";"	        //	78	Conteúdo do memo (começa com /@ e termina com @/)	Memo	16		PMEMO.VALMEMO
+    cLine += PADR(LTRIM(''),02)+";"	        //	79	Indicativo de Evento Inativo	Inteiro	2		PEVENTO.INATIVO
+    cLine += PADR(LTRIM(''),02)+";"	        //	80	Indicativo de Estorno da Base de Cálculo	Booleano	2		PEVENTO.ESTCALCULO
+    cLine += PADR(LTRIM(''),02)+";"	        //	81	Indicativo de Estorno da Base de Férias	Booleano	2		PEVENTO.ESTCALCFERIAS
+    cLine += PADR(LTRIM(''),04)+";"	        //	82	Identificador do memo	Inteiro	4		PEVENTO.IDANOTACAO
+    cLine += PADR(LTRIM(''),2)+";"	            //	83	Segue rateio de salário composto	Booleano	2		PEVENTO.SEGUERATEIOSALCMP
+    cLine += PADR(LTRIM(''),20)+";"	        //	84	Conta Reversão	String	20		PEVENTO.CONTAREVERSAO
+    cLine += PADR(LTRIM(''),8)+";"	            //	85	Fórmula para evento relacionado.	String	8		PEVENTO.FORMULAEVTRELAC
+    cLine += PADR(LTRIM(''),1)+";"	            //	86	Remunerações Quadro de Pessoal	String	1		PEVENTO.QUADROREM
+    cLine += PADR(LTRIM(''),4) + ";"	        //	87	Ordem cálculo dentro de uma prioridade	Inteiro	4		PEVENTO.ORDEMCALCULO
+    cLine += PADR(LTRIM(''),2) + ";"	        //	88	Evento dedutível em IRRF de 13o	Booleano	2		PEVENTO.DEDUTIVELIRRF13
+    cLine += PADR(LTRIM(''),2) + ";"	        //	89	Evento dedutível em IRRF de férias	Booleano	2		PEVENTO.DEDUTIVELIRRFFERIAS
+    cLine += PADR(LTRIM(''),2) + ";"	        //	90	Segue rateio do movimento de ensino	Booleano	2		PEVENTO.SEGUERATEIOMOVENSINO
+    cLine += PADR(LTRIM(RV_NATUREZ),4) + ";"	//	91	Natureza da rubrica	String	4		PEVENTO.NATRUBRICA
+    cLine += PADR(LTRIM(''),2) + ";"	        //	92	Incidência de INSS suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 136 INCINSSSUSPENSAO)	Inteiro	2		PEVENTO.INCINSSSUSPENSA
+    cLine += PADR(LTRIM(''),2) + ";"       	//	93	Incidência de IRRF suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 137 INCIRRFSUSPENSAO)	Inteiro	2		PEVENTO.INCIRRFSUSPENSA
+    cLine += PADR(LTRIM(''),2) + ";"       	//	94	Incidência de FGTS suspensa em decorrência de decisão judicial (Valores válidos : 1), 2), 3)	Inteiro	2		PEVENTO.INCFGTSSUSPENSA
+    cLine += PADR(LTRIM(''),20) + ";"      	//	95	Número do Processo Administrativo/Judicial	String	20		PEVENTO.NRPROCESSOINSS
+    cLine += PADR(LTRIM(''),1) + ";"       	//	96	Código Correspondente ao Tipo de Processo (A - Administrativo), J - Judicial)	String	1		PEVENTO.TPPROCESSOINSS
+    cLine += PADR(LTRIM(''),2) + ";"       	//	97	Extensão da Decisão/Sentença	Inteiro	2		PEVENTO.EXTDECISAOINSS
+    cLine += PADR(LTRIM(''),20) + ";"	        //	98	Número do Processo Administrativo/Judicial	String	20		PEVENTO.NRPROCESSOIRRF
+    cLine += PADR(LTRIM(''),1) + ";"	        //	99	Código Correspondente ao Tipo de Processo (A - Administrativo), J - Judicial)	String	1		PEVENTO.TPPROCESSOIRRF
+    cLine += PADR(LTRIM(''),20) + ";"	        //	100	Número do Processo Administrativo/Judicial	String	20		PEVENTO.NRPROCESSOFGTS
+    cLine += PADR(LTRIM(''),1) + "; "	        //	101	Código Correspondente ao Tipo de Processo (A - Administrativo), J - Judicial)	String	1		PEVENTO.TPPROCESSOFGTS
+    cLine += PADR(LTRIM(''),2) + "; "	        //	102	Incidência de Contribuição Sindical Suspensa	Inteiro	2		PEVENTO.INCSINDSUSPENSA
+    cLine += PADR(LTRIM(''),20) + ";"	        //	103	Número do Processo Administrativo/Judicial	String	20		PEVENTO.NRPROCESSOSIND
+    cLine += PADR(LTRIM(''),1) + ";"	        //	104	Código Correspondente ao Tipo de Processo (A - Administrativo), J - Judicial)	String	1		PEVENTO.TPPROCESSOSIND
+    cLine += PADR(LTRIM(''),2) + ";"	        //	105	Incidência de Salário Maternidade Suspensa	Inteiro	2		PEVENTO.INCSALMATERNSUSPENSA
+    cLine += PADR(LTRIM(''),20) + ";"	        //	106	Número do Processo Administrativo/Judicial	String	20		PEVENTO.NRPROCESSOSALMATERN
+    cLine += PADR(LTRIM(''),1) + ";"	        //	107	Código Correspondente ao Tipo de Processo (A - Administrativo), J - Judicial)	String	1		PEVENTO.TPPROCESSOSALMATERN
+    cLine += PADR(LTRIM(''),2) + ";"	        //	108	Incide no Custo do funcionário	Inteiro	2		PEVENTO.INCIDECUSTOFUNCIONARIO
+    cLine += PADR(LTRIM(''),4) + ";"	        //	109	Identificador do Item Contábil	Inteiro	4		PEVENTO.IDITEMCONTABIL
+    cLine += PADR(LTRIM(''),4) + ";"	        //	110	Identificador da Classe de Valor	Inteiro	4		PEVENTO.IDCLASSEVALOR
+    cLine += PADR(LTRIM(''),1) + ";"	        //	111	Tipo de Benefício PPE	String	1		PEVENTO.CODTPBENEFICIO
+    cLine += PADR(LTRIM(''),2) + ";"	        //	112	Tipo de Desconto PPE	String	2		PEVENTO.CODTPDESCONTO
+    cLine += PADR(LTRIM(''),2) + ";"	        //	113	Incidência de PIS	Booleano	2		PEVENTO.INCPIS
+    cLine += PADR(LTRIM(''),2) + ";"	        //	114	Estorna PIS	Booleano	2		PEVENTO.ESTPIS
+    cLine += PADR(LTRIM(''),2) + ";"	        //	115	Compõe Remuneração Base de Professor	Booleano	2		PEVENTO.COMPOEREMBASE
+    cLine += PADR(LTRIM(''),2) + ";"	        //	116	Rendimento não tributável em função de acordos internacionais de bitributação	Booleano	2		PEVENTO.RENDNAOTRIBACORDOINTERNAC
+    cLine += PADR(LTRIM(''),2) + ";"	        //	117	Não é base de cálculo em função de acordos internacionais de previdência social	Booleano	2		PEVENTO.NAOEBASECALCACORDOINTERNAC  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	118	Incidência de INSS 13º suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 136 INCINSSSUSPENSAO)	Inteiro	2		PEVENTO.INCINSS13SUSPENSA     
+    cLine += PADR(LTRIM(''),2) + ";"	        //	119	Incidência de IRRF 13º suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 137 INCIRRFSUSPENSAO)	Inteiro	2		PEVENTO. INCIRRF13SUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	120	Incidência de FGTS 13º suspensa em decorrência de decisão judicial	Inteiro	2		INCFGTS13SUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	121	Incidência de IRRF Férias suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 137 INCIRRFSUSPENSAO)	Inteiro	2		INCIRRFFERIASSUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	122	Incidência de IRRF PLR suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 137 INCIRRFSUSPENSAO)	Inteiro	2		INCIRRFPLRSUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	123	Incidência de INSS Sal.Matern. suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 136 INCINSSSUSPENSAO)	Inteiro	2		INCINSSSALMATSUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	124	Incidência de INSS Sal.Mater.13º suspensa em decorrência de decisão judicial (campo descontinuado e substituido para o campo 136 INCINSSSUSPENSAO)	Inteiro	2		INCINSSSALMAT13SUSPENSA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	125	Incidência de Contribuição Sindical 	Boleano	2		INCCONTRIBSINDICAL  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	126	Forçar incidência  de IRRF	Inteiro	2		FORCARINCIRRF  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	127	Incidência de IRRF Forçada	String	2		INCIRRFFORCADA  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	128	Isento de IRRF	Inteiro	2		ISENTOIRRF  
+    cLine += PADR(LTRIM(''),4) + ";"	        //	129	Incidência IRRF Isenção	String	4		INCIRRFISENCAO
+    cLine += PADR(LTRIM(''),2) + ";"	        //	130	Não calcula diferença para este evento	Boleano	2		NAOCALCDIFERENCA
+    cLine += PADR(LTRIM(''),2) + ";"	        //	131	Incidência de Suspensão para Contribuição Previdenciária (Aba Proventos)	Inteiro	2		INCCPSUSPENSAO
+    cLine += PADR(LTRIM(''),4) + ";"	        //	132	Evento de Diferença de Salário Negativa	String	4		CODEVENTODIFNEGATIVA
+    cLine += PADR(LTRIM(''),2) + ";"	        //	133	Incidência de INSS exclusiva do empregador (Aba Proventos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADOR
+    cLine += PADR(LTRIM(''),2) + ";"	        //	134	Incidência de INSS exclusiva do segurado - 13º salário	Inteiro	2		INCINSSEXCLUSIVASEGURADO13
+    cLine += PADR(LTRIM(''),2) + ";"	        //	135	Incidência de INSS exclusiva do empregador (Aba Descontos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADORDESC
+    cLine += PADR(LTRIM(''),2) + ";"	        //	136	Incidência de INSS suspensa em decorrência de decisão judicial (Valores válidos: 91), 92), 93), 94)	Inteiro	2		INCINSSSUSPENSAO
+    cLine += PADR(LTRIM(''),4) + ";"	        //	137	Incidência de IRRF suspensa em decorrência de decisão judicial (Valores válidos: Conforme tabela 21 do eSocial independente do layout do eSocial)	Inteiro	4		INCIRRFSUSPENSAO  
+    cLine += PADR(LTRIM(''),2) + ";"	        //	138	Compõe o teto remuneratório específico (art. 37), XI), da CF/1988) 	Boleano	2		COMPOETETOREMUNERATORIO
+    cLine += PADR(LTRIM(''),2) + ";"	        //	139	Incidência de Suspensão para Contribuição Previvenciária (Aba Descontos)	Inteiro	2		INCCPSUSPENSAODESC
+    cLine += PADR(LTRIM(''),2) + ";"	        //	140	Incidência de INSS décimo terceiro exclusiva do empregador (Aba Proventos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADOR13
+    cLine += PADR(LTRIM(''),2) + ";"	        //	141	Incidência de INSS décimo terceiro exclusiva do empregador (Aba Descontos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADOR13DS
+    cLine += PADR(LTRIM(''),2) + ";"	        //	142	Incidência de INSS décimo terceiro exclusiva do empregador (Aba Descontos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADOR13DS
+    cLine += PADR(LTRIM(''),2) + ";"	        //	143	Incidência de INSS décimo terceiro exclusiva do empregador (Aba Descontos)	Inteiro	2		INCINSSEXCLUSIVAEMPREGADOR13DS
+
+
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row()),1 Say Alltrim(Str(nCt),4))+" de "+Alltrim(Str(nTot),4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

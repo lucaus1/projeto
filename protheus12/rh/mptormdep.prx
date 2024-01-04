@@ -1,0 +1,458 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mptormdep()    
+Private nLin := 1
+Private nHdl := 0
+Private nCt   := 0
+Private nTot := 0
+Private cLine :=""
+Private lFil01 := .T. 
+Private lFil03 := .T.
+Private cMat := "" 
+Private cCod := ""
+Private TemMae := .F.
+Private TemPai := .F. 
+Private cCodMae := ""
+
+// CT
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADDEPENCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADDEPENIT.TXT")
+Endcase 
+*/
+// ARMOR 
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADDEP0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADDEP0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADDEP0201.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - Dependentes ")
+DbselectArea("SRB")
+nTot := RECCOUNT()
+DbSetOrder(1)
+DbSeek(Xfilial("SRB")+"",.T.)
+While !EOF() .and. RB_FILIAL == SM0->M0_CODFIL
+  DbSelectArea("SRA")
+  DbSetOrder(1)
+    lFil01 := .T. 
+    lFil03 := .T.
+    cMat := SRB->RB_MAT 
+    cCod := SRB->RB_COD
+    cCodMae :=  SRB->RB_COD
+    if !DBSEEK( "01"+SRB->RB_MAT)
+      lFil01 := .F. 
+    ENDIF
+    if !DBSEEK( "03"+SRB->RB_MAT)
+      lFil03 := .F. 
+    ENDIF
+    if !lFil01 .and. !lFil03
+      DbselectArea("SRB")
+      Dbskip()
+      loop
+    Endif
+    DbselectArea("SRB")
+  
+
+                //	Comentário	Posição	Descrição	Tipo	Tamanho		Campo
+    cLine := ALLTRIM(RB_MAT)	//	1	Chapa do Funcionário	String	16		PFDEPEND.CHAPA
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_COD)	//	2	Nº do Dependente	Inteiro	2		PFDEPEND.NRODEPEND
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_NOME)	//	3	Nome do Dependente	String	120		PFDEPEND.NOME
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_CIC)	//	4	CPF do Dependente	String	12		PFDEPEND.CPF
+    cLine += ";" 							
+    cLine += STRTRAN(DTOC(RB_DTNASC),"/","")	//	5	Data de Nasc. Do Dependente	Data	8		PFDEPEND.DTNASCIMENTO
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_SEXO)	//	6	Sexo do Dependente (M/F)	String	1		PFDEPEND.SEXO
+    cLine += ";" 							
+    cLine += ALLTRIM('S')	//	7	Estado Civil do Dependente (C- Casado  D - Desquitado  E -União Estável  I-Divorciado  O – Outros  P-Separado  S- Solteiro  V- Viúvo)	String	1		PFDEPEND.ESTADOCIVIL
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_LOCNASC)	//	8	Local de Nascimento do Dependente	String	32		PFDEPEND.LOCALNASCIMENTO
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_CARTORI)	//	9	Nome do Cartório	String	40		PFDEPEND.CARTORIO
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_NREGCAR)	//	10	Nº do Registro	String	10		PFDEPEND.NROREGISTRO
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_NUMLIVR)	//	11	Nº do Livro de Registro	String	8		PFDEPEND.NROLIVRO
+    cLine += ";" 							
+    cLine += ALLTRIM(PADL(RB_NUMFOLH,5))	//	12	Nº da Folha de Registro	String	5		PFDEPEND.NROFOLHA
+    cLine += ";" 							
+    cLine += ALLTRIM(RB_TIPIR)	 //	13	Incidência de IRRF (0-Não/1-Sim) Inteiro	1 PFDEPEND.INCIRRF
+    cLine += ";"
+    cLine += ALLTRIM(RB_TIPSF) //14 Incidência de INSS (0-Não/1-Sim) Inteiro 1 PFDEPEND.INCINSS
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(RB_TPDEPAM),1) //	15	Incidência de Assistência Médica (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCASSISTMEDICA
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),01) // 16	Incidência de Pensão (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCPESAO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	17	Incidências Definíveis ("*" nas posições das incidências confirmadas e ' ' (branco) nas posições das incidências não confirmadas. Ex: *_ _ * _ _ _ o dependente incide na Incidência 1 e na Incidência 4)	String	20		PFDEPEND.INCDEFINIVEIS
+    cLine += ";" 		
+    cGrauPar:="1"
+    Do Case
+      Case RB_GRAUPAR == "F"
+        cGrauPar:="1"
+      Case RB_GRAUPAR == "C"
+        cGrauPar:="5"
+      Case RB_GRAUPAR == "E"
+        cGrauPar:="D"
+      Case RB_GRAUPAR == "M" .and. RB_SEXO =="F"
+        cGrauPar:="7" // MAE 
+        TemMae := .T.
+      Case RB_GRAUPAR == "P" .and. RB_SEXO =="M"
+        cGrauPar:="6" // PAI
+        TemPai := .T.
+      Case RB_GRAUPAR == "O"
+        cGrauPar:="9"
+      OTHERWISE
+        cGrauPar:="9"
+    Endcase
+
+    cLine += PADR(ALLTRIM(cGraupar),01) //	18	Grau de Parentesco do Dependente (1-Filho (a) válido 3-Filho (a) inválido 5-Cônjuge 6-Pai 7-Mãe 8-Sogra 9-Outros A- AVÔ(ó) C-Companheiro(a) D-Enteado E–Excluído G-Ex-Cônjuge I- Irmã (o) Válido N-Irmã (o) Inválido P-Ex-companheiro(a) S-Ex-Sogro(a) T-Neto(a) X-Ex-Enteado(a) M-Menor Pobre B-Incapaz	String	1		PFDEPEND.GRAUPARENTESCO
+    cLine += ";" 							
+    cLine += ALLTRIM('1') // 19	Dependentes possui cartão vacina? (0 - Não/1- Sim)	String	1		PFDEPEND.CARTAOVACINA
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),09) // 20	Percentual da Pensão	String	9		PFDEPEND.PERCENTUAL
+    cLine += ";" 							
+    cLine += ALLTRIM('') // 21	Tipo da Pensão	String	2		PFDEPEND.TIPOPENSAO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	22	Banco de pagamento pensão	String	3		PFDEPEND.BANCO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	23	Agencia de pagamento da Pensão	String	6		PFDEPEND.AGENCIA
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),15) //	24	Conta de Pagamento Pensão	String	15		PFDEPEND.CONTACORRENTE
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),45) //	25	Nome responsável	String	45		PFDEPEND.RESPONSAVEL
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	26	Fórmula cálculo	String	8		PFDEPEND.FORCALCULO
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),01) //	27	Cálculo da Pensão é sobre o bruto (0-Não/ 1-Sim)	String	1		PFDEPEND.BRUTO
+    cLine += ";" 							
+    cLine += PADR(STRTRAN(DTOC(RB_DTENTRA),"/",""),08) //	28	Data de entrega da certidão de nascimento	Data	8		PFDEPEND.DATAENTREGACERTIDAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM('1'),01) //	29	Flag apresentou compr frequência escolar? (0 - Não/1- Sim)	String	1		PFDEPEND.FREQESCOLAR
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM('0'),01) // 30	Universitário/Escola técnica 2º grau (0 - Não/1- Sim)	String	1		PFDEPEND.UNIVERSITARIO
+    cLine += ";" 							
+    cTipoDSF :="0"
+    Do CASE
+      case RB_TIPSF == "1"
+       cTipoDSF :="1"
+      case RB_TIPSF == "2"
+       cTipoDSF :="1"
+    Endcase
+    cLine += PADR(cTipoDSF,01) // 31 Incidência Salário Família - (0-Não/ 1-Sim)	String	1		PFDEPEND.INCSALFAM
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''  ),80) // 32	Observação	String	80		PFDEPEND.OBSERVACAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	33	Fórmula Adicional Pensão	String	8		PFDEPEND.FORMPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	34	Data de início do desconto da pensão	Data	8		PFDEPEND.DATAINICIODESCPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),05) //	35	Coligada do fornecedor	Inteiro	5		PFDEPEND.CODCOLFORNEC
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),25) //	36	Código do fornecedor	String	25		PFDEPEND.CODFORNECEDOR
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),05) //	37	Operação Bancária	String	5		PFDEPEND.CODCOLFORNEC
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),09) //	38	Valor fixo	Real	9		PFDEPEND.VALORFIXO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),100) //	39	Número do Cartão SUS	String	100		PFDEPEND.NUMEROCARTAOSUS
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(RB_NUMAT  ),20) //	40	Número da Declaração de Nascido Vivo - Resolução Normativa Nº 295	String	20		PFDEPEND.NUMDECLARANASCVIVO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	41	Data Fim do Desconto de Pensão	Data	8		PFDEPEND.DATAFIMDESCPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),01) //	42	campo extra 
+    // cLine += PADR(ALLTRIM(''),01) //	43	campo extra 
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row()),1 Say AlALLTRIM(Str(nCt),4))+" de "+AlALLTRIM(Str(nTot),4))
+    Dbskip()
+    if cMat <> RB_MAT  // incluir pai e mae 
+      if !TemMae 
+       IncMae()
+        TemMae := .F.
+      Endif 
+      if !TemPai 
+       IncPai()
+        TemPai := .F. 
+      Endif 
+    Endif
+
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+
+
+Static Function IncMae()
+   Do Case 
+    case  lFil01 
+      DbSelectArea("SRA")
+      DBSEEK( "01"+cMAT)
+    Case  lFil03
+      DbSelectArea("SRA")
+      DBSEEK( "03"+cMAT)
+   ENDCASE
+    // Mae 
+    cLine := ALLTRIM(cMAT)	//	1	Chapa do Funcionário	String	16		PFDEPEND.CHAPA
+    cLine += ";" 							
+    cCodMae := STRZERO(val(cCod)+1,2)
+    cLine += ALLTRIM(cCODMae)	//	2	Nº do Dependente	Inteiro	2		PFDEPEND.NRODEPEND
+    cLine += ";" 							
+    cLine += ALLTRIM(SRA->RA_MAE)	//	3	Nome do Dependente	String	120		PFDEPEND.NOME
+    cLine += ";" 							
+    cLine += ""	//	4	CPF do Dependente	String	12		PFDEPEND.CPF
+    cLine += ";" 							
+    cLine += ""	//	5	Data de Nasc. Do Dependente	Data	8		PFDEPEND.DTNASCIMENTO
+    cLine += ";" 							
+    cLine += "F"	//	6	Sexo do Dependente (M/F)	String	1		PFDEPEND.SEXO
+    cLine += ";" 							
+    cLine += ALLTRIM('C')	//	7	Estado Civil do Dependente (C- Casado  D - Desquitado  E -União Estável  I-Divorciado  O – Outros  P-Separado  S- Solteiro  V- Viúvo)	String	1		PFDEPEND.ESTADOCIVIL
+    cLine += ";" 							
+    cLine += ""	//	8	Local de Nascimento do Dependente	String	32		PFDEPEND.LOCALNASCIMENTO
+    cLine += ";" 							
+    cLine += ""	//	9	Nome do Cartório	String	40		PFDEPEND.CARTORIO
+    cLine += ";" 							
+    cLine += ""	//	10	Nº do Registro	String	10		PFDEPEND.NROREGISTRO
+    cLine += ";" 							
+    cLine += ""	//	11	Nº do Livro de Registro	String	8		PFDEPEND.NROLIVRO
+    cLine += ";" 							
+    cLine += ""	//	12	Nº da Folha de Registro	String	5		PFDEPEND.NROFOLHA
+    cLine += ";" 							
+    cLine += ""	 //	13	Incidência de IRRF (0-Não/1-Sim) Inteiro	1 PFDEPEND.INCIRRF
+    cLine += ";"
+    cLine += "" //14 Incidência de INSS (0-Não/1-Sim) Inteiro 1 PFDEPEND.INCINSS
+    cLine += ";" 							
+    cLine += "" //	15	Incidência de Assistência Médica (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCASSISTMEDICA
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),01) // 16	Incidência de Pensão (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCPESAO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	17	Incidências Definíveis ("*" nas posições das incidências confirmadas e ' ' (branco) nas posições das incidências não confirmadas. Ex: *_ _ * _ _ _ o dependente incide na Incidência 1 e na Incidência 4)	String	20		PFDEPEND.INCDEFINIVEIS
+    cLine += ";" 		
+    cGrauPar:="7"
+    //    cGrauPar:="7" // MAE 
+    //    cGrauPar:="6" // PAI
+    cLine += PADR(ALLTRIM(cGraupar),01) //	18	Grau de Parentesco do Dependente (1-Filho (a) válido 3-Filho (a) inválido 5-Cônjuge 6-Pai 7-Mãe 8-Sogra 9-Outros A- AVÔ(ó) C-Companheiro(a) D-Enteado E–Excluído G-Ex-Cônjuge I- Irmã (o) Válido N-Irmã (o) Inválido P-Ex-companheiro(a) S-Ex-Sogro(a) T-Neto(a) X-Ex-Enteado(a) M-Menor Pobre B-Incapaz	String	1		PFDEPEND.GRAUPARENTESCO
+    cLine += ";" 							
+    cLine += ALLTRIM('1') // 19	Dependentes possui cartão vacina? (0 - Não/1- Sim)	String	1		PFDEPEND.CARTAOVACINA
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),09) // 20	Percentual da Pensão	String	9		PFDEPEND.PERCENTUAL
+    cLine += ";" 							
+    cLine += ALLTRIM('') // 21	Tipo da Pensão	String	2		PFDEPEND.TIPOPENSAO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	22	Banco de pagamento pensão	String	3		PFDEPEND.BANCO
+    cLine += ";" 							
+    cLine += ALLTRIM('') //	23	Agencia de pagamento da Pensão	String	6		PFDEPEND.AGENCIA
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),15) //	24	Conta de Pagamento Pensão	String	15		PFDEPEND.CONTACORRENTE
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),45) //	25	Nome responsável	String	45		PFDEPEND.RESPONSAVEL
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	26	Fórmula cálculo	String	8		PFDEPEND.FORCALCULO
+    cLine += ";" 							
+    cLine += PADL(ALLTRIM('0'),01) //	27	Cálculo da Pensão é sobre o bruto (0-Não/ 1-Sim)	String	1		PFDEPEND.BRUTO
+    cLine += ";" 							
+    cLine += "" //	28	Data de entrega da certidão de nascimento	Data	8		PFDEPEND.DATAENTREGACERTIDAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM('1'),01) //	29	Flag apresentou compr frequência escolar? (0 - Não/1- Sim)	String	1		PFDEPEND.FREQESCOLAR
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM('0'),01) // 30	Universitário/Escola técnica 2º grau (0 - Não/1- Sim)	String	1		PFDEPEND.UNIVERSITARIO
+    cLine += ";" 							
+    cTipoDSF :="0"
+    cLine += PADR(cTipoDSF,01) // 31 Incidência Salário Família - (0-Não/ 1-Sim)	String	1		PFDEPEND.INCSALFAM
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''  ),80) // 32	Observação	String	80		PFDEPEND.OBSERVACAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	33	Fórmula Adicional Pensão	String	8		PFDEPEND.FORMPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	34	Data de início do desconto da pensão	Data	8		PFDEPEND.DATAINICIODESCPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),05) //	35	Coligada do fornecedor	Inteiro	5		PFDEPEND.CODCOLFORNEC
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),25) //	36	Código do fornecedor	String	25		PFDEPEND.CODFORNECEDOR
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),05) //	37	Operação Bancária	String	5		PFDEPEND.CODCOLFORNEC
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),09) //	38	Valor fixo	Real	9		PFDEPEND.VALORFIXO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),100) //	39	Número do Cartão SUS	String	100		PFDEPEND.NUMEROCARTAOSUS
+    cLine += ";" 							
+    cLine += "" //	40	Número da Declaração de Nascido Vivo - Resolução Normativa Nº 295	String	20		PFDEPEND.NUMDECLARANASCVIVO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),08) //	41	Data Fim do Desconto de Pensão	Data	8		PFDEPEND.DATAFIMDESCPENSAO
+    cLine += ";" 							
+    cLine += PADR(ALLTRIM(''),01) //	42	campo extra 
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++     
+RETURN
+
+Static Function IncPai()
+   Do Case 
+    case  lFil01 
+      DbSelectArea("SRA")
+      DBSEEK( "01"+cMAT)
+    Case  lFil03
+      DbSelectArea("SRA")
+      DBSEEK( "03"+cMAT)
+   ENDCASE
+    // Pai 
+    If !empty(SRA->RA_PAI)
+      cLine := ALLTRIM(cMAT)	//	1	Chapa do Funcionário	String	16		PFDEPEND.CHAPA
+      cLine += ";" 							
+      cCodPai := STRZERO(val(cCodMae)+1,2)
+      cLine += ALLTRIM(cCodPai)	//	2	Nº do Dependente	Inteiro	2		PFDEPEND.NRODEPEND
+      cLine += ";" 							
+      cLine += ALLTRIM(SRA->RA_PAI)	//	3	Nome do Dependente	String	120		PFDEPEND.NOME
+      cLine += ";" 							
+      cLine += ""	//	4	CPF do Dependente	String	12		PFDEPEND.CPF
+      cLine += ";" 							
+      cLine += ""	//	5	Data de Nasc. Do Dependente	Data	8		PFDEPEND.DTNASCIMENTO
+      cLine += ";" 							
+      cLine += "M"	//	6	Sexo do Dependente (M/F)	String	1		PFDEPEND.SEXO
+      cLine += ";" 							
+      cLine += ALLTRIM('C')	//	7	Estado Civil do Dependente (C- Casado  D - Desquitado  E -União Estável  I-Divorciado  O – Outros  P-Separado  S- Solteiro  V- Viúvo)	String	1		PFDEPEND.ESTADOCIVIL
+      cLine += ";" 							
+      cLine += ""	//	8	Local de Nascimento do Dependente	String	32		PFDEPEND.LOCALNASCIMENTO
+      cLine += ";" 							
+      cLine += ""	//	9	Nome do Cartório	String	40		PFDEPEND.CARTORIO
+      cLine += ";" 							
+      cLine += ""	//	10	Nº do Registro	String	10		PFDEPEND.NROREGISTRO
+      cLine += ";" 							
+      cLine += ""	//	11	Nº do Livro de Registro	String	8		PFDEPEND.NROLIVRO
+      cLine += ";" 							
+      cLine += ""	//	12	Nº da Folha de Registro	String	5		PFDEPEND.NROFOLHA
+      cLine += ";" 							
+      cLine += ""	 //	13	Incidência de IRRF (0-Não/1-Sim) Inteiro	1 PFDEPEND.INCIRRF
+      cLine += ";"
+      cLine += "" //14 Incidência de INSS (0-Não/1-Sim) Inteiro 1 PFDEPEND.INCINSS
+      cLine += ";" 							
+      cLine += "" //	15	Incidência de Assistência Médica (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCASSISTMEDICA
+      cLine += ";" 							
+      cLine += PADL(ALLTRIM('0'),01) // 16	Incidência de Pensão (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCPESAO
+      cLine += ";" 							
+      cLine += ALLTRIM('') //	17	Incidências Definíveis ("*" nas posições das incidências confirmadas e ' ' (branco) nas posições das incidências não confirmadas. Ex: *_ _ * _ _ _ o dependente incide na Incidência 1 e na Incidência 4)	String	20		PFDEPEND.INCDEFINIVEIS
+      cLine += ";" 		
+      cGrauPar:="6"
+      //    cGrauPar:="7" // MAE 
+      //    cGrauPar:="6" // PAI
+      cLine += PADR(ALLTRIM(cGraupar),01) //	18	Grau de Parentesco do Dependente (1-Filho (a) válido 3-Filho (a) inválido 5-Cônjuge 6-Pai 7-Mãe 8-Sogra 9-Outros A- AVÔ(ó) C-Companheiro(a) D-Enteado E–Excluído G-Ex-Cônjuge I- Irmã (o) Válido N-Irmã (o) Inválido P-Ex-companheiro(a) S-Ex-Sogro(a) T-Neto(a) X-Ex-Enteado(a) M-Menor Pobre B-Incapaz	String	1		PFDEPEND.GRAUPARENTESCO
+      cLine += ";" 							
+      cLine += ALLTRIM('1') // 19	Dependentes possui cartão vacina? (0 - Não/1- Sim)	String	1		PFDEPEND.CARTAOVACINA
+      cLine += ";" 							
+      cLine += PADL(ALLTRIM('0'),09) // 20	Percentual da Pensão	String	9		PFDEPEND.PERCENTUAL
+      cLine += ";" 							
+      cLine += ALLTRIM('') // 21	Tipo da Pensão	String	2		PFDEPEND.TIPOPENSAO
+      cLine += ";" 							
+      cLine += ALLTRIM('') //	22	Banco de pagamento pensão	String	3		PFDEPEND.BANCO
+      cLine += ";" 							
+      cLine += ALLTRIM('') //	23	Agencia de pagamento da Pensão	String	6		PFDEPEND.AGENCIA
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),15) //	24	Conta de Pagamento Pensão	String	15		PFDEPEND.CONTACORRENTE
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),45) //	25	Nome responsável	String	45		PFDEPEND.RESPONSAVEL
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),08) //	26	Fórmula cálculo	String	8		PFDEPEND.FORCALCULO
+      cLine += ";" 							
+      cLine += PADL(ALLTRIM('0'),01) //	27	Cálculo da Pensão é sobre o bruto (0-Não/ 1-Sim)	String	1		PFDEPEND.BRUTO
+      cLine += ";" 							
+      cLine += "" //	28	Data de entrega da certidão de nascimento	Data	8		PFDEPEND.DATAENTREGACERTIDAO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM('1'),01) //	29	Flag apresentou compr frequência escolar? (0 - Não/1- Sim)	String	1		PFDEPEND.FREQESCOLAR
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM('0'),01) // 30	Universitário/Escola técnica 2º grau (0 - Não/1- Sim)	String	1		PFDEPEND.UNIVERSITARIO
+      cLine += ";" 							
+      cTipoDSF :="0"
+      cLine += PADR(cTipoDSF,01) // 31 Incidência Salário Família - (0-Não/ 1-Sim)	String	1		PFDEPEND.INCSALFAM
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''  ),80) // 32	Observação	String	80		PFDEPEND.OBSERVACAO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),08) //	33	Fórmula Adicional Pensão	String	8		PFDEPEND.FORMPENSAO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),08) //	34	Data de início do desconto da pensão	Data	8		PFDEPEND.DATAINICIODESCPENSAO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),05) //	35	Coligada do fornecedor	Inteiro	5		PFDEPEND.CODCOLFORNEC
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),25) //	36	Código do fornecedor	String	25		PFDEPEND.CODFORNECEDOR
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),05) //	37	Operação Bancária	String	5		PFDEPEND.CODCOLFORNEC
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),09) //	38	Valor fixo	Real	9		PFDEPEND.VALORFIXO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),100) //	39	Número do Cartão SUS	String	100		PFDEPEND.NUMEROCARTAOSUS
+      cLine += ";" 							
+      cLine += "" //	40	Número da Declaração de Nascido Vivo - Resolução Normativa Nº 295	String	20		PFDEPEND.NUMDECLARANASCVIVO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),08) //	41	Data Fim do Desconto de Pensão	Data	8		PFDEPEND.DATAFIMDESCPENSAO
+      cLine += ";" 							
+      cLine += PADR(ALLTRIM(''),01) //	42	campo extra 
+      fWrite(nHdl,cLine+CRLF)
+      nLin++
+      nCt++
+    Endif 
+RETURN
+
+
+/*
+Comentário	Posição	Descrição	Tipo	Tamanho		Campo
+“/*	1	Chapa do Funcionário	String	16		PFDEPEND.CHAPA
+“/*	2	Nº do Dependente	Inteiro	2		PFDEPEND.NRODEPEND
+“/*	3	Nome do Dependente	String	120		PFDEPEND.NOME
+“/*	4	CPF do Dependente	String	12		PFDEPEND.CPF
+“/*	5	Data de Nasc. Do Dependente	Data	8		PFDEPEND.DTNASCIMENTO
+“/*	6	Sexo do Dependente (M/F)	String	1		PFDEPEND.SEXO
+“/*	7	Estado Civil do Dependente (C- Casado  D - Desquitado  E -União Estável  I-Divorciado  O – Outros  P-Separado  S- Solteiro  V- Viúvo)	String	1		PFDEPEND.ESTADOCIVIL
+“/*	8	Local de Nascimento do Dependente	String	32		PFDEPEND.LOCALNASCIMENTO
+“/*	9	Nome do Cartório	String	40		PFDEPEND.CARTORIO
+“/*	10	Nº do Registro	String	10		PFDEPEND.NROREGISTRO
+“/*	11	Nº do Livro de Registro	String	8		PFDEPEND.NROLIVRO
+“/*	12	Nº da Folha de Registro	String	5		PFDEPEND.NROFOLHA
+“/*	13	Incidência de IRRF (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCIRRF
+“/*	14	Incidência de INSS (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCINSS
+“/*	15	Incidência de Assistência Médica (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCASSISTMEDICA
+“/*	16	Incidência de Pensão (0-Não/1-Sim)	Inteiro	1		PFDEPEND.INCPESAO
+“/*	17	Incidências Definíveis ("*" nas posições das incidências confirmadas e ' ' (branco) nas posições das incidências não confirmadas. Ex: *_ _ * _ _ _ o dependente incide na Incidência 1 e na Incidência 4)	String	20		PFDEPEND.INCDEFINIVEIS
+“/*	18	Grau de Parentesco do Dependente (1-Filho (a) válido 3-Filho (a) inválido 5-Cônjuge 6-Pai 7-Mãe 8-Sogra 9-Outros A- AVÔ(ó) C-Companheiro(a) D-Enteado E–Excluído G-Ex-Cônjuge I- Irmã (o) Válido N-Irmã (o) Inválido P-Ex-companheiro(a) S-Ex-Sogro(a) T-Neto(a) X-Ex-Enteado(a) M-Menor Pobre B-Incapaz	String	1		PFDEPEND.GRAUPARENTESCO
+“/*	19	Dependentes possui cartão vacina? (0 - Não/1- Sim)	String	1		PFDEPEND.CARTAOVACINA
+“/*	20	Percentual da Pensão	String	9		PFDEPEND.PERCENTUAL
+“/*	21	Tipo da Pensão	String	2		PFDEPEND.TIPOPENSAO
+“/*	22	Banco de pagamento pensão	String	3		PFDEPEND.BANCO
+“/*	23	Agencia de pagamento da Pensão	String	6		PFDEPEND.AGENCIA
+“/*	24	Conta de Pagamento Pensão	String	15		PFDEPEND.CONTACORRENTE
+“/*	25	Nome responsável	String	45		PFDEPEND.RESPONSAVEL
+“/*	26	Fórmula cálculo	String	8		PFDEPEND.FORCALCULO
+“/*	27	Cálculo da Pensão é sobre o bruto (0-Não/ 1-Sim)	String	1		PFDEPEND.BRUTO
+“/*	28	Data de entrega da certidão de nascimento	Data	8		PFDEPEND.DATAENTREGACERTIDAO
+“/*	29	Flag apresentou compr frequência escolar? (0 - Não/1- Sim)	String	1		PFDEPEND.FREQESCOLAR
+“/*	30	Universitário/Escola técnica 2º grau (0 - Não/1- Sim)	String	1		PFDEPEND.UNIVERSITARIO
+“/*	31	Incidência Salário Família - (0-Não/ 1-Sim)	String	1		PFDEPEND.INCSALFAM
+“/*	32	Observação	String	80		PFDEPEND.OBSERVACAO
+“/*	33	Fórmula Adicional Pensão	String	8		PFDEPEND.FORMPENSAO
+“/*	34	Data de início do desconto da pensão	Data	8		PFDEPEND.DATAINICIODESCPENSAO
+“/*	35	Coligada do fornecedor	Inteiro	5		PFDEPEND.CODCOLFORNEC
+“/*	36	Código do fornecedor	String	25		PFDEPEND.CODFORNECEDOR
+“/*	37	Operação Bancária	String	5		PFDEPEND.CODCOLFORNEC
+“/*	38	Valor fixo	Real	9		PFDEPEND.VALORFIXO
+“/*	39	Número do Cartão SUS	String	100		PFDEPEND.NUMEROCARTAOSUS
+“/*	40	Número da Declaração de Nascido Vivo - Resolução Normativa Nº 295	String	20		PFDEPEND.NUMDECLARANASCVIVO
+“/*	41	Data Fim do Desconto de Pensão	Data	8		PFDEPEND.DATAFIMDESCPENSAO
+
+/*

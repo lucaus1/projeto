@@ -1,0 +1,91 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmrfer()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("cadrferCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("cadrferIT.TXT")
+Endcase 
+*/
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("cadrfer0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("cadrfer0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("cadrfer0201.TXT")
+Endcase 
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - RECIBO DE FERIAS  ")
+DbselectArea("SRH")
+nTot := RECCOUNT()
+DbSetOrder(1)
+DbSeek(Xfilial("SRH")+"",.T.)
+While !EOF() // .AND. RH_FILIAL == SM0->M0_CODFIL
+   // Formula	//	Posição	Descrição	Tipo	Tamanho	Posição	Campo	CAMPO
+DbSelectArea("SRF")
+DbSetOrder(1)
+IF Dbseek(Xfilial("SRF")+SRH->RH_MAT+DTOS(SRH->RH_DATABAS))
+    Do Case 
+    Case (RF_DATAFIM) > (RF_DATABAS+364)
+      cLine := PADR(SRH->RH_MAT,16) + ";" 	//	1	Chapa do Funcionário	String	16	1	PFUFERIASRECIBO.CHAPA	PFHSTAFT.CHAPA
+      cLine +=  PADL(STRTRAN(DTOC(RF_DATABAS+364),"/",""),08) + ";"
+    OTHERWISE 
+      cLine := PADR(SRH->RH_MAT,16) + ";" 	//	1	Chapa do Funcionário	String	16	1	PFUFERIASRECIBO.CHAPA	PFHSTAFT.CHAPA
+      cLine +=  PADL(STRTRAN(DTOC(RF_DATAFIM),"/",""),08) + ";"
+    EndCase 
+Else 
+  // Recibo de Férias não tem correspondência com Período de Gozo.
+  DbselectArea("SRH")
+  Exit 
+  Loop
+  // cLine += PADL(STRTRAN(DTOC(RH_DBASEAT),"/",""),08) + ";" 	//	2	Data final do período aquisitivo	Data	8	2	PFUFERIASRECIBO.FIMPERAQUIS	PFHSTAFT.DTINICIO
+ENDIF
+DbselectArea("SRH")
+cLine += PADL(STRTRAN(DTOC(RH_DTRECIB),"/",""),08) + ";" 	//	3	Data de pagamento das férias	Data	8	3	PFUFERIASRECIBO.DATAPAGTO	PFHSTAFT.DTFINAL
+cLine += ""+";"	//	4	Desconto de Inss ref. ao primeiro mês	Real	9	4	PFUFERIASRECIBO.INSS1	PFHSTAFT.TIPO
+cLine += ""+";"	//	5	Desconto de Inss ref. ao segundo mês	Real	9	5	PFUFERIASRECIBO.INSS2	PFHSTAFT.MOTIVO
+cLine += ""+";"	//	6	Desconto de Irrf	Real	9	6	PFUFERIASRECIBO.IRRF	PFHSTAFT.OBSERVACAO
+cLine += ""+";"	//	7	Base de Inss referente ao primeiro mês	Real	9	7	PFUFERIASRECIBO.BASEINSS1	PFHSTAFT.ESTTEMPOSERVICO
+cLine += ""+";"	//	8	Base de Inss referente ao segundo mês	Real	9	8	PFUFERIASRECIBO.BASEINSS2	PFHSTAFT.CODCOLTOMADOR
+cLine += ""+";"	//	9	Base de Irrf	Real	9	9	PFUFERIASRECIBO.BASEIRRF	PFHSTAFT.CODTOMADOR
+cLine += ""+";"	//	10	Valor Líquido do Recibo de Férias	Real	9	10	PFUFERIASRECIBO.LIQUIDO	PFHSTAFT.TPTOMADOR
+cLine += ""+";"	//	11	Observação referente ao Recibo de Férias	String	80	11	PFUFERIASRECIBO.OBSERVACAO	PFHSTAFT.DATAREQUERIMENTO
+cLine += ""+";"	//	12	GUID da execução do processo de cálculo	String	40	12	PFUFERIASRECIBO.EXECID	PFHSTAFT.CEI
+cLine += ""+";"	//	13	Pensão	Real	9	13	PFUFERIASRECIBO.PENSAO	PFHSTAFT.CODCID
+cLine += ""+";"	//	14	Base da Pensão	Real	9	14	PFUFERIASRECIBO.BASEPENSAO	PFHSTAFT.INFOONUS
+cLine += ""+";"	//	15	Valores forçados manualmente	Inteiro	2	15	PFUFERIASRECIBO.VALORESFORCADOS	PFHSTAFT.CODMEDICO
+cLine += ""+";"	//	16	Média do período aquisitivo atual	Real	9	16	PFUFERIASRECIBO.MEDIAPERAQATUAL	PFHSTAFT.TIPOACIDENTETRANSITO
+cLine += ""+";"	//	17	Média do próximo período aquisitivo	Real	9	17	PFUFERIASRECIBO.MEDIAPROXPERAQ	PFHSTAFT.ACIDENTETRANSITO
+cLine += STRTRAN(ALLTRIM(STR(RH_SALMES)),".",",") + ";"	//	18	Salário do func. no momento do cálculo	Real	9	18	PFUFERIASRECIBO.SALARIO	PFHSTAFT.CNPJSINDICATO
+cLine += ""+";"	//	19	Número de dependentes de IRRF	Inteiro	2	19	PFUFERIASRECIBO.NRODEPENDIRRF	PFHSTAFT.INFOONUSREMUNERACAO
+cLine += ""+";"	//	20	Número dependentes de Salário Familia	Inteiro	2	20	PFUFERIASRECIBO.NRODEPENDSALFAMILIA	PFHSTAFT.CODESTABILIDADE
+
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM RECIBO FERIAS")
+Return 
+/*
+
+/*

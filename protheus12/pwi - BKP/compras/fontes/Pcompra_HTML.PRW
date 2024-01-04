@@ -1,0 +1,742 @@
+#include "topconn.ch"
+#include "rwmake.ch"
+#include "tbiconn.ch"  
+#define EXCLUSIVO .F.
+
+User Function PC_HTML()
+
+SETPRVT("cArqTMP,LCria,aCampos,cNum,Ent_End,Ent_Bai,Ent_CEP,Ent_Cid,Ent_Est")
+/*
+/////////////////////////////////////////////////////////////////////////////
+//-------------------------------------------------------------------------//
+// Programa  | PC_HTML  |Autor  | Jose Macedo        | Data |  22/08/2005  //
+//-------------------------------------------------------------------------//
+// Descrição | Pedido de Compra em HTML                                    //
+//-------------------------------------------------------------------------//
+// Uso       | Compras                                                     //
+//-------------------------------------------------------------------------//
+//-------------------------------------------------------------------------//
+/////////////////////////////////////////////////////////////////////////////
+Alteracoes
+Data       Consultor       Descricao
+16/07/2008 Franciney       unidade de gravação 
+21/08/2008 de SC7 para  FIELD->DESPROD	:= SB1->B1_DESC
+
+*/  
+
+// Mostra parametros com ENDERECO PARA ENTREGA
+
+
+//lPerg := Pergunte("ENDENT",.T.)
+//If !lPerg
+//    Return
+//Endif    
+
+MV_PAR01:=Ent_End := SM0->M0_ENDENT
+MV_PAR02:=Ent_Bai := SM0->M0_BAIRENT
+MV_PAR03:=Ent_CEP := SM0->M0_CEPENT
+MV_PAR04:=Ent_Cid := SM0->M0_CIDENT
+MV_PAR05:=Ent_Est := SM0->M0_ESTENT
+
+If  !FUNNAME() $ "MATA121#COM001"
+	dbSelectArea("SC7")
+	aRotina := { { "Procurar   ",'AxPesqui', 0, 1 } ,;
+	             { "Imprimir PC",'U_fCriaTMP()', 0, 2 } }
+	cCadastro := "IMPRESSAO PEDIDOS DE COMPRAS"
+	mBrowse(01,01,30,70,"SC7",,"C7_CONAPRO<>'L'")
+	dbSelectArea("SC7")
+	Set Filter To
+Else
+    U_fCriaTMP()   
+EndIf
+
+Return(Nil)                
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// CRIA ARQUIVO DE TRABALHO
+User Function fCriaTMP()
+
+cEmpAtual:= SM0->(M0_CODIGO+M0_CODFIL)
+
+If SM0->M0_CODIGO = '99'
+   SM0->(dbSeek("01"))
+EndIf
+   
+cArqTMP  := CriaTrab(Nil,.f.) // "PCOMPRA"
+aCampos  := {}
+AADD(aCAMPOS,{"NUM"		,"C",006,0})
+AADD(aCAMPOS,{"IT"		,"C",003,0})
+AADD(aCAMPOS,{"QUANT"	,"N",018,4})
+AADD(aCAMPOS,{"UM"		,"C",002,0})
+AADD(aCAMPOS,{"CODPROD"	,"C",015,0})
+AADD(aCAMPOS,{"DESPROD"	,"C",400,0})
+AADD(aCAMPOS,{"CONTA"	,"C",006,0})
+AADD(aCAMPOS,{"SC"		,"C",006,0})
+AADD(aCAMPOS,{"UNIT"	,"N",014,2})
+AADD(aCAMPOS,{"IPI"		,"N",005,2})
+AADD(aCAMPOS,{"VALOR"	,"N",014,2})
+AADD(aCAMPOS,{"EMISSAO" ,"D",008,0})
+AADD(aCAMPOS,{"VALDESC" ,"N",014,2})
+AADD(aCAMPOS,{"VALIPI"	,"N",014,2})
+AADD(aCAMPOS,{"VALFRET" ,"N",014,2})
+AADD(aCAMPOS,{"EMP_CAB1","C",090,0})
+AADD(aCAMPOS,{"EMP_CAB2","C",090,0})
+AADD(aCAMPOS,{"EMP_CAB3","C",090,0})
+AADD(aCAMPOS,{"EMP_CAB4","C",100,0})
+AADD(aCAMPOS,{"CODFORN" ,"C",006,0})
+AADD(aCAMPOS,{"NOMFORN" ,"C",050,0})
+AADD(aCAMPOS,{"CONTATO"	,"C",020,0})
+AADD(aCAMPOS,{"FONE"	,"C",014,0})
+AADD(aCAMPOS,{"FAX" 	,"C",014,0})
+AADD(aCAMPOS,{"ENDERECO","C",050,0})
+AADD(aCAMPOS,{"BAIRRO"  ,"C",025,0})
+AADD(aCAMPOS,{"CIDADE"  ,"C",025,0})
+AADD(aCAMPOS,{"CEP"		,"C",009,0})
+AADD(aCAMPOS,{"ESTADO"  ,"C",002,0})
+AADD(aCAMPOS,{"CNPJ"	,"C",020,0})
+AADD(aCAMPOS,{"IEST"	,"C",020,0})
+AADD(aCAMPOS,{"DESCONTO","N",014,2})
+AADD(aCAMPOS,{"TPFRETE" ,"C",001,0})
+AADD(aCAMPOS,{"CONDPAG" ,"C",040,0})
+AADD(aCAMPOS,{"DATAVENC","C",008,0})
+AADD(aCAMPOS,{"PRAZOENT","C",025,0})
+AADD(aCAMPOS,{"ENTREGA1","C",050,0})
+AADD(aCAMPOS,{"ENTREGA2","C",050,0})
+AADD(aCAMPOS,{"COBRANCA","C",090,0})
+AADD(aCAMPOS,{"SOLICITA","C",025,0})
+AADD(aCAMPOS,{"TES"		,"C",003,0})
+AADD(aCAMPOS,{"RAMAL"	,"C",004,0})
+AADD(aCAMPOS,{"CC"		,"C",036,0})
+AADD(aCAMPOS,{"COMPRA"	,"C",025,0})
+AADD(aCAMPOS,{"OBS"		,"C",200,0})
+AADD(aCAMPOS,{"EMPRESA"	,"C",002,0})
+AADD(aCAMPOS,{"FILIAL"	,"C",002,0})
+AADD(aCAMPOS,{"PC"		,"C",001,0})
+AADD(aCAMPOS,{"APROV1"  ,"C",030,0})
+AADD(aCAMPOS,{"APROV2"  ,"C",030,0})
+
+If Select("TMP") > 0
+   TMP->(dbCloseArea())
+EndIf
+DbCreate(cArqTMP,aCAMPOS)
+dbUseArea(.T.,, cArqTMP, "TMP", EXCLUSIVO )
+dbSelectArea("TMP")
+
+Processa( {|| ImprimePC() },"Selecionando Registros...",,.T. )
+
+Return(Nil)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Static Function ImprimePC()
+
+dbSelectArea("SC7")
+cArqAtual := Alias()
+nOrdAtual := dbSetOrder()
+nRegAtual := Recno()
+cSolic    := ""
+lOk       := .f.
+nTotDesc  := 0
+cAprov1   := cAprov2 := ""                            
+cNum 	  := C7_NUM
+cItem	  := C7_ITEM       
+
+_Incrementa:=0        // QUANDO A DESCRICAO DO PRODUTO OCUPAR UM ITEM A MAIS NO DETALHE (MAIOR QUE 40 CARACTERES)
+
+
+_APLIC01:=_APLIC02:=SPACE(80)
+
+@ 1,1 to  600,600 DIALOG oJan3 TITLE "Dados Complementares da Solicitacao"
+
+@ 40,  20 SAY "Aplicacao :"
+@ 40,  70 GET _APLIC01
+@ 60,  70 GET _APLIC02
+
+
+@ 85, 199 BMPBUTTON TYPE 1 ACTION Close(oJan3)        // CONFIRMA
+ACTIVATE DIALOG oJan3 CENTERED
+
+
+
+dbSelectArea("SA2")
+dbSetOrder(1)
+dbSeek(xFilial("SA2")+SC7->C7_FORNECE+SC7->C7_LOJA)
+dbSelectArea("SE4")
+dbSetOrder(1)                            
+dbSeek(xFilial("SE4")+SC7->C7_COND)
+dbSelectArea("SC1")
+dbSetOrder(1)                 
+dbSelectArea("SY1")
+dbSetOrder(3)
+dbSeek(xFilial("SY1")+SC7->C7_USER)
+
+dbSelectArea("SC7")
+dbSetOrder(1)
+dbGoTop()
+dbSeek(xFilial("SC7")+cNum+"0001",.T.)
+While !Eof() .And. (C7_FILIAL+C7_NUM) == (SM0->M0_CODFIL+cNum)
+    lOk := .t.
+    nStr:= 41                 
+    cDescri := Trim(C7_DESCRI)  
+    // Monta descrição do produto
+
+    dbSelectArea("SC1")
+	dbSeek(SC7->C7_FILIAL+SC7->C7_NUMSC+SC7->C7_ITEMSC)
+
+	dbSelectArea("SB1")
+	dbSetOrder(1)                                               
+	dbSeek(xFilial("SB1")+SC7->C7_PRODUTO)
+
+	dbSelectArea("SCR")
+	dbSetOrder(1)
+	dbSeek(SC7->C7_FILIAL+"PC"+SC7->C7_NUM)
+	While !Eof() .And. SCR->(CR_FILIAL+Alltrim(SCR->CR_NUM))==SC7->(C7_FILIAL+C7_NUM) .And. SCR->CR_TIPO == "PC"
+	    If SCR->CR_STATUS = "03"
+  		   cAprov1 := If(SCR->CR_NIVEL="01" .And. cAprov1 = "",AllTrim(UsrFullName(SCR->CR_USER)),cAprov1)
+ 	  	   cAprov2 := If(SCR->CR_NIVEL="02" .And. cAprov2 = "",AllTrim(UsrFullName(SCR->CR_USER)),cAprov2)
+ 	  	EndIf   
+  		dbSelectArea("SCR")
+  		dbSkip()
+	End
+
+  	dbSelectArea("TMP") 	
+   	RecLock("TMP",.T.)
+	fDetalhe()
+	fCabecalho()
+    fRodape()
+	MsUnLock()
+
+    dbSelectArea("SC7")
+    dbSkip()                                         
+    cSolic:=TMP->SOLICITA
+    
+End      
+
+nTotReg := TMP->(RecCount()) + _Incrementa
+
+If lOk                 
+   VerParametros()	
+   nGoReg := 1
+   Page_HTML()
+Else
+   Alert("Nao foram encontrados registros para este PC !!!")
+EndIf
+
+dbSelectArea(cArqAtual)
+dbSetOrder(nOrdAtual)
+dbGoTo(nRegAtual)
+        
+Return(Nil)
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Static Function fDetalhe()
+
+	FIELD->IT		:= StrZero(Val(SC7->C7_ITEM),3)
+	FIELD->QUANT	:= SC7->C7_QUANT
+	FIELD->UM		:= SC7->C7_UM
+	FIELD->CODPROD	:= SC7->C7_PRODUTO
+	// ALTERADO EM 21/08/2008 
+	FIELD->DESPROD	:= SB1->B1_DESC
+	FIELD->CONTA	:= SC7->C7_CONTA
+	FIELD->SC		:= SC7->C7_NUMSC
+	FIELD->UNIT		:= SC7->C7_PRECO
+	FIELD->IPI		:= SC7->C7_IPI
+	FIELD->VALOR	:= SC7->C7_TOTAL
+	FIELD->VALDESC	:= SC7->C7_VLDESC
+	FIELD->VALIPI	:= SC7->C7_VALIPI
+	FIELD->VALFRET	:= SC7->(C7_VALFRE+C7_DESPESA)
+
+    IF LEN(ALLTRIM(SB1->B1_DESC))>40
+       _Incrementa++                                          
+    ENDIF
+
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+Static Function fCabecalho()
+
+	FIELD->EMP_CAB1	:= Trim(SM0->M0_NOMECOM)
+	FIELD->EMP_CAB2	:= Trim(SM0->M0_ENDENT)+" - "+Trim(SM0->M0_BAIRENT)+" - CEP: "+;
+					   Transform(SM0->M0_CEPENT,"@R 99999-999")+" - "+Rtrim(SM0->M0_CIDENT)+" - "+SM0->M0_ESTENT
+	FIELD->EMP_CAB3	:= "TEL.: "+Trim(SM0->M0_TEL)+SPACE(30)+" - FAX: "+Trim(SM0->M0_FAX)
+	FIELD->EMP_CAB4	:= "C.N.P.J.: "+Transform(SM0->M0_CGC,"@R 99.999.999/9999-99")+SPACE(30)+"    INSCR. ESTADUAL: "+Rtrim(SM0->M0_INSC)
+   	FIELD->NUM		:= SC7->C7_NUM
+	FIELD->EMISSAO	:= SC7->C7_EMISSAO
+	FIELD->CODFORN	:= SC7->C7_FORNECE
+	FIELD->NOMFORN	:= SA2->A2_NOME
+	FIELD->CONTATO	:= If(Empty(SC7->C7_CONTATO),SA2->A2_CONTATO,SC7->C7_CONTATO)
+	FIELD->FONE		:= SA2->A2_TEL
+	FIELD->FAX		:= SA2->A2_FAX
+	FIELD->ENDERECO	:= Rtrim(SA2->A2_END)+If(!Empty(SA2->A2_NR_END),", "+SA2->A2_NR_END,"")
+	FIELD->BAIRRO	:= SA2->A2_BAIRRO
+	FIELD->CIDADE	:= SA2->A2_MUN
+	FIELD->CEP		:= Transform(SA2->A2_CEP,"@R 99999-999")
+	FIELD->ESTADO	:= SA2->A2_EST
+	FIELD->CNPJ		:= Transform(SA2->A2_CGC,If(Len(Rtrim(SA2->A2_CGC))=14,"@R 99.999.999/9999-99","@R 999.999.999-99"))
+	FIELD->IEST		:= SA2->A2_INSCR
+return
+
+//////////////////////////////////////////////////////////////////////////////////////
+Static Function fRodape()
+
+	FIELD->TPFRETE	:= SC7->C7_TPFRETE
+	FIELD->CONDPAG	:= SE4->E4_DESCRI
+
+    _COND:=IIF(SUBSTR(SE4->E4_COND,2,1)#",",VAL(LEFT(SE4->E4_COND,2)),VAL(LEFT(SE4->E4_COND,1)))
+    _DTVE:=If(SC7->C7_DATPRF > SC7->C7_EMISSAO,SC7->C7_DATPRF+_COND,SC7->C7_EMISSAO+_COND)    
+	FIELD->DATAVENC	:= DTOC(_DTVE)
+
+	FIELD->PRAZOENT	:= If(SC7->C7_DATPRF > SC7->C7_EMISSAO,Strzero(SC7->C7_DATPRF-SC7->C7_EMISSAO,3)+" dia(s)  -  ","")+dtoc(SC7->C7_DATPRF)
+	FIELD->ENTREGA1	:= Trim(Ent_End)+" - "+Trim(Ent_Bai)
+	FIELD->ENTREGA2	:= "CEP: "+Transform(Ent_CEP,"@R 99999-999")+" - "+Rtrim(Ent_Cid)+" - "+Ent_Est
+
+	FIELD->COBRANCA	:= Trim(SM0->M0_ENDCOB)+" - "+Trim(SM0->M0_BAIRCOB)+" - CEP: "+;
+					   Transform(SM0->M0_CEPCOB,"@R 99999-999")+" - "+Rtrim(SM0->M0_CIDCOB)+" - "+SM0->M0_ESTCOB
+	If !Trim(SC1->C1_SOLICIT) $ Trim(cSolic)
+	    cSolic := cSolic+If(Trim(cSolic)<>"",", ","")+Trim(SC1->C1_SOLICITA)
+    EndIf              
+    
+	FIELD->SOLICITA	:= cSolic
+    FIELD->RAMAL	:= "9999"
+    FIELD->TES  	:= SC7->C7_TES
+	FIELD->CC		:= Rtrim(SC7->C7_CC)+" - "+Posicione("CTT",1,xFilial("CTT")+SC7->C7_CC,"CTT_DESC01")
+	FIELD->COMPRA	:= Alltrim(UsrFullName(SC7->C7_USER))
+	FIELD->OBS		:= SC7->C7_OBS
+	FIELD->EMPRESA	:= SM0->M0_CODIGO
+	FIELD->FILIAL	:= SM0->M0_CODFIL
+	FIELD->PC		:= SC7->C7_CONAPRO          
+    FIELD->APROV1   := cAprov1
+	FIELD->APROV2   := cAprov2
+return
+
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Monta Página HTML
+//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Static Function Page_HTML()
+
+//TMP->(dbCloseArea())
+
+If nTotReg > 18
+   nItens := 2
+ElseIf nTotReg > 36
+   nItens := 3
+ElseIf nTotReg > 54
+   nItens := 4
+ElseIf nTotReg > 72
+   nItens := 5
+ElseIf nTotReg > 90
+   nItens := 6
+Else
+   nItens := 1 	   
+EndIf
+
+nDesc:= nFrete := nIPI := nBruto := nValLiq := 0
+
+cPc  := TMP->NUM
+   
+For i:=1 To nItens
+
+	cFim := chr(13)+chr(10)
+
+	// dbUseArea(.T.,, cArqTMP, "TMP", EXCLUSIVO )
+	dbSelectArea("TMP")
+	dbGoTo(nGoReg)
+
+	Pg      := ""	           
+	cDrive  := "U:\TEMP\"    // ONDE VAI FICAR O arquivoTmp.HTML
+	cRemote := "\AP6\AP_DATA\SIGAADV\"    // ONDE ESTA O EMPRESA.JPG
+                     
+	cArq    := cDrive+"PC_"+cPc+"-"+StrZero(i,2)+".HTML"
+	cLogo   := cRemote+"EMPRESA.JPG"
+	NaoAprov:= cRemote+"EMPRESA.JPG"
+
+	nHdl	:= fCreate(cArq)
+	cEOL    := "CHR(13)+CHR(10)"
+	If Empty(cEOL)
+		cEOL := CHR(13)+CHR(10)
+	Else
+		cEOL := Trim(cEOL)
+		cEOL := &cEOL
+	Endif
+	
+	If nHdl == -1
+		MsgAlert("O arquivo de nome "+AllTrim(cArq)+" nao pode ser criado! Verifique os parametros.","Atencao!")
+		fClose(nHdl)
+		Return
+	Endif
+
+	Pg :='<HTML> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<script> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+ 
+	Pg :='ie4up=nav4up=false; ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='var agt = navigator.userAgent.toLowerCase(); ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='var major = parseInt(navigator.appVersion); ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='if ((agt.indexOf("msie") != -1) && (major >= 4)) ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='ie4up = true; ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='if ((agt.indexOf("mozilla") != -1)  && (agt.indexOf("spoofer") == -1) && (agt.indexOf("compatible") == -1) && ( major>= 4)) ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='nav4up = true; ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</script> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<STYLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='A {text-decoration:none} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='A IMG {border-style:none; border-width:0;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='DIV {position:absolute; z-index:25;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='.fc1-6 { COLOR:000080;FONT-SIZE:18PT;FONT-FAMILY:Courier New;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-1 { COLOR:000000;FONT-SIZE:14PT;FONT-FAMILY:Times New Roman;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-2 { COLOR:000000;FONT-SIZE:11PT;FONT-FAMILY:Arial;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-13 { COLOR:000000;FONT-SIZE:10PT;FONT-FAMILY:Arial;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-13X { COLOR:000000;FONT-SIZE:10PT;FONT-FAMILY:Arial;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='.fc1-0 { COLOR:000000;FONT-SIZE:5PT;FONT-FAMILY:Arial;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-3 { COLOR:000000;FONT-SIZE:8PT;FONT-FAMILY:Arial;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-4 { COLOR:000000;FONT-SIZE:8PT;FONT-FAMILY:Times New Roman;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-5 { COLOR:000000;FONT-SIZE:6PT;FONT-FAMILY:Arial;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-7 { COLOR:000000;FONT-SIZE:6PT;FONT-FAMILY:Courier New;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-8 { COLOR:000000;FONT-SIZE:5PT;FONT-FAMILY:Arial;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-9 { COLOR:000000;FONT-SIZE:7PT;FONT-FAMILY:Arial;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-10 { COLOR:000000;FONT-SIZE:6PT;FONT-FAMILY:Courier New;FONT-WEIGHT:BOLD;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-11 { COLOR:000000;FONT-SIZE:7PT;FONT-FAMILY:Courier New;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.fc1-12 { COLOR:000000;FONT-SIZE:5PT;FONT-FAMILY:Courier New;FONT-WEIGHT:NORMAL;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-0 {border-color:000000;border-style:none;border-bottom-width:0PX;border-left-width:0PX;border-top-width:0PX;border-right-width:0PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-1 {border-color:000000;border-style:none;border-bottom-width:0PX;border-left-width:0PX;border-top-width:0PX;border-right-width:0PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-2 {border-color:000000;border-style:none;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-3 {border-color:000000;border-style:none;border-bottom-width:0PX;border-left-style:solid;border-left-width:1PX;border-top-width:0PX;border-right-width:0PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-4 {border-color:000000;border-style:none;border-bottom-width:0PX;border-left-width:0PX;border-top-style:solid;border-top-width:1PX;border-right-width:0PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-5 {border-color:000000;border-style:none;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='.ad1-6 {border-color:000000;border-style:none;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;} ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</STYLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	 
+
+	Pg :='<BODY BGCOLOR="FFFFFF"LEFTMARGIN=0 TOPMARGIN=0 BOTTOMMARGIN=0 RIGHTMARGIN=0> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	 
+
+
+    // BORDAS DO FORMULARIO 
+
+	Pg :='<div style="left:5PX;  top:359PX;border-color:000000;border-style:solid;border-width:0px;border-top-width:1PX;width:744PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<div style="left:5PX;  top:375PX;border-color:000000;border-style:solid;border-width:0px;border-top-width:1PX;width:744PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+// UNIDADE
+	Pg :='<div style="left:140PX;top:359PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='<div style="left:100PX;top:360PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<div style="left:204PX;top:359PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<div style="left:628PX;top:360PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<div style="left:540PX;top:359PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<div style="left:36PX; top:359PX;border-color:000000;border-style:solid;border-width:0px;border-left-width:1PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="0px" height="440PX"><td>&nbsp;</td></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</div> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+
+    // BORDAS ENDER FAT + END ENTREGA + FORNECEDOR
+	Pg :='<DIV class="box" style="z-index:10; border-color:000000;border-style:solid;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;left:4PX;top:  4PX;width:744PX;height:372PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table border=0 cellpadding=0 cellspacing=0 width=737px height=129px><TD>&nbsp;</TD></TABLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV class="box" style="z-index:10; border-color:000000;border-style:solid;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;left:4PX;top:359PX;width:744PX;height:440PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table border=0 cellpadding=0 cellspacing=0 width=737px height=89px><TD>&nbsp;</TD></TABLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+
+
+
+	Pg :='<DIV style="left:604PX;top:12PX;width:136PX;height:32PX;TEXT-ALIGN:CENTER;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table width="131PX" border=0 cellpadding=0 cellspacing=0> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<tr><td ALIGN="CENTER" class="fc1-0">  </td></tr> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<tr><td ALIGN="CENTER" class="fc1-0">  </td></tr> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<tr><td ALIGN="CENTER" class="fc1-0">  </td></tr></table> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+
+
+// INICIO : CABECALHO 1 Coluna    LINHA
+	Pg :='<DIV style="left:606PX ;top:60PX;width:40PX;height:28PX;TEXT-ALIGN:CENTER;"><span class="fc1-1">PC.'+NUM+If(nTotReg>18,"/"+StrZero(i,2),"")+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='<DIV style="left:125PX ;top:4PX;width:416PX;height:40PX;   TEXT-ALIGN:CENTER;"><span class="fc1-6">PEDIDO DE COMPRA</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:075PX ;top:34PX;width:616PX;height:16PX;  TEXT-ALIGN:CENTER;"><span class="fc1-6">'+Rtrim(EMP_CAB1)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX  ;top:065PX;width:716PX;height:40PX;  "><span class="fc1-1">ENDERECO PARA FATURAMENTO E COBRANCA</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX  ;top:085PX;width:716PX;height:16PX; "><span class="fc1-2">'+(EMP_CAB2)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX  ;top:105PX;width:716PX;height:16PX; "><span class="fc1-2">'+(EMP_CAB4)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:604PX ;top:105PX;width:64PX;height:17PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">EMISSAO:</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:676PX ;top:105PX;width:64PX;height:14PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">'+dToc(EMISSAO)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+
+
+	Pg :='<DIV style="left:25PX;top:125PX;width:716PX;height:16PX; "><span class="fc1-2">'+(EMP_CAB3)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+    _USU:=ALLTRIM(SUBSTR(cUSUARIO,7,15))
+	Pg :='<DIV style="left:25PX;top:145PX;width:718PX;height:16PX;"><span class="fc1-2">ORGAO SOLICITANTE : DEPARTAMENTO DE COMPRAS (CONTATO: '+_USU+")"+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+
+	// Pg :='<DIV style="left:25PX;top:180PX;width:716PX;height:40PX;  "><span class="fc1-1">SUFRAMA : 20.0003.02-0 </span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX;top:180PX;width:716PX;height:40PX;  "><span class="fc1-1">SUFRAMA : '+SM0->M0_INS_SUF+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+//	Pg :='<DIV style="left:25PX;top:200PX;width:716PX;height:16PX;"><span class="fc1-2">AV.MARQUÊS DE HERVAL No 1151 (ENTRE MAURITI E MARIZ DE BARROS)</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+//	Pg :='<DIV style="left:25PX;top:220PX;width:718PX;height:16PX;"><span class="fc1-2">BAIRRO: PEDREIRA               BELÉM-PA         CEP: 66.085-310</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+
+	
+	If PC <> "L"
+	   Pg :='<DIV style="z-index:15;left:183PX;top:60PX;width:405PX;height:52PX;">' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	   Pg :='<img  SRC="'+NaoAprov+'">' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	   Pg :='</DIV>    ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	EndIf   
+	
+	Pg :='<DIV style="z-index:11;left:10PX;top:26PX;width:64PX;height:60PX;">' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='</DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+
+
+//                                  LINHA
+	Pg :='<DIV style="left:25PX; top:245PX;width:400PX;height:8PX;"><span class="fc1-13">FORNECEDOR:</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX; top:261PX;width:400PX;height:19PX;"><span class="fc1-13">'+Rtrim(NOMFORN)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:452PX;top:261PX;width:76PX;height:19PX;"><span class="fc1-13">'+Rtrim(CODFORN)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:548PX;top:261PX;width:88PX;height:19PX;"><span class="fc1-13">'+Rtrim(CONTATO)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:25PX; top:281PX;width:400PX;height:19PX;"><span class="fc1-13">'+Rtrim(ENDERECO)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='<DIV style="left:25PX; top:301PX;width:250PX;height:19PX;"><span class="fc1-13">'+Rtrim(BAIRRO)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:452PX;top:301PX;width:250PX;height:19PX;"><span class="fc1-13">'+Rtrim(CIDADE)+'/'+ESTADO+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+//	Pg :='<DIV style="left:548PX;top:301PX;width:56PX;height:16PX;"><span class="fc1-13">'+ESTADO+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+
+	Pg :='<DIV style="left:25PX; top:321PX;width:80PX;height:16PX;"><span class="fc1-13">'+Rtrim(CEP)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:260PX;top:321PX;width:130PX;height:19PX;"><span class="fc1-13">FONE:'+Rtrim(FONE)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:452PX;top:321PX;width:120PX;height:19PX;"><span class="fc1-13">FAX:'+Rtrim(FAX)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Pg :='<DIV style="left:25PX ;top:341PX;width:224PX;height:16PX;"><span class="fc1-13">CNPJ: '+Rtrim(CNPJ)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:452PX;top:341PX;width:272PX;height:16PX;"><span class="fc1-13">INSCR EST: '+Rtrim(IEST)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+
+    // CABECALHO
+	Pg :='<DIV style="left:4PX;  top:360PX;width:32PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13"> Item</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:44PX; top:360PX;width:48PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">Quant</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:108PX;top:360PX;width:24PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">UN.</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:140PX;top:360PX;width:58PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">Solicit</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:212PX;top:360PX;width:216PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">Descrição</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:548PX;top:360PX;width:72PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">R$ Unit</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:660PX;top:360PX;width:80PX;height:11PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">R$ Total</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+	nRec := Recno()    
+	nIt := 0
+	nLin := 384
+	lPula:= .t.
+	
+    // DETALHE (ITENS) DO PEDIDO
+	While !Eof() .And. NUM = cPc .And. lPula
+        _KEY_SC1:=CODPROD+SC
+        DBSELECTAREA("SC1")
+        DBSETORDER(2)
+        DBSEEK(xFilial("SC1")+_KEY_SC1)
+        IF FOUND()
+           _ITEMSC1:=STRZERO(VAL(C1_ITEM),3,0)
+          ELSE
+           _ITEMSC1:="  "  // IT
+        ENDIF   
+        DBSELECTAREA("TMP")
+		Pg :='<DIV style="left:4PX;top:'+StrZero(nLin,3)+'PX;width:32PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">'      +Rtrim(_ITEMSC1)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:44PX;top:'+StrZero(nLin,3)+'PX;width:48PX;height:10PX;TEXT-ALIGN:RIGHT;"><span class="fc1-13">'      +Transform(QUANT,"@EZ 999,999.99")+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:108PX;top:'+StrZero(nLin,3)+'PX;width:24PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">'    +UM+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:140PX;top:'+StrZero(nLin,3)+'PX;width:64PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-13">'    +Rtrim(SC)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:212PX;top:'+StrZero(nLin,3)+'PX;width:324PX;height:16PX;"><span class="fc1-13">'                     +Rtrim(DESPROD)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:548PX;top:'+StrZero(nLin,3)+'PX;width:64PX;height:10PX;TEXT-ALIGN:RIGHT;"><span class="fc1-13">'     +Transform(UNIT,"@EZ 9,999,999.9999")+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		Pg :='<DIV style="left:660PX;top:'+StrZero(nLin,3)+'PX;width:72PX;height:10PX;TEXT-ALIGN:RIGHT;"><span class="fc1-13">'     +Transform(VALOR,"@EZ 99,999,999.99")+'</span></DIV><BR>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+		nLin+=20                                          
+        IF LEN(ALLTRIM(DESPROD))>40
+		   nLin+=20                                          
+        ENDIF
+	    nDesc   += VALDESC       
+	    nFrete  += VALFRET
+	    nIPI    += VALIPI
+	    nBruto  += VALOR
+	    nValLiq := nBruto+nFrete+nIPI-nDesc
+
+		dbSkip()
+		nGoReg++
+                                                         
+		If nLin > 743     // 803
+		   lPula := .f.
+		EndIf   
+
+	End	
+
+
+	If TMP->(Eof())                                       
+		TMP->(dbGoTop())
+//      BORDA DO RODAPE DE ASSINATURAS
+		Pg :='<DIV class="box" style="z-index:10; border-color:000000;border-style:solid;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;left:4PX;top:830PX;width:744PX;height:50PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<table border=0 cellpadding=0 cellspacing=0 width=737px height=46px><TD>&nbsp;</TD></TABLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+
+        // RODAPE
+	    Pg :='<DIV style="left:212PX;top:780PX;width:260PX;height:10PX;"><span class="fc1-2">T O T A L</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:660PX;top:780PX;width:72PX;height:18PX;TEXT-ALIGN:RIGHT;"><span class="fc1-2">'+Transform(nValLiq,"@E 9,999,999.99")+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+	    Pg :='<DIV style="left:8PX;  top:800PX;width:260PX;height:10PX;"><span class="fc1-4">COND. DE PAGAMENTO</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:9PX;  top:810PX;width:261PX;height:16PX;"><span class="fc1-13">'+Rtrim(CONDPAG)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+	    Pg :='<DIV style="left:292PX;top:800PX;width:240PX;height:8PX;"><span class="fc1-4">PRAZO DE ENTREGA</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:293PX;top:810PX;width:240PX;height:16PX;"><span class="fc1-13">'+Rtrim(PRAZOENT)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+	    Pg :='<DIV style="left:500PX;top:800PX;width:240PX;height:8PX;"><span class="fc1-4">DATA DO VENCIMENTO</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:501PX;top:810PX;width:240PX;height:16PX;"><span class="fc1-13">'+Rtrim(DATAVENC)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+		 
+		Pg :='<DIV style="left:12PX; top:833PX;width:128PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Emitente </span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:328PX;top:833PX;width:132PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Gerencia</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:612PX;top:833PX;width:128PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Diretoria</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	Else
+//      BORDA DO RODAPE DE ASSINATURAS
+		Pg :='<DIV class="box" style="z-index:10; border-color:000000;border-style:solid;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;left:4PX;top:830PX;width:744PX;height:50PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<table border=0 cellpadding=0 cellspacing=0 width=737px height=46px><TD>&nbsp;</TD></TABLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+        Pg := '<DIV style="left:34PX;top:810PX;width:725PX;height:24PX;TEXT-ALIGN:CENTER;"><span class="fc1-9"> CONTINUA NA PRÓXIMA PÁGINA </span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))	
+
+		Pg :='<DIV style="left:12PX; top:833PX;width:128PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Emitente </span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:328PX;top:833PX;width:132PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Gerencia</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+		Pg :='<DIV style="left:612PX;top:833PX;width:128PX;height:16PX;TEXT-ALIGN:CENTER;"><span class="fc1-2">Diretoria</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+
+	EndIf
+	Pg :='<DIV class="box" style="z-index:10; border-color:000000;border-style:solid;border-bottom-style:solid;border-bottom-width:1PX;border-left-style:solid;border-left-width:1PX;border-top-style:solid;border-top-width:1PX;border-right-style:solid;border-right-width:1PX;left:4PX;top:900PX;width:744PX;height:50PX;"> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<table border=0 cellpadding=0 cellspacing=0 width=737px height=46px><TD>&nbsp;</TD></TABLE> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+    Pg :='<DIV style="left:8PX;  top:903PX;width:260PX;height:10PX;"><span class="fc1-4">Aplicação:</span></DIV> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='<DIV style="left:29PX; top:913PX;width:661PX;height:16PX;"><span class="fc1-13X">'+Rtrim(_APLIC01)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+	Pg :='<DIV style="left:29PX; top:930PX;width:661PX;height:16PX;"><span class="fc1-13X">'+Rtrim(_APLIC02)+'</span></DIV>' + cFim ; fWrite(nHdl,Pg,Len(pG)) 
+
+	
+	Pg :='<BR> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	Pg :='</BODY></HTML> ' + cFim ; fWrite(nHdl,Pg,Len(pG))
+	
+	fClose(nHdl)                        
+	
+	// TMP->(dbCloseArea())
+	
+	WaitRun("Explorer "+cArq,0)
+
+Next i
+	
+Return
+
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Verifca Parametros Auxiliares, cria caso não existam
+STATIC Function VerParametros()
+	dbSelectArea("SX6")
+	If !dbSeek("  US_IMPSP")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_IMPSP"
+	    X6_TIPO		:= "C"
+	    X6_DESCRIC	:= "Gera Formulário de Solicitação de Pagamento ?  (S)im  N(ao)"
+	    X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "N"
+	    MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_CTNFE")
+    	RecLock("SX6",.T.)
+	    X6_VAR		:= "US_CTNFE"
+    	X6_TIPO		:= "C"
+	    X6_DESCRIC	:= "CONTABILIZA N. FISCAL ENTRADA On Line ?  (S)im  N(ao)"
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "S"
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_INSSEMP")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_INSSEMP"
+	    X6_TIPO		:= "C"
+	    X6_DESCRIC	:= "Contabiliza INSS parte Empresa,no Ctas Pagar e NFE ?  (S)im  N(ao)"
+	    X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "S"
+	    MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_APRFIN")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_APRFIN"
+	    X6_TIPO		:= "C"	
+    	X6_DESCRIC	:= "Utiliza Controle Aprovacao no Financeiro ?  (S)im  N(ao)" 
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "N"
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_REMOTE")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_REMOTE"
+	    X6_TIPO		:= "C"	
+    	X6_DESCRIC	:= "Mapeamento para Diretorio Remote (Drive)" 
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := ""
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_HTML")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_HTML"
+	    X6_TIPO		:= "C"	
+    	X6_DESCRIC	:= "Path para Gravação de HTML's" 
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := ""
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_MAXPC")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_MAXPC"
+	    X6_TIPO		:= "N"	
+    	X6_DESCRIC	:= "% máximo para divergencia do PC x NF" 
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "10"
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_MINPC")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_MINPC"
+	    X6_TIPO		:= "N"	
+    	X6_DESCRIC	:= "% minimo para divergencia do PC x NF" 
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "10"
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_HISTNFE")
+	    RecLock("SX6",.T.)
+	    X6_VAR		:= "US_HISTNFE"
+	    X6_TIPO		:= "C"	
+    	X6_DESCRIC	:= "Informa Historico Financeiro na N.F. Entrada ?" 
+	    X6_DESC1	:= ""
+    	X6_PROPRI	:= "U"  
+	    X6_CONTEUD  := "N"
+    	MsUnLock()
+	EndIf 
+	dbSelectArea("SX6")
+	If !dbSeek("  US_CPGPC")
+	    RecLock("SX6",.T.)
+	    X6_VAR	:= "US_CPGPC"
+	    X6_TIPO	:= "C"	
+	    X6_DESCRIC	:= "Gera Titulo Provisorio no C.Pagar, na aprov. do PC ?  (S)im  N(ao)" 
+	    X6_PROPRI	:= "U"  
+    	X6_CONTEUD  := "N"
+   	    MsUnLock()
+	EndIf
+                      
+Return(Nil)
+
+

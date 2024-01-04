@@ -1,0 +1,635 @@
+#include "rwmake.ch"
+User Function AtuPDSRR
+cPerg := "PWI001"
+criaperg(cPerg)
+
+IF pergunte(cPerg,.t.)  
+pergunte(cPerg,.F.)              
+    _cAnoRef := mv_par01
+    _cMesRef := mv_par02
+   	Processa( {|| RunProc() } )
+
+Endif
+
+Return nil
+
+Static Function RunProc()
+ Alert("Processando transf de verbas da Tabela SRR")
+	// _cTabfech := "RC"+_cCodEmp+substr(_cAnoRef,3,2)+_cMesRef
+ DbSelectArea("SRR")  
+ DbSetOrder(1)             
+ nRec := Recno()
+ procregua(reccount())
+ DbGotop()
+Do While !Eof() 
+ Do Case
+   Case rr_pd='032' // PAGAMENTO ADIANTAMEN
+        Reclock("SRR",.F.) 
+		Replace rr_pd with "106" 		
+   Case rr_pd='008' //	FALTAS e/ou ATRASOS 
+		Reclock("SRR",.F.) 
+		Replace rr_pd with "452" 	
+   Case rr_pd='493' //    SUSPENSAO
+        Reclock("SRR",.F.) 
+        Replace rr_pd with "453"
+   Case rr_pd='115' // PERICULOSIDADE
+        Reclock("SRR",.F.) 
+        Replace rr_pd with "117"
+   Case rr_pd='005' // SALARIO FAMILIA
+        Reclock("SRR",.F.) 
+        Replace rr_pd with '115'
+   Case rr_pd='401' // DIF IR FERIAS
+        Reclock("SRR",.F.) 
+        Replace rr_pd with "509"
+   Case rr_pd='018' // ADIANTAMENTO QUINZEN                                                         
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "401"
+   Case rr_pd='118' // FARMACIA        em SRD e SRK                                                 
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "457"
+   Case rr_pd='120' // HS.EXTRAS 50%                                                                
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "207"
+   Case rr_pd='121' // HS.EXTRAS 100%     DIURNA                                                    
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "206"
+   Case rr_pd='162' // INSALUB.MAXIMA                                                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "120"
+   Case rr_pd='119' // ADIANT.DIVERSOS    e SRK                                                     
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='116' // INSALUBRIDADE      em SRD                                                    
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "119"
+   Case rr_pd='124' // ADIC.NOTURNO       P                                                         
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "202"
+   Case rr_pd='173' // HS.EXT.NOT.75% NOTURNA                                                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "217"
+   Case rr_pd='140' // HS.EXT.NOT.100% NOTURNA                                                      
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "235"
+   Case rr_pd='377' // FALTA E\OU ATRASOS                                                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "413"
+   Case rr_pd='355' // EMP CONSIGNADO/FOLHA       2               D16     464        -> em SRK,SRD        
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "464" 
+   Case rr_pd='163' // EXAME LAB  2               D14     465  em SRK, SRD                          
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "465"
+   Case rr_pd='149' //    DESC.PAGTO.INDEVIDO     2               D10     466  - em SRK, SRD        
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "466"
+   Case rr_pd='211' //    ADIANT.P/COMPRAS        2               D17     467  - em SRD             
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "467"
+   Case rr_pd='198' //    LIG.TELEF.PARTICULAR    2               D10     468 - em SRD              
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "468"
+   Case rr_pd='226' //        DESP MEDICA/CONSUL/U    2               D14     469 - em SRD          
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "469"
+   Case rr_pd='356' //    DESC SESI /ATRASO       2               D12     470 - em SRD              
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "470"
+   Case rr_pd='282' //    MENSALIDADE/SESI        2               D04     471 - em SRD              
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "471"
+   Case rr_pd='264' //    MENS.SIND.MARINHEIRO    2               D05     472 - JA EM SRD           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "472"
+   Case rr_pd='248' //    ETAPA   2               D10     473           - JA EM SRD                 
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "473"
+   Case rr_pd='146' //    CONT.ASSOCIATIVA SIN    2       1,500   D05     436 - JA EM SRD           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "436"
+   Case rr_pd='262' //    GRATIF.CHEFIA MAQ.      1               P04     323                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "323"
+   Case rr_pd='131' //    GRATIFICACAO    1       100,000 P05     262 - ja em SRD                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "262"
+   Case rr_pd='151' //    BONUS   1               P05     285                                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "285"
+   Case rr_pd='001' //    HORAS NORMAIS   1       100,000 P01     112                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "112"
+   Case rr_pd='358' //    REEMB DESC EMPREST CONSIG       1               P11     288               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "288"
+   Case rr_pd='219' //    TX.ADMIN.EMPRESTIMO     2               D10     474                       	
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "474"
+   Case rr_pd='221' //    PRO-LABORE      1       100,000 P07     190                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "190"
+   Case rr_pd='144' //    31o.Dia 1               P01     243                                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "243"
+   Case rr_pd='239' //    DESP.C/OTICA    2               D02     475                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "475"
+   Case rr_pd='138' //    REEMBOLSO DESC.INDEV    1               P13     244                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "244"
+   Case rr_pd='136' //    ESTORNO DE FALTAS       1       100,000 P01     204                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "204"
+   Case rr_pd='148' //    DESC.MAT.N/DEVOLV       2               D10     476                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "476"
+   Case rr_pd='357' //    DESC EMPREST CONSIG     2               D13     464                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "464"
+   Case rr_pd='016' //    SALARIO MATERNIDADE     1       100,000 P06     121                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "121"
+   Case rr_pd='020' //    ARREDONDAMENTO  2       100,000 D10     408                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "408"
+   Case rr_pd='003' // I.N.S.S.       2       100,000 D03     417                                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "417"
+   Case rr_pd='004' //    I.R.R.F.        2       100,000 D07     419                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "419"
+   Case rr_pd='094' //    13O. SALARIO PARC       1                       108                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "108"
+   Case rr_pd='194' //    PREMIO PRODUCAO 1               P05     280                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "280"
+   Case rr_pd='122' //    DSR S/H.EXT/ADC.NOT     1       100,000 P02     116                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "116"
+   Case rr_pd='037' // ABONO DE FERIAS    1       100,000 F01     131                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "131"
+   Case rr_pd='039' //    FERIAS NO MES   1       100,000 F01     129                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "129"
+   Case rr_pd='042' // FERIAS PAGAS NO MES        1       100,000 F01     129                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "129"
+   Case rr_pd='130' //    IRRF PARTIC.LUCROS      2                       430                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "430"
+   Case rr_pd='040' //    FERIAS NO PROXIMO ME    1       100,000 F01     130                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "130"
+   Case rr_pd='043' //    DIF. FERIAS PAGAS NO    1       100,000 F01     145                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "145"
+   Case rr_pd='045' //    13o SAL.RESCISAO        1       100,000 R02     163                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "163"
+   Case rr_pd='050' //    1/3 ABONO DE FERIAS     1       100,000 F01     136                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "136"
+   Case rr_pd='053' // DIF. DE ABONO DE FER       1               F01     151                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "151"
+   Case rr_pd='009' //    1a PARCELA 13o SALAR    1       100,000 P09     107                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "107"
+   Case rr_pd='022' //    FERIAS INDENIZADAS      1       100,000 R01     143                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "143"
+   Case rr_pd='144' //    31o.Dia 1               P01     243                                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "243"
+   Case rr_pd='023' //    FERIAS PROPORCIONAIS    1       100,000 R01     144                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "144"
+   Case rr_pd='056' //    AVISO PREV.INDENIZ.     1       100,000 P05     160                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "160"
+   Case rr_pd='057' //    1/3 DE FERIAS RESCIS    1       100,000 R01     170                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "170"
+   Case rr_pd='065' //    13o SALARIO INDENIZA    1               R02     164                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "164"
+   Case rr_pd='360' // DIF EMP CONSIG FOLHA       2               D13     477                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "477"
+   Case rr_pd='368' //    P.CONTAS-ALEXANDRE LIMA 2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='369' //    P.CONTAS-ALIOMAR FARIAS 2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='370' //    P.CONTAS-DJAN CARLOS    2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='371' //    P.CONTAS-ADERSON TAVARES        2               463               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='372' //    P.CONTAS-GERSON ANDRADE 2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='373' //    P.CONTAS-MARIA ILZA     2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='374' //    P.CONTAS-RENATO SANTOS  2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='375' //    P.CONTAS-RONALDO LAMARAO        2               463               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='376' //    P.CONTAS-PEDRO ANDRADE  2                       463                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "463"
+   Case rr_pd='147' //    CONT.ASSISTENCIAL ME    2       1,000   D05     422                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "422"
+   Case rr_pd='250' //    VALE CRECHE     1               P05     275                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "275"
+   Case rr_pd='247' //    ETAPA   1               P05     276                                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "276"
+   Case rr_pd='141' //    ADIC.NOT.S/HS.EXT.NO    1       20,000  P03     281                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "281"
+   Case rr_pd='184' //    IND.LEI 6.708 (Multa Dissidio)  1               P05     283               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "283"
+   Case rr_pd='246' //    REP.REMUN.MARITIMO      1               P05     319                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "319"
+   Case rr_pd='249' //    ADIC.PERIC.MARITIMO     1               P03     320                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "320"
+   Case rr_pd='259' //    H.EXT.MARIT.60% 1       100,000 P02     321                               
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "321"
+   Case rr_pd='260' //    GRATIF.PRATICAGEM       1               P04     322                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "322"
+   Case rr_pd='266' //    ADIC.NOT.MARITIMO       1               P03     325                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "325"
+   Case rr_pd='284' //    GRATIFICACAO QUINQUE    1               P04     105                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "105"
+   Case rr_pd='142' //    DIF. INSALUBRIDADE      1               P05     119                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "119"
+   Case rr_pd='139' //    HS.EXT.NOTUR.50%        1       150,000 P02     329                       
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "329"
+   // em 26/06.07
+   Case rr_pd='007' //        DESC. DSR       2       100,000 D10     447                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "447"
+   Case rr_pd='367' //        REEMB LABORATORIO       1               P17     327                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "327"
+   Case rr_pd='378' //        REEMBOLSO SESI  1               P05     328                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "328"
+   Case rr_pd='230' //        H.EXT.50%-TELEFON       1       150,000         330                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "330"
+   Case rr_pd='035' //        DIFERENCA SALARIAL      1       100,000 P01     230                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "230"
+   Case rr_pd='351' //        HS BANC 75%     1       175,000 P02     331                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "331"
+   Case rr_pd='352' //        HS BANCO 100%   1       200,000 P02     332                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "332"
+   Case rr_pd='238' //        ADIC.SOBREAVISO 1               P03     333                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "333"
+   Case rr_pd='068' //        1/3 FERIAS NO MES       1               F01     134                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "134"
+   Case rr_pd='069' //        1/3 FERIAS NO PROXIM    1               F01     135                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "135"
+   Case rr_pd='071' //        DIF. 1/3 FERIAS MS      1               F01     148                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "148"
+   Case rr_pd='079' //        DIF. 1/3 FER. PAGAS     1               F01     147                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "147"
+   Case rr_pd='155' //        DIF. S/ FER MS  1               F01     146                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "146"
+   Case rr_pd='080' //        DIF. OUTROS ADIC FER    1               F01     155                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "155"
+   Case rr_pd='153' //        ARRED NAS FERIAS        1               P05     158                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "158"
+   Case rr_pd='133' //        IND.ART.479     1               P05     181                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "181"
+   Case rr_pd='154' //        MEDIA DE FERIAS MSEG    1               F01     133                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "133"
+   Case rr_pd='110' // 201    DIF.13O.SAL     1                       110                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "110"
+   Case rr_pd='287' //        LICENCA S/REMUNERACA    2               D10     334                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "334"
+   Case rr_pd='296' //        H.EXTRA 75%- TELEFONISTA        1       175,000 P02     335           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "335"
+   Case rr_pd='132' //        DIF.PERICUL.RESC        1               P05     117                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "117"
+   Case rr_pd='125' //        MEDIA DE FERIAS 1       100,000 F01     132                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "132"
+   Case rr_pd='126' //        DIF.MEDIA FERIAS        1               F01     153                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "153"
+   Case rr_pd='127' //        MEDIA 13o SALARIO       1       100,000         241                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "241"
+   Case rr_pd='152' //        AUXILIO FUNERAL 1               D08     336                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "336"
+   Case rr_pd='277' //        DIF. 1/3 ABONO PECUN    1               P08     152                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "152"
+   Case rr_pd='297' //        SALDO DE SALARIO        1       100,000 P01     126                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "126"
+   Case rr_pd='298' //        MEDIA SOBRE HORAS       1       100,000 F01     139                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "139"
+   Case rr_pd='299' //        MEDIA SOBRE HORAS MS    1               F01     140                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "140"
+   Case rr_pd='302' //        DIF MED HOR MES SEG     1               F01     154                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "154"
+   Case rr_pd='253' //        DIF VALE CRECHE 1               P05     275                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "275"
+   Case rr_pd='304' //        MEDIA FER PROP RESC     1       100,000 F01     253                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "253"
+   Case rr_pd='305' //        MEDIA FERIAS VENCIDAS RESCISAO  1       100,000 F01     254           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "254"
+   Case rr_pd='306' //        MEDIA AVISO PREVIO RESCISAO     1       100,000 F09     256           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "256"
+   Case rr_pd='311' //        DIF.VALE RANCHO 1                       432                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "432"
+   Case rr_pd='307' //        MEDIA 13O. SALARIO RESCISAO     1       100,000 N05     311           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "311"
+   Case rr_pd='255' //        DIF.GRATIFICACAO        1               P05     262                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "262"
+   Case rr_pd='309' //        MEDIA 13O. SALARIO SOBRE AVISO  1       100,000 N05     257           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "257"
+   Case rr_pd='312' // ARREND 13O SALARIO     1       100,000 P10     109                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "109"
+   Case rr_pd='350' //        INSUF DE SALDO  1               P05     125             - so tinha uma ocorrencia!
+		Reclock("SRR",.F.) 
+		Replace rr_pd with "125" 
+   Case rr_pd='382' //        ARRED EMP CONS FOLHA    1       100,000 P13     183                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "183"
+   Case rr_pd='010' // I.N.S.S. DE 13o SALA   2       100,000 D03     423                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "423"
+   Case rr_pd='011' //        CONTRIBUICAO SINDICA    2       100,000 D05     421                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "421"
+   Case rr_pd='012' //        PENSAO ALIMENTICIA J    2       100,000 D06     415                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "415"
+   Case rr_pd='028' //        I.R.R.F. FERIAS 2               D07     420                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "420"
+   Case rr_pd='033' //        ADIANTAMENTOS 13o SA    2       100,000 D11     440                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "440"
+   Case rr_pd='405' //        LIQ PG RESC ANTER       2               R03     522                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "522"
+   Case rr_pd='034' //        ADIANTAMENTOS 13O       2       100,000         405                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "405"
+   Case rr_pd='041' //        ADIANT.CONF.REC.FERI    2       100,000 F02     425                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "425"
+   Case rr_pd='046' //        I.R.R.F. 13o SALARIO    2       100,000 D07     424                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "424"
+   Case rr_pd='048' //        ADIANTAMENTOS 13o SA    2       100,000         439                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "439"
+   Case rr_pd='074' //        I.N.S.S. FERIAS 2               D03     418                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "418"
+   Case rr_pd='383' //        ARRED EMP CONS FOLHA    2       100,000 D15     438                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "438"
+   Case rr_pd='403' //        FERIAS PAGA MES ANTE    2       100,000 D18     433                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "433"
+   Case rr_pd='404' //        2A. PARC. 13O. RESC     2                       427                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "427"
+   Case rr_pd='491' //        ARRED ADIANTAMENTO      2       100,000 D01     402                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "402"
+   Case rr_pd='492' //        LIQ PAGO RESCISAO       2       100,000 R03     428                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "428"
+		// iniciado em 03/07/2007 e relacionamento das verbas x LPs                                                               
+   Case rr_pd='177' //        MULTA ART.477 p.8 CL    1               P05     181                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "181"
+   Case rr_pd='178' //        IND.ESTAB.PROVISORIA    1               P05     212                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "212"
+   Case rr_pd='129' //        PENSAO ALIMENTICIA FERIAS       2       100,000         434           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "434"
+   Case rr_pd='747' //        DED INSS 13 SAL 3       100,000         755                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "755"
+   Case rr_pd='701' //        % INSS EMPRESA  3       100,000 B01     747                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "747"
+   Case rr_pd='702' //        % TERCEIROS     3       100,000 B01     748                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "748"
+   Case rr_pd='710' //        SAL CT ATE LIM FOL      3       100,000         703                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "703"
+   Case rr_pd='711' //        SAL CT ACIMA LIM FOL    3       100,000         704                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "704"
+   Case rr_pd='712' //        SAL CT ATE LIM 13       3       100,000         709                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "709"
+   Case rr_pd='713' //        SAL CT ACIMA LIM 13     3       100,000         710                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "710"
+   Case rr_pd='714' //        BASE FGTS       3       100,000         707                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "707"
+   Case rr_pd='715' //        BASE FGTS RES DISP      3       100,000         888                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "888"
+   Case rr_pd='716' //        BASE FGTS 13 SAL        3       100,000         722                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "722"
+   Case rr_pd='717' //        BASE FGTS 13 RES DIS    3       100,000         889                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "889"
+   Case rr_pd='722' //        BASE IR ADTO SAL(DF)    3       100,000         702                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "702"
+   Case rr_pd='723' //        BASE IR FER OUT PERI    3       100,000         915                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "915"
+   Case rr_pd='799' //        LIQUIDO A RECEBER       3               D09     713                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "713"
+   Case rr_pd='725' //        BASE IR ADTO SAL        3       100,000         701                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "701"
+   Case rr_pd='726' //        BASE IR SALARIO 3       100,000         705                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "705"
+   Case rr_pd='727' //        BASE IR FERIAS  3       100,000         706                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "706"
+   Case rr_pd='728' //        BASE IR 13      3       100,000         712                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "712"
+   Case rr_pd='729' //        BASE PENSAO ALIM FOL    3       100,000         714                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "714"
+   Case rr_pd='730' //        DIF BASE IR FER 3       100,000         720                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "720"
+   Case rr_pd='740' //        DED DEP IR FOL  3       100,000         715                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "715"
+   Case rr_pd='741' //        DED DEP IR FER  3       100,000         716                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "716"
+   Case rr_pd='742' //        DED DEP IR 13 SAL       3       100,000         718                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "718"
+   Case rr_pd='178' // CORREÇÃO:178   IND.ESTAB.PROVISORIA    1               P05     212           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "212"
+   Case rr_pd='200' //        PIS REND/ABONO  1                       232                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "232"
+   Case rr_pd='059' //        DIF. SALARIO FAMILIA    1       100,000 P06     337                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "337"
+   Case rr_pd='743' //        DED DEP DIF FERIAS      3       100,000         717                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "717"
+   Case rr_pd='745' //        DED INSS FOL    3       100,000         753                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "753"
+   Case rr_pd='754' //        FGTS DEPOSITADO RESC    3       100,000         725                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "725"
+   Case rr_pd='746' //        DED INSS FER    3       100,000         754                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "754"
+   Case rr_pd='750' //        FGTS    3       100,000 B02     708                                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "708"
+   Case rr_pd='751' //        FGTS 13 SAL     3       100,000         723                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "723"
+   Case rr_pd='752' //        FGTS QUITACAO   3       100,000         726                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "726"
+   Case rr_pd='755' //        FGTS MES ANTERIOR       3       100,000         724                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "724"
+   Case rr_pd='756' //        FGTS ARTIGO 22 (40%)    3       100,000         727                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "727"
+   Case rr_pd='760' //        C.S. 0.5% REM FOL       3       0,500   B02     832                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "832"
+   Case rr_pd='761' //        C.S. 0.5% REM 13 SAL    3       0,500           833                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "833"
+   Case rr_pd='762' //        C.S. 0.5% REM RES       3       0,500           829                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "829"
+   Case rr_pd='763' //        C.S. 0.5% REM 13 RES    3       0,500           830                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "830"
+   Case rr_pd='764' //        C.S. 10% SALDO FGTS     3                       831                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "831"
+   Case rr_pd='780' //        SALARIO DO MES  3                       918                           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "918"
+   Case rr_pd='799' //        LIQUIDO A RECEBER       3               D09     713                   
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "713"
+   Case rr_pd='825' //        HORAS EFETIVAS TRABALHADAS      3       100,000         624           
+   		Reclock("SRR",.F.) 
+   		Replace rr_pd with "624"
+EndCase 
+  MsUnlock()
+  DbGoto(nRec)		                
+  DbSkip()
+  IncProc()
+Enddo
+	Alert("Fim da Atualização dos CC em SRD")	
+Return
+
+Static Function CriaPerg(cPerg)
+Local _sAlias := Alias()
+Local aRegs := {}
+Local i,j
+dbSelectArea("SX1")
+dbSetOrder(1)
+// Grupo Ordem Pergunta                          /Variavel/Tipo/Tamanho/Decimal/Presel/GSC/Valid/Var01/Def01/Cnt01/Var02/Def02/Cnt02/Var03/Def03/Cnt03/Var04/Def04/Cnt04/Var05/Def05/Cnt05
+//                                                                              1                                                                      2                                                   3                                              4
+//          1     2     3                       4    5    6         7    8   9  0  1    2   3           4            5    6    7    8    9             0   1   2   3   4          5   6   7   8   9        0   1   2   3   4       5   6   7   8      9   0   1   2
+AADD(aRegs,{cPerg,"01", "Ano  Referencia    ?", ".", ".", "mv_ch1", "C", 04, 0, 0, "G", "", "mv_par01", ""         , "" , "" , "" , "" , ""          , "", "", "", "", ""       , "", "", "", "", ""     , "", "", "", "", ""    , "", "", "", ""   , "", "", "", "" })
+AADD(aRegs,{cPerg,"02", "Mes referencia     ?", ".", ".", "mv_ch2", "C", 02, 0, 0, "G", "", "mv_par02", ""         , "" , "" , "" , "" , "   "       , "", "", "", "", "       ", "", "", "", "", "    " , "", "", "", "", "    ", "", "", "", ""   , "", "", "", "" })
+
+For i:=1 to Len(aRegs)
+	If !dbSeek(cPerg+aRegs[i,2])
+		RecLock("SX1",.T.)
+		For j:=1 to FCount()
+			If j <= Len(aRegs[i])
+				FieldPut(j,aRegs[i,j])
+			Endif
+		Next
+		MsUnlock()
+	Endif
+Next
+
+dbSelectArea(_sAlias)
+
+Return nil
+
+

@@ -1,0 +1,113 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmpegoslq()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+Local cStatusFer :="F"
+Local cObs :="2"
+
+// m1
+/*      
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADPERGOZOCT-SQL.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADPERGOZOIT-SQL.TXT")
+Endcase 
+*/
+// M2
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERGOZ0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADPERGOZ0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERGOZ0201.TXT")
+Endcase 
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+//                                      1       2       3           4           5       6           7          8           9               10              11          12              13              14          15
+// cFixo := "INSERT INTO PFUFERIASPER(CODCOLIGADA,CHAPA,FIMPERAQUIS,DATAPAGTO,DATAINICIO,DATAFIM,DATAAVISO,NRODIASABONO, PAGA1APARC13O, NDIASLICREM1, NDIASLICREM2, FERIASCOLETIVAS, FERIASPERDIDAS, OBSERVACAO, SITUACAOFERIAS) VALUES (" 
+cFixo := "INSERT INTO PFUFERIASPER(CODCOLIGADA,CHAPA,FIMPERAQUIS,DATAPAGTO,DATAINICIO,DATAFIM,DATAAVISO,NRODIASABONO, FERIASCOLETIVAS, FERIASPERDIDAS, OBSERVACAO, SITUACAOFERIAS) VALUES (" 
+    
+Alert("Inicio da Rotina de Migracao Protheus para RM - periodo de gozo ")
+DbselectArea("SRH")
+nTot := RECCOUNT()
+dbGotop()
+
+DbSeek(Xfilial("SRH")+"",.T.)
+While !EOF() .AND. RH_FILIAL == SM0->M0_CODFIL 
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+ if SM0->M0_CODIGO == "01"
+      cLine :=cFixo+"1"+","+"'"+PADR(RH_MAT,6)+"'"+","	//	1	Chapa	String	16	PFUNC.CHAPA
+    Else
+      cLine :=cFixo+"2"+","+"'"+PADR(RH_MAT,6)+"'"+","	//	1	Chapa	String	16	PFUNC.CHAPA
+    ENDIF
+    
+    DbSelectArea("SRF")
+    DbSetOrder(1)
+    IF Dbseek(Xfilial("SRF")+SRH->RH_MAT+DTOS(SRH->RH_DATABAS))
+       // cLine += "'"+SUBSTR(DTOS(RF_DATAFIM),1,4)+"-"+SUBSTR(DTOS(RF_DATAFIM),5,2)+"-"+SUBSTR(DTOS(RF_DATAFIM),7,2)+" 00:00:00"+"'"+ ","	//	2	Data final do período aquisitivo	Data	8	PFUFERIASPER.FIMPERAQUIS
+      Do Case 
+      // Case LEFT(DTOS(RF_DATABAS),4) < "2021" 
+      //   cLine += "'"+SUBSTR(DTOS((RF_DATABAS+364)),1,4)+"-"+SUBSTR(DTOS((RF_DATABAS+364)),5,2)+"-"+SUBSTR(DTOS(((RF_DATABAS)+364)),7,2)+" 00:00:00"+"'"+ ","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+      Case (RF_DATAFIM) > (RF_DATABAS+364)
+        cLine += "'"+SUBSTR(DTOS(((RF_DATABAS+364))),1,4)+"-"+SUBSTR(DTOS(((RF_DATABAS+364))),5,2)+"-"+SUBSTR(DTOS(((RF_DATABAS+364))),7,2)+" 00:00:00"+"'"+ ","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+      OTHERWISE 
+        // cLine += "'"+PADR(STRTRAN(DTOC(STOD(RF_DATAFIM)),"/","-"),08)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+        cLine += "'"+SUBSTR(DTOS(RF_DATAFIM),1,4)+"-"+SUBSTR(DTOS((RF_DATAFIM)),5,2)+"-"+SUBSTR(DTOS((RF_DATAFIM)),7,2)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS    
+      EndCase 
+      cStatusFer := "F"
+      cObs:="2"
+      Do case
+        Case RF_STATUS == "1"
+            cStatusFer := "M"
+        Case RF_STATUS == "2"
+            cStatusFer := "P"
+            cObs:= "2"
+        Case RF_STATUS == "3"
+            cStatusFer := "F"
+            cObs := "9"
+      Endcase 
+    ELSE
+      DbselectArea("SRH")
+      DBSKIP()
+      LOOP 
+    ENDIF    
+    DbselectArea("SRH")
+    cLine += "'"+SUBSTR(DTOS(RH_DTRECIB),1,4)+"-"+SUBSTR(DTOS(RH_DTRECIB),5,2)+"-"+SUBSTR(DTOS(RH_DTRECIB),7,2)+" 00:00:00"+"'"+ "," //	3	Data de pagamento das férias	Data	8	PFUFERIASPER.DATAPAGTO
+    cLine += "'"+SUBSTR(DTOS(RH_DATAINI),1,4)+"-"+SUBSTR(DTOS(RH_DATAINI),5,2)+"-"+SUBSTR(DTOS(RH_DATAINI),7,2)+" 00:00:00"+"'"+ "," //	4	Data de início das férias	Data	8	PFUFERIASPER.DATAINICIO
+    cLine += "'"+SUBSTR(DTOS(RH_DATAFIM),1,4)+"-"+SUBSTR(DTOS(RH_DATAFIM),5,2)+"-"+SUBSTR(DTOS(RH_DATAFIM),7,2)+" 00:00:00"+"'"+ "," //	5	Data de fim das férias	Data	8	PFUFERIASPER.DATAFIM
+    cLine += "'"+SUBSTR(DTOS(RH_DTAVISO),1,4)+"-"+SUBSTR(DTOS(RH_DTAVISO),5,2)+"-"+SUBSTR(DTOS(RH_DTAVISO),7,2)+" 00:00:00"+"'"+ "," //	6	Data de aviso das férias	Data	8	PFUFERIASPER.DATAAVISO
+    cLine += STR(RH_DABONPE) + ","	//	7	Número de dias de abono pecuniário	Real	9	PFUFERIASPER.NRODIASABONO
+    cLine += STR(RH_PERC13S) + ","	//	8	Ind. de pagto. da 1ª parcela 13ºsalário	Booleano	2	PFUFERIASPER.PAGA1APARC13O
+    // cLine += "" + ","	//	9	Licença remunerada férias colet. 1ºmês	Real	9	PFUFERIASPER.NDIASLICREM1
+    // cLine += "" + ","	//	10	Licença remunerada férias colet. 2ºmês	Real	9	PFUFERIASPER.NDIASLICREM2
+    // cLine += "" + ","	//	11	Indicativo de per.ref.à férias coletivas	Booleano	2	PFUFERIASPER.FERIASCOLETIVAS
+    cLine += STR(RH_DFERIAS) + ","	//	12	Dias de férias perdidos devido a faltas	Inteiro	2	PFUFERIASPER.FERIASPERDIDAS
+    cLine += "'"+cObs+"',"	//	13	Obs. a ser impressa no recibo de férias	String	80	PFUFERIASPER.OBSERVACAO
+    cLine += "'"+cStatusFer+ "');"	//	14	Situação das férias	String	1	PFUFERIASPER.SITUACAOFERIAS
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

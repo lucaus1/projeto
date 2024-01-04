@@ -1,0 +1,720 @@
+#INCLUDE "rwmake.ch"
+#include "Topconn.ch"
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºPrograma  ³PTRPWC     º Autor ³ Potencial - Franciney Alves 01/09/06   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescricao ³ Relatorio gerencial de agrupamento por verbas              º±±
+±±º          ³                                                            º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ MP8 SIGA GPE                                               º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function PTRPWC
+
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Declaracao de Variaveis                                             ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+Local cDesc1       := "Este programa tem como objetivo imprimir relatorio "
+Local cDesc2       := "de acordo com os parametros informados pelo usuario."
+Local cDesc3       := "Relatorio de agrupamento por verbas"
+Local cPict        := ""
+Local titulo       := "Relatorio Gerencial de agrupamento por verbas"
+Local nLin         := 80
+
+Local Cabec1       := "Relatorio Gerencial de agrupamento por verbas"                                                                           
+// Matricula	Nome	Salario (101)	HE 60%	 HE 110%	HE 150%	 Total Valor Extra		Dsr	Adcional Nort	Periculosidade (117)	Premio Assuidade (111)	Salario Familia	Vale transporte	Outros Proventos(124 +210)	Ajuda de Custo (211+212)	Aluguel (213)	Arredondamento de Salario (399) Inss Folha(401+402+403)	IRRF (404+407)	Adiantamento (415)	Faltas (510+511)		Atrasos (512+514)		Outros Adiantamentos (423+430.431+432+422)	Farmacia (446)	Outros Desconto (420+421+652+691)	contr. Sindical (460)
+//																														  1	        1         1         1         1         1         1         1         1         1         2         2         2         2         2         2         2         2         2         2         3         3         3         3         3         3         3         3         3         3         4         4         4         4         4         4         4         4         4         4         5         5         5         5         5         5         5
+// 						        1         2         3         4         5         6         7         8         9         0		    1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6
+//                     12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+Local Cabec2      := "| Matric  Nome                                    Salario   |"
+Local imprime     := .T.
+Local aOrd := {}
+Private lEnd        := .F.
+Private lAbortPrint := .F.
+Private CbTxt       := ""
+Private limite      := 320
+Private tamanho     := "G"
+Private nomeprog    := "PTRPWC" // Coloque aqui o nome do programa para impressao no cabecalho
+Private nTipo       := 15
+Private aReturn     := { "Zebrado", 1, "Administracao", 1, 2, 1, "", 1}
+Private nLastKey	:= 0
+Private aPerg 	:= {}
+Private cPerg   := "PTRPWC"
+Private cbtxt   := Space(10)
+Private cbcont  := 00
+Private CONTFL  := 01
+Private m_pag   := 01
+Private wnrel   := "NOME" // Coloque aqui o nome do arquivo usado para impressao em disco
+Private cString := "SRC"
+
+
+
+dbSelectArea("SX1")
+dbSetOrder(1)
+
+  	//- Defindo grupo de perguntas 
+  	aadd(aPerg,{cPerg, "01", "Ano/Mes de      ?"   ,"mv_ch1","C",06,0,1,"G","","mv_par01","","","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "02", "Ano/Mes Ate     ?"   ,"mv_ch2","C",06,0,1,"G","","mv_par02","","","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "03", "Centro de Custo de ?","mv_ch3","C",09,0,1,"G","","mv_par03","","SI3","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "04", "Centro de Custo Ate?","mv_ch4","C",09,0,1,"G","","mv_par04","","SI3","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "05", "Matricula de ?"      ,"mv_ch5","C",06,0,1,"G","","mv_par05","","SRA","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "06", "Matricula Ate?"      ,"mv_ch6","C",06,0,1,"G","","mv_par06","","SRA","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "07", "Movimento ?"         ,"mv_ch7","N",01,0,1,"C","","mv_par07","Mensal","","Acumulado","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "08", "Outros Proventos?"   ,"mv_ch8","C",50,0,1,"G","","mv_par08","","SRV","","","","","","","","","","","","",""})
+  	aadd(aPerg,{cPerg, "09", "Outros Descontos?"   ,"mv_ch9","C",50,0,1,"G","","mv_par09","","SRV","","","","","","","","","","","","",""})  	
+  	aadd(aPerg,{cPerg, "10", "Gera Arquivo    ?"   ,"mv_cha","N",01,0,1,"C","","mv_par10","Sim","","Nao","","","","","","","","","","","",""})  	
+  	aadd(aPerg,{cPerg, "11", "Empresa  ?"         ,"mv_chb","N",01,0,1,"C","","mv_par11","PWI","","PWB","","","","","","","","","","","",""})
+
+
+  	 
+  	//- Gravando grupo de perguntas
+  	For nA:= 1 To Len(aPerg)
+   	If !(dbSeek(cPerg+aPerg[nA,2]))
+      	RecLock("SX1",.t.)
+			Replace X1_GRUPO    with aPerg[nA][1]
+			Replace X1_ORDEM    with aPerg[nA][2]
+			Replace X1_PERGUNT  with aPerg[nA][3]
+			Replace X1_PERSPA   with aPerg[nA][3]
+			Replace X1_PERENG   with aPerg[nA][3]
+			Replace X1_VARIAVL  with aPerg[nA][4]
+			Replace X1_TIPO     with aPerg[nA][5]
+			Replace X1_TAMANHO  with aPerg[nA][6]
+			Replace X1_GSC      with aPerg[nA][9]
+			Replace X1_DECIMAL  with aPerg[nA][7]
+			Replace X1_PRESEL   with aPerg[nA][8]
+			Replace X1_DEF01    with aPerg[nA][12]
+			Replace X1_DEF02    with aPerg[nA][15]
+			Replace X1_DEFSPA1  with aPerg[nA][12]
+			Replace X1_DEFSPA2  with aPerg[nA][15]
+			Replace X1_DEFENG1  with aPerg[nA][12]
+			Replace X1_F3       with aPerg[nA][13]
+			Replace X1_DEFENG2  with aPerg[nA][15]
+			MsUnlock()
+		Endif
+	Next
+
+
+dbSelectArea("SRC")
+dbSetOrder(1)
+
+
+pergunte(cPerg,.F.)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Monta a interface padrao com o usuario...                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+wnrel := SetPrint(cString,NomeProg,cPerg,@titulo,cDesc1,cDesc2,cDesc3,.T.,aOrd,.T.,Tamanho,,.T.)
+
+If nLastKey == 27
+	Return
+Endif
+                     
+
+SetDefault(aReturn,cString)
+
+If nLastKey == 27
+   Return
+Endif
+
+nTipo := If(aReturn[4]==1,15,18)
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Processamento. RPTSTATUS monta janela com a regua de processamento. ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+RptStatus({|| RunReport(Cabec1,Cabec2,Titulo,nLin) },Titulo)
+Return
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÉÍÍÍÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍËÍÍÍÍÍÍÑÍÍÍÍÍÍÍÍÍÍÍÍÍ»±±
+±±ºFun‡„o    ³RUNREPORT º Autor ³ AP6 IDE            º Data ³  01/09/06   º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÊÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºDescri‡„o ³ Funcao auxiliar chamada pela RPTSTATUS. A funcao RPTSTATUS º±±
+±±º          ³ monta a janela com a regua de processamento.               º±±
+±±ÌÍÍÍÍÍÍÍÍÍÍØÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¹±±
+±±ºUso       ³ Programa principal                                         º±±
+±±ÈÍÍÍÍÍÍÍÍÍÍÏÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍÍ¼±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function RunReport(Cabec1,Cabec2,Titulo,nLin)
+Local nOrdem            
+aStru:= {{"MATRIC"     	,"C", 06	 ,0},; // Matricula
+		{"NOME"     	,"C", 30	 ,0},; // Nome do funcionario
+        {"Cargo"        ,"C", 20     ,0},; // Cargo
+        {"Depto"        ,"C", 20     ,0},; // Departamento
+        {"DtAdmis"      ,"D", 08     ,0},; // Data de admissão
+        {"SalBase"      ,"N", 14     ,2},; // Salário Base
+        {"Categ"        ,"C", 01     ,0},; // Categoria (horista / mensalista)
+		{"SALARIO"  	,"N", 12	 ,2},; // Valor do Salario -   Horas mês -> ref da verba salario	112/113
+		{"FaltasV"    	,"N", 12     ,2},; // Valor Faltas  Faltas e Atrasos 	413
+		{"AtrasoV"    	,"N", 12     ,2},; // Valor Atrasos 414 
+		{"DSRSHE"     	,"N", 12	 ,2},; // Valor Reflexo DSR S/ HE     DSR  S/ HORAS EXTRAS	116
+		{"VHE"      	,"N", 12	 ,2},; // Valor de Horas Extra Valor Horas Extras  ->	206/207/208/209/210/217/218/219/220
+		{"INSS"       	,"N", 12	 ,2},; // Valor INSS    Valor INSS ->	417- id 064 (folha mensal) , 418 - id 065 (férias)
+        {"FGTS"         ,"N", 12     ,2},; // Valor FGTS ->  708 - id. 018
+        {"AssistM"      ,"N", 12     ,2},; // Assistência Médica     410
+        {"PenSAli"      ,"N", 12     ,2},; // Pensão Alimentícia     416,435,517,518,429,514
+        {"Qdep"         ,"N", 12     ,0},; // Qtde Dependentes       NO CADASTRO DO FUNCIONARIO
+        {"BaseIR"       ,"N", 12     ,2},; // Base IRPF      405 - id 015, 712 id 027, 706 id 016,  915 id 236
+	    {"IRRF"       	,"N", 12 	 ,2},; // Valor IRRF    Valor IRPF	419 - ID 066, 424 id 071, 420 id 067
+        {"MedHFer"      ,"N", 12     ,2},; // Média horas Extras (q foram pagas nas férias do mês)   139 - id 082,  140 - id 083, 141 - id 084
+        {"BPrv13"       ,"N", 12     ,2},; // Valor base cálculo provisão 13.o       formula (valor salario +media atualizados )
+        {"VPrv13"       ,"N", 12     ,2},; // Valor Provisão 13.o    735 - id 136
+        {"BInssP13"     ,"N", 12     ,2},; // Valor base cálculo provisão inss 13.o  formula (valor salario +media atualizados )
+        {"VPrvIN13"     ,"N", 12     ,2},; // Valor Provisão INSS 13.o       736 - id 137
+        {"BFgtP13"      ,"N", 12     ,2},; // Valor base cálculo provisão fgts 13.o  formula (valor salario +media atualizados )
+        {"PrvFgt13"     ,"N", 12     ,2},; // Valor Provisão FGTS 13.o       737 - id 138
+        {"PerAqUlF"     ,"D", 08     ,0},; // Período aquisitivo das ultimas férias  informativo base na SRT
+        {"BprvFer"      ,"N", 12     ,2},; // Valor base cálculo provisão de férias  formula (valor salario +media atualizados )
+        {"VProvFer"     ,"N", 12     ,2},; // Valor Provisão Férias  729 - id 130
+   	    {"BInssPFer"	,"N", 12	 ,2},; // Valor base cálculo provisão inss de férias	formula (valor salario +media atualizados )
+   	    {"VInssPFer" 	,"N", 12	 ,2},; // Valor provisão INSS Férias	730 - id 131
+        {"BFgtPFer"     ,"N", 12     ,2},; // Valor base cálculo provisão fgts de férias     formula (valor salario +media atualizados )
+        {"VFgtPfer"     ,"N", 12     ,2},; // Valor provisão FGTS Férias     731 - id 132
+        {"CCMov"        ,"C", 09     ,0}}  // Codigo Centro de custo 
+
+//- Criando Abertura de Tabela Temporaria
+c_Arq:= CriaTrab(aStru,.t.)
+dbUseArea(.t.,,c_Arq,"wFolhaGer",.f.,.f.)
+
+//- Indice por Boleto
+c_Key:= "MATRIC+CCMOV"
+c_Ind:= CriaTrab(nil,.f.)
+IndRegua("wFolhaGer",c_Ind,c_Key,,,"Criando Arquivo Temporário...")
+
+DbSelectArea(cString)
+dbSetOrder(1)              
+if mv_par07 == 1 .and. mv_par11 == 1 // Mensal e PWI
+ dbSelectArea(cString)
+ dbSetOrder(2)  // Filial + ccusto + matricula
+ DbGotop()
+ Do While !EOF()
+    cFilial := SRC->RC_FILIAL
+    cCC  :=  SRC->RC_CC
+    cMat := SRC->RC_MAT
+    
+    if SRC->RC_CC < mv_par03 .AND. SRC->RC_CC > mv_par04 
+       dbSelectArea(cString)    
+       DbSkip()
+       Loop
+    Endif
+    if SRC->RC_MAT < mv_par05 .AND. SRC->RC_MAT > mv_par06 
+       dbSelectArea(cString)    
+       DbSkip()
+       Loop
+    Endif                                 
+    DbSelectArea("SRT")
+    DbSetOrder(1) // filial+Mat+cc+datacalcul+provisao+verba
+    DbSeek(xFilial("SRT")+cMat+SRC->RC_CC+Dtos(SRC->RC_DATA)+"1") // ferias
+   
+    DbSelectArea("SRA")
+    DbSetOrder(1)
+    DbSeek(xFilial("SRA")+cMat)
+    dbSelectArea(cString)    
+    Do While   cFilial == SRC->RC_FILIAL .AND.  cCC  ==  SRC->RC_CC .AND.  cMat == SRC->RC_MAT
+       DbSelecTArea("wFolhaGer")
+       if !DbSeek(cMat+cCC) 
+          RecLock("wFolhaGer",.T.)
+          	Replace CCMov  WITH cCC
+			Replace MATRIC    WITH cMat 
+			Replace NOME      WITH SRA->RA_NOME 
+			Replace DtAdmis WITH SRA->RA_ADMISSA 	
+			Replace SalBase WITH SRA->RA_SALARIO // Salário Base
+			Replace Categ   WITH SRA->RA_CATFUNC // Categoria (horista / mensalista)
+			Replace Depto     WITH "ADM" //  Departamento, criar regra conforme ccusto
+			Replace PerAqUlF  with SRT->RT_DATABAS    // Período aquisitivo das ultimas férias  informativo base na SRT
+                  
+       Endif
+       if DbSeek(cMat+cCC) 
+           Do Case
+              	  Case SRC->RC_PD $ "112/113"
+                            Replace  SALARIO with (SALARIO+SRC->RC_VALOR)  // Valor do Salario -   Horas mês -> ref da verba salario	112/113
+                  Case SRC->RC_PD $ "413"
+                            Replace FaltasV  with SRC->RC_VALOR  // Valor Faltas  Faltas e Atrasos  413
+                  Case SRC->RC_PD $ "414"
+                            Replace AtrasoV with SRC->RC_VALOR  // Valor Atrasos 414
+                  Case SRC->RC_PD $ "116"
+                            Replace DSRSHE  with SRC->RC_VALOR // Valor Reflexo DSR S/ HE   116
+                  Case SRC->RC_PD $ "206/207/208/209/210/217/218/219/220"
+                            Replace VHE     with (VHE+SRC->RC_VALOR)  // Valor de Horas Extra Valor Horas Extras  ->    206/207/208/209/210/217/218/219/220
+                  Case SRC->RC_PD $ "417/418"
+                            Replace INSS    with (INSS+SRC->RC_VALOR)  // Valor INSS    Valor INSS ->    417- id 064 (folha mensal) , 418 - id 065 (férias)
+                  Case SRC->RC_PD $ "708" 
+                            Replace FGTS    with SRC->RC_VALOR // Valor FGTS ->  708 - id. 018
+                  Case SRC->RC_PD $ "410"
+                            Replace AssistM with SRC->RC_VALOR  // Assistência Médica     410
+                  Case SRC->RC_PD $ "416,435,517,518,429,514"
+                            Replace PenSAli with (PenSAli+SRC->RC_VALOR)    // Pensão Alimentícia     
+                  Case SRC->RC_PD $ "715"  // ver verba com numero de dependentes 
+                            Replace Qdep  with SRC->RC_HORAS  // Qtde Dependentes       NO CADASTRO DO FUNCIONARIO
+                  Case SRC->RC_PD $ "712/706/915"  // ver 405
+                            Replace BaseIR with (BaseIR+SRC->RC_VALOR)   // Base IRPF      405 - id 015, 712 id 027, 706 id 016,  915 id 236
+                  Case SRC->RC_PD $ "419/424/420"
+                            Replace  IRRF  with (IRRF+SRC->RC_VALOR)      // Valor IRRF    Valor IRPF       419 - ID 066, 424 id 071, 420 id 067
+                  Case SRC->RC_PD $ "139/140/141"
+                            Replace MedHFer with (MedHFer+SRC->RC_VALOR)    // Média horas Extras (q foram pagas nas férias do mês)   139 - id 082,  140 - id 083, 141 - id 084
+                  Case SRC->RC_PD $  "formula"
+                            Replace BPrv13  with SRC->RC_VALOR    // Valor base cálculo provisão 13.o       formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "735"
+                            Replace VPrv13  with SRC->RC_VALOR    // Valor Provisão 13.o    735 - id 136
+                  Case SRC->RC_PD $ "formula"
+                            Replace BInssP13 with SRC->RC_VALOR    // Valor base cálculo provisão inss 13.o  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "736"
+                            Replace VPrvIN13 with SRC->RC_VALOR   // Valor Provisão INSS 13.o       736 - id 137
+                  Case SRC->RC_PD $ "formula"
+                            Replace BFgtP13  with SRC->RC_VALOR   // Valor base cálculo provisão fgts 13.o  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "737"
+                            Replace PrvFgt13 with SRC->RC_VALOR   // Valor Provisão FGTS 13.o       737 - id 138
+                  Case SRC->RC_PD $ "formula"
+                            Replace BprvFer  with SRC->RC_VALOR   // Valor base cálculo provisão de férias  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "729"
+                            Replace VProvFer with SRC->RC_VALOR   // Valor Provisão Férias  729 - id 130
+                  Case SRC->RC_PD $ "formula"
+                            Replace BInssPFer with SRC->RC_VALOR  // Valor base cálculo provisão inss de férias     formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "730"
+                            Replace VInssPFer with SRC->RC_VALOR  // Valor provisão INSS Férias     730 - id 131
+                  Case SRC->RC_PD $ "formula"
+                            Replace BFgtPFer with SRC->RC_VALOR   // Valor base cálculo provisão fgts de férias     formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "731"
+                            Replace VFgtPfer with SRC->RC_VALOR   // Valor provisão FGTS Férias     731 - id 132
+                  EndCase
+                           
+       Endif
+       DbSelecTArea("SRC")
+	   DbSkip()
+	Enddo
+
+ Enddo                           
+ElseIf mv_par07 == 2 .and. mv_par11 == 1 // acumulado e pwi 
+ dbSelectArea("SRD")
+ dbSetOrder(2)  // Filial + ccusto + matricula
+ DbGotop()
+ Do While !EOF()
+    cFilial := SRD->RD_FILIAL
+    cCC     := SRD->RD_CC
+    cMat    := SRD->RD_MAT
+
+    if SRD->RD_CC < mv_par03 .AND. SRD->RD_CC > mv_par04 
+       dbSelectArea("SRD")    
+       DbSkip()
+       Loop
+    Endif
+    if SRD->RD_MAT < mv_par05 .AND. SRD->RD_MAT > mv_par06 
+       dbSelectArea("SRD")    
+       DbSkip()
+       Loop
+    Endif              
+    DbSelectArea("SRT")
+    DbSetOrder(1) // filial+Mat+cc+datacalcul+provisao+verba
+    DbSeek(xFilial("SRT")+cMat+SRD->RD_CC+Dtos(SRD->RD_DATPGT)+"1") // ferias
+    
+    DbSelectArea("SRA")
+    DbSetOrder(1)
+    DbSeek(xFilial("SRA")+cMat)
+    dbSelectArea("SRD")    
+    Do While   cFilial == SRD->RD_FILIAL .AND.  cCC  ==  SRD->RD_CC .AND.  cMat == SRD->RD_MAT
+       
+       If SRD->RD_DATARQ < mv_par01 .or. SRD->RD_DATARQ > mv_par02
+          DbSkip()
+          Loop
+       Endif  
+       
+       DbSelecTArea("wFolhaGer")
+       if !DbSeek(cMat+cCC) 
+          RecLock("wFolhaGer",.T.)
+            Replace CCMov   with cCC
+            Replace MATRIC  WITH cMat 
+            Replace NOME    WITH SRA->RA_NOME
+ 			Replace DtAdmis WITH SRA->RA_ADMISSA 	
+			Replace SalBase WITH SRA->RA_SALARIO // Salário Base
+			Replace Categ   WITH SRA->RA_CATFUNC // Categoria (horista / mensalista)
+			Replace Depto   WITH "ADM" //  Departamento, criar regra conforme ccusto
+			Replace PerAqUlF  with SRT->RT_DATABAS
+       Endif
+       if DbSeek(cMat+cCC) 
+           Do Case
+           Case SRD->RD_PD $ "112/113"
+             Replace  SALARIO with (SALARIO+SRD->RD_VALOR)  // Valor do Salario -   Horas mês -> ref da verba salario      112/113
+           Case SRD->RD_PD $ "413"
+             Replace  FaltasV  with SRD->RD_VALOR  // Valor Faltas  Faltas e Atrasos  413
+           Case SRD->RD_PD $ "414"
+             Replace  Atraso with SRD->RD_VALOR  // Valor Atrasos 414
+           Case SRD->RD_PD $ "116"
+             Replace  DSRSHE  with SRD->RD_VALOR // Valor Reflexo DSR S/ HE   116
+           Case SRD->RD_PD $ "206/207/208/209/210/217/218/219/220"
+             Replace  VHE     with  (VHE+SRD->RD_VALOR)  // Valor de Horas Extra Valor Horas Extras  ->    206/207/208/209/210/217/218/219/220
+           Case SRD->RD_PD $ "417/418"
+           Replace  INSS    with (INSS+SRD->RD_VALOR)  // Valor INSS    Valor INSS ->    417- id 064 (folha mensal) , 418 - id 065 (férias)
+           Case SRD->RD_PD $ "708"
+           Replace  FGTS    with SRD->RD_VALOR // Valor FGTS ->  708 - id. 018
+           Case SRD->RD_PD $ "410"
+           Replace  AssistM with SRD->RD_VALOR  // Assistência Médica     410
+           Case SRD->RD_PD $ "416,435,517,518,429,514"
+           Replace  PenSAli with (PenSAli+SRD->RD_VALOR)    // Pensão Alimentícia
+           Case SRD->RD_PD $ "715"  // ver verba com numero de dependentes
+           Replace  Qdep    WITH SRD->rd_horas // Qtde Dependentes       NO CADASTRO DO FUNCIONARIO
+           Case SRD->RD_PD $ "712/706/915"  // ver 405
+           Replace  BaseIR with (BaseIR+SRD->RD_VALOR)   // Base IRPF      405 - id 015, 712 id 027, 706 id 016,  915 id 236
+           Case SRD->RD_PD $ "419/424/420"
+           Replace  IRRF  with (IRRF+SRD->RD_VALOR)      // Valor IRRF    Valor IRPF       419 - ID 066, 424 id 071, 420 id 067
+           Case SRD->RD_PD $ "139/140/141"
+           Replace  MedHFer with (MedHFer+SRD->RD_VALOR)    // Média horas Extras (q foram pagas nas férias do mês)   139 - id 082,  140 - id 083
+           Case SRD->RD_PD $  "formula"
+           Replace  BPrv13  with SRD->RD_VALOR    // Valor base cálculo provisão 13.o       formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "735"
+           Replace  VPrv13  with SRD->RD_VALOR    // Valor Provisão 13.o    735 - id 136
+           Case SRD->RD_PD $ "formula"
+           Replace  BInssP13 with SRD->RD_VALOR    // Valor base cálculo provisão inss 13.o  formula (valor salario +media atualizados
+           Case SRD->RD_PD $ "736"
+           Replace  VPrvIN13 with SRD->RD_VALOR   // Valor Provisão INSS 13.o       736 - id 137
+           Case SRD->RD_PD $ "formula"
+           Replace  BFgtP13  with SRD->RD_VALOR   // Valor base cálculo provisão fgts 13.o  formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "737"
+           Replace  PrvFgt13 with SRD->RD_VALOR   // Valor Provisão FGTS 13.o       737 - id 138
+           Case SRD->RD_PD $ "formula"
+           Replace  BprvFer  with SRD->RD_VALOR   // Valor base cálculo provisão de férias  formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "729"
+           Replace  VProvFer with SRD->RD_VALOR   // Valor Provisão Férias  729 - id 130
+           Case SRD->RD_PD $ "formula"
+           Replace  BInssPFer with SRD->RD_VALOR  // Valor base cálculo provisão inss de férias     formula (valor salario +media atual
+           Case SRD->RD_PD $ "730"
+           Replace  VInssPFer with SRD->RD_VALOR  // Valor provisão INSS Férias     730 - id 131
+           Case SRD->RD_PD $ "formula"
+           Replace  BFgtPFer with SRD->RD_VALOR   // Valor base cálculo provisão fgts de férias     formula (valor salario +media atual
+           Case SRD->RD_PD $ "731"
+           Replace  VFgtPfer with SRD->RD_VALOR   // Valor provisão FGTS Férias     731 - id 132
+           EnDCase
+       Endif
+       DbSelecTArea("SRD")
+	   DbSkip()
+	Enddo
+
+ Enddo                           
+
+// PWB
+Elseif mv_par07 == 1 .and. mv_par11 == 2 // Mensal e PWB
+ dbSelectArea(cString)
+ dbSetOrder(2)  // Filial + ccusto + matricula
+ DbGotop()
+ Do While !EOF()
+    cFilial := SRC->RC_FILIAL
+    cCC  :=  SRC->RC_CC
+    cMat := SRC->RC_MAT
+    
+    if SRC->RC_CC < mv_par03 .AND. SRC->RC_CC > mv_par04 
+       dbSelectArea(cString)    
+       DbSkip()
+       Loop
+    Endif
+    if SRC->RC_MAT < mv_par05 .AND. SRC->RC_MAT > mv_par06 
+       dbSelectArea(cString)    
+       DbSkip()
+       Loop
+    Endif                                 
+    DbSelectArea("SRT")
+    DbSetOrder(1) // filial+Mat+cc+datacalcul+provisao+verba
+    DbSeek(xFilial("SRT")+cMat+SRC->RC_CC+Dtos(SRC->RC_DATA)+"1") // ferias
+   
+    DbSelectArea("SRA")
+    DbSetOrder(1)
+    DbSeek(xFilial("SRA")+cMat)
+    dbSelectArea(cString)    
+    Do While   cFilial == SRC->RC_FILIAL .AND.  cCC  ==  SRC->RC_CC .AND.  cMat == SRC->RC_MAT
+       DbSelecTArea("wFolhaGer")
+       if !DbSeek(cMat+cCC) 
+          RecLock("wFolhaGer",.T.)
+          	Replace CCMov  WITH cCC
+			Replace MATRIC    WITH cMat 
+			Replace NOME      WITH SRA->RA_NOME 
+			Replace DtAdmis WITH SRA->RA_ADMISSA 	
+			Replace SalBase WITH SRA->RA_SALARIO // Salário Base
+			Replace Categ   WITH SRA->RA_CATFUNC // Categoria (horista / mensalista)
+			Replace Depto     WITH "ADM" //  Departamento, criar regra conforme ccusto
+			Replace PerAqUlF  with SRT->RT_DATABAS    // Período aquisitivo das ultimas férias  informativo base na SRT
+                  
+       Endif
+       if DbSeek(cMat+cCC) 
+           Do Case
+              	  Case SRC->RC_PD $ "101"
+                            Replace  SALARIO with (SALARIO+SRC->RC_VALOR)  // Valor do Salario -   Horas mês -> ref da verba salario	112/113
+                  Case SRC->RC_PD $ "431"
+                            Replace FaltasV  with SRC->RC_VALOR  // Valor Faltas  Faltas e Atrasos  413
+                  Case SRC->RC_PD $ "112"
+                            Replace DSRSHE  with SRC->RC_VALOR // Valor Reflexo DSR S/ HE   116
+                  Case SRC->RC_PD $ "136/139/133/132"
+                            Replace VHE     with (VHE+SRC->RC_VALOR)  // Valor de Horas Extra Valor Horas Extras  ->    206/207/208/209/210/217/218/219/220
+                  Case SRC->RC_PD $ "401/491"
+                            Replace INSS    with (INSS+SRC->RC_VALOR)  // Valor INSS    Valor INSS ->    417- id 064 (folha mensal) , 418 - id 065 (férias)
+                  Case SRC->RC_PD $ "732" 
+                            Replace FGTS    with SRC->RC_VALOR // Valor FGTS ->  708 - id. 018
+                  Case SRC->RC_PD $ "417"
+                            Replace AssistM with SRC->RC_VALOR  // Assistência Médica     410
+                  Case SRC->RC_PD $ "450"
+                            Replace PenSAli with (PenSAli+SRC->RC_VALOR)    // Pensão Alimentícia     
+                  Case SRC->RC_PD $ ""  // ver verba com numero de dependentes 
+                            Replace Qdep  with SRC->RC_HORAS  // Qtde Dependentes       NO CADASTRO DO FUNCIONARIO
+                  Case SRC->RC_PD $ "711/726/707/726"  
+                            Replace BaseIR with (BaseIR+SRC->RC_VALOR)   // Base IRPF      405 - id 015, 712 id 027, 706 id 016,  915 id 236
+                  Case SRC->RC_PD $ "405/403/495"
+                            Replace  IRRF  with (IRRF+SRC->RC_VALOR)      // Valor IRRF    Valor IRPF       419 - ID 066, 424 id 071, 420 id 067
+                  Case SRC->RC_PD $ "146/147"
+                            Replace MedHFer with (MedHFer+SRC->RC_VALOR)    // Média horas Extras (q foram pagas nas férias do mês)   139 - id 082,  140 - id 083, 141 - id 084
+                  Case SRC->RC_PD $  "formula"
+                            Replace BPrv13  with SRC->RC_VALOR    // Valor base cálculo provisão 13.o       formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "756"
+                            Replace VPrv13  with SRC->RC_VALOR    // Valor Provisão 13.o    735 - id 136
+                  Case SRC->RC_PD $ "formula"
+                            Replace BInssP13 with SRC->RC_VALOR    // Valor base cálculo provisão inss 13.o  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "757"
+                            Replace VPrvIN13 with SRC->RC_VALOR   // Valor Provisão INSS 13.o       736 - id 137
+                  Case SRC->RC_PD $ "formula"
+                            Replace BFgtP13  with SRC->RC_VALOR   // Valor base cálculo provisão fgts 13.o  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "758"
+                            Replace PrvFgt13 with SRC->RC_VALOR   // Valor Provisão FGTS 13.o       737 - id 138
+                  Case SRC->RC_PD $ "formula"
+                            Replace BprvFer  with SRC->RC_VALOR   // Valor base cálculo provisão de férias  formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "750"
+                            Replace VProvFer with SRC->RC_VALOR   // Valor Provisão Férias  729 - id 130
+                  Case SRC->RC_PD $ "formula"
+                            Replace BInssPFer with SRC->RC_VALOR  // Valor base cálculo provisão inss de férias     formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "751"
+                            Replace VInssPFer with SRC->RC_VALOR  // Valor provisão INSS Férias     730 - id 131
+                  Case SRC->RC_PD $ "formula"
+                            Replace BFgtPFer with SRC->RC_VALOR   // Valor base cálculo provisão fgts de férias     formula (valor salario +media atualizados )
+                  Case SRC->RC_PD $ "752"
+                            Replace VFgtPfer with SRC->RC_VALOR   // Valor provisão FGTS Férias     731 - id 132
+                  EndCase
+                           
+       Endif
+       DbSelecTArea("SRC")
+	   DbSkip()
+	Enddo
+
+ Enddo                           
+ElseIf mv_par07 == 2 .and. mv_par11 == 2 // acumulado e pwb 
+ dbSelectArea("SRD")
+ dbSetOrder(2)  // Filial + ccusto + matricula
+ DbGotop()
+ Do While !EOF()
+    cFilial := SRD->RD_FILIAL
+    cCC     := SRD->RD_CC
+    cMat    := SRD->RD_MAT
+
+    if SRD->RD_CC < mv_par03 .AND. SRD->RD_CC > mv_par04 
+       dbSelectArea("SRD")    
+       DbSkip()
+       Loop
+    Endif
+    if SRD->RD_MAT < mv_par05 .AND. SRD->RD_MAT > mv_par06 
+       dbSelectArea("SRD")    
+       DbSkip()
+       Loop
+    Endif              
+    DbSelectArea("SRT")
+    DbSetOrder(1) // filial+Mat+cc+datacalcul+provisao+verba
+    DbSeek(xFilial("SRT")+cMat+SRD->RD_CC+Dtos(SRD->RD_DATPGT)+"1") // ferias
+    
+    DbSelectArea("SRA")
+    DbSetOrder(1)
+    DbSeek(xFilial("SRA")+cMat)
+    dbSelectArea("SRD")    
+    Do While   cFilial == SRD->RD_FILIAL .AND.  cCC  ==  SRD->RD_CC .AND.  cMat == SRD->RD_MAT
+       
+       If SRD->RD_DATARQ < mv_par01 .or. SRD->RD_DATARQ > mv_par02
+          DbSkip()
+          Loop
+       Endif  
+       
+       DbSelecTArea("wFolhaGer")
+       if !DbSeek(cMat+cCC) 
+          RecLock("wFolhaGer",.T.)
+            Replace CCMov   with cCC
+            Replace MATRIC  WITH cMat 
+            Replace NOME    WITH SRA->RA_NOME
+ 			Replace DtAdmis WITH SRA->RA_ADMISSA 	
+			Replace SalBase WITH SRA->RA_SALARIO // Salário Base
+			Replace Categ   WITH SRA->RA_CATFUNC // Categoria (horista / mensalista)
+			Replace Depto   WITH "ADM" //  Departamento, criar regra conforme ccusto
+			Replace PerAqUlF  with SRT->RT_DATABAS
+       Endif
+       if DbSeek(cMat+cCC) 
+           Do Case
+           Case SRD->RD_PD $ "101"
+             Replace  SALARIO with (SALARIO+SRD->RD_VALOR)  // Valor do Salario -   Horas mês -> ref da verba salario      112/113
+           Case SRD->RD_PD $ "431"
+             Replace  FaltasV  with SRD->RD_VALOR  // Valor Faltas  Faltas e Atrasos  413
+           Case SRD->RD_PD $ "112"
+             Replace  DSRSHE  with SRD->RD_VALOR // Valor Reflexo DSR S/ HE   116
+           Case SRD->RD_PD $ "136/139/133/132"
+             Replace  VHE     with  (VHE+SRD->RD_VALOR)  // Valor de Horas Extra Valor Horas Extras  ->    206/207/208/209/210/217/218/219/220
+           Case SRD->RD_PD $ "401/491"
+             Replace  INSS    with (INSS+SRD->RD_VALOR)  // Valor INSS    Valor INSS ->    417- id 064 (folha mensal) , 418 - id 065 (férias)
+           Case SRD->RD_PD $ "732"
+             Replace  FGTS    with SRD->RD_VALOR // Valor FGTS ->  708 - id. 018
+           Case SRD->RD_PD $ "417"
+             Replace  AssistM with SRD->RD_VALOR  // Assistência Médica     410
+           Case SRD->RD_PD $ "450"
+             Replace  PenSAli with (PenSAli+SRD->RD_VALOR)    // Pensão Alimentícia
+           Case SRD->RD_PD $ ""  // ver verba com numero de dependentes
+             Replace  Qdep    WITH SRD->rd_horas // Qtde Dependentes       NO CADASTRO DO FUNCIONARIO
+           Case SRD->RD_PD $ "711/726/707/726"  
+             Replace  BaseIR with (BaseIR+SRD->RD_VALOR)   // Base IRPF      405 - id 015, 712 id 027, 706 id 016,  915 id 236
+           Case SRD->RD_PD $ "405/403/495"
+             Replace  IRRF  with (IRRF+SRD->RD_VALOR)      // Valor IRRF    Valor IRPF       419 - ID 066, 424 id 071, 420 id 067
+           Case SRD->RD_PD $ "146/147"
+             Replace  MedHFer with (MedHFer+SRD->RD_VALOR)    // Média horas Extras (q foram pagas nas férias do mês)   139 - id 082,  140 - id 083
+           Case SRD->RD_PD $  "formula"
+             Replace  BPrv13  with SRD->RD_VALOR    // Valor base cálculo provisão 13.o       formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "756"
+             Replace  VPrv13  with SRD->RD_VALOR    // Valor Provisão 13.o    735 - id 136
+           Case SRD->RD_PD $ "formula"
+             Replace  BInssP13 with SRD->RD_VALOR    // Valor base cálculo provisão inss 13.o  formula (valor salario +media atualizados
+           Case SRD->RD_PD $ "757"
+             Replace  VPrvIN13 with SRD->RD_VALOR   // Valor Provisão INSS 13.o       736 - id 137
+           Case SRD->RD_PD $ "formula"
+             Replace  BFgtP13  with SRD->RD_VALOR   // Valor base cálculo provisão fgts 13.o  formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "758"
+             Replace  PrvFgt13 with SRD->RD_VALOR   // Valor Provisão FGTS 13.o       737 - id 138
+           Case SRD->RD_PD $ "formula"
+             Replace  BprvFer  with SRD->RD_VALOR   // Valor base cálculo provisão de férias  formula (valor salario +media atualizados )
+           Case SRD->RD_PD $ "750"
+             Replace  VProvFer with SRD->RD_VALOR   // Valor Provisão Férias  729 - id 130
+           Case SRD->RD_PD $ "formula"
+             Replace  BInssPFer with SRD->RD_VALOR  // Valor base cálculo provisão inss de férias     formula (valor salario +media atual
+           Case SRD->RD_PD $ "751"
+             Replace  VInssPFer with SRD->RD_VALOR  // Valor provisão INSS Férias     730 - id 131
+           Case SRD->RD_PD $ "formula"
+             Replace  BFgtPFer with SRD->RD_VALOR   // Valor base cálculo provisão fgts de férias     formula (valor salario +media atual
+           Case SRD->RD_PD $ "752"
+             Replace  VFgtPfer with SRD->RD_VALOR   // Valor provisão FGTS Férias     731 - id 132
+           EnDCase
+       Endif
+       DbSelecTArea("SRD")
+	   DbSkip()
+	Enddo
+
+ Enddo                           
+Endif
+
+if mv_par10 == 1                     
+
+	DbSelecTArea("wFolhaGer")
+	Copy to \Report_folha\GerencialRH 
+	
+	cArquivo := 'GerencialRh'
+   cIndice  := '\Report_folha\GerencialRh'+ OrdBagExt()
+   If !MSFILE( cArquivo )
+	   If MSCREATE( 'GerencialRh', aStru, "TOPCONN" )
+   	   APMsgInfo('Criado com sucesso!')
+		Else
+			APMsgInfo('Problemas ao criar o arquivo!')
+		EndIf
+	Endif	
+	         // 1o nova area
+           // 2o driver
+           // 3o Nome da tabela
+           // 4o Alias
+           // 5o Shared
+           // 6o ReadOnly
+           //         1o, 2o   , 3o     , 4o  , 5o, 6o
+    /*
+    DbUseArea(.T.,"TOPCONN",'GerencialRh',"TRA",.T.,.F.)              
+    DbSelectArea("TRA")         
+	 if MSAPPEND('GerencialRh','\Report_folha\PWCRH.dbf')
+	   APMsgInfo('Append com sucesso!')
+	 Else
+	   APMsgInfo('Erro no Append!')  
+	 Endif	 
+	 DbSelectArea("TRA")         
+	 DbCloseArea()
+    */
+Endif
+ 
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ SETREGUA -> Indica quantos registros serao processados para a regua ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+DbSelecTArea("wFolhaGer")
+SetRegua(RecCount())
+
+dbGoTop()
+While !EOF()                                       
+    // FUNCIONARIOS
+    DbSelectArea("SRA")
+	DbSetOrder(1)
+    DbSeek(xFilial()+wFolhaGer->MATRIC)                        
+    // CENTRO DE CUSTOS
+    DbSelectArea("SI3")
+    DbSetOrder(1)
+    DbSeek(xFilial()+wFolhaGer->CCMov)    
+    DbSelectArea("wFolhaGer")						
+   If lAbortPrint                                  
+	  @0, 000 PSay Avalimp(132)
+      @nLin,00 PSAY "*** CANCELADO PELO OPERADOR ***"
+      Exit
+   Endif
+
+   //ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+   //³ Impressao do cabecalho do relatorio. . .                            ³
+   //ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+   If nLin > 55 // Salto de Página. Neste caso o formulario tem 55 linhas...
+      Cabec(Titulo,Cabec1,Cabec2,NomeProg,Tamanho,nTipo)
+      nLin := 8
+   Endif
+   
+	@nLin,001 PSAY	"|"+wFolhaGer->CCMov
+	@nLin,014 PSAY	"|"+wFolhaGer->MATRIC
+	@nLin,023 PSAY	"|"+wFolhaGer->NOME
+//			 																																						 1	        1         1         1         1         1         1         1         1         1         2         2         2         2         2         2         2         2         2         2         3         3         3         3         3         3         3         3         3         3         4         4         4         4         4         4         4         4         4         4         5         5         5         5         5         5         5
+//    					             1         2         3         4         5         6         7         8         9         0		     1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6         7         8         9         0         1         2         3         4         5         6
+//                       12345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789012345678901234567890123456789
+//			Cabec2      := "C.Custo       Matric  Nome                                    Salario    "
+   nCol := 058
+	@nLin,063 PSAY	"|"+Transform(wFolhaGer->SALARIO, "@E 99,999.99")	
+
+	nLin ++
+    wFolhaGer->(dbSkip())
+   	                
+    IncProc()         
+
+   nLin := nLin + 1 // Avanca a linha de impressao
+
+   dbSkip() // Avanca o ponteiro do registro no arquivo
+EndDo
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Finaliza a execucao do relatorio...                                 ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+SET DEVICE TO SCREEN    
+
+wFolhaGer->(dbCloseArea())
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+ 	//³ Se impressao em disco, chama o gerenciador de impressao...          ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+If aReturn[5]==1
+   dbCommitAll()
+   SET PRINTER TO
+   OurSpool(wnrel)
+Endif
+
+MS_FLUSH()
+    
+Return

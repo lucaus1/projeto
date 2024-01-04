@@ -1,0 +1,217 @@
+#include "rwmake.ch"        // incluido pelo assistente de conversao do AP5 IDE em 08/06/00
+ 
+
+user function MANSZ1PRE()
+
+
+dbselectarea("SZ1")   
+DBSETORDER(1)
+DBGOTOP()
+//axcadastro("SZ1","Controle de Toras")
+cCadastro:="Controle de Toras"
+aRotina := { { "Pesquisa"  , 'AxPesqui'                , 0, 1 } ,;
+             { "Corta   "  , 'ExecBlock("SZ1CORTE")'   , 0, 2 } ,;
+             { "Canc Cor"  , 'ExecBlock("SZ1CANCE")'   , 0, 2 }}
+
+MBROWSE(16,00,280,350,"SZ1") //,,Z1_CORTE)
+return nil             
+
+**************************
+USER FUNCTION SZ1CORTE()
+**************************
+DBSELECTAREA("SZ1")
+DBSETORDER(1)
+nREG:=RECNO()
+IF !EMPTY(Z1_CORTE)
+   ALERT("Processo de corte ja efetuado para este registro !!")
+   RETURN nil
+ENDIF
+
+DbSelectArea("SB1")
+DbSetOrder(1)
+DbGoTop()
+If DbSeek(xFilial("SB1")+SZ1->Z1_ESPECIE )
+   _cEspecie   := SZ1->Z1_ESPECIE+"-"+SUBSTR(B1_DESC,1,15)
+  ELSE
+   _cEspecie   := "*nao encontrada*" 
+Endif
+
+DbSelectArea("SA2")
+DbSetOrder(1)
+DbGoTop()
+If DbSeek(xFilial("SA2")+SZ1->Z1_CODFOR )
+   _cFORN   := SZ1->Z1_CODFOR+"-"+SUBSTR(A2_NOME,1,20)
+  ELSE
+   _cFORN   := "*nao encontrado*"
+Endif
+
+DBSELECTAREA("SZ1")
+
+
+_D1:=0
+_D2:=0
+_D3:=0
+
+ @ 1,1 to  250,500 DIALOG oJan2 TITLE "Preparacao da Madeira (Corte)"
+// @ 10,10 bitmap size 100,40 file "LGRL01.BMP"
+
+ @ 25, 20 Say "Especie..................... "+_cEspecie
+ @ 35, 20 Say "Fornecedor.............. "+_cForn
+ @ 55, 20 Say " Comprimento Total ..... "+STR(Z1_COMPRIM,6,0)
+ @ 65, 20 Say " Data da Medicao ....... "+DTOC(Z1_MEDICAO)
+ @ 75, 20 Say " Comprimento A:"
+ @ 85, 20 Say " Comprimento B:"
+
+ @ 75, 75 Get _d1 PICTURE "999999"
+ @ 85, 75 Get _d2 PICTURE "999999"
+
+
+ @ 110, 189 BMPBUTTON TYPE 1 ACTION Trava()// Substituido pelo assistente de conversao do AP5 IDE em 18/06/01 ==>  @ 110, 189 BMPBUTTON TYPE 1 ACTION Execute(Trava)
+ @ 110, 218 BMPBUTTON TYPE 2 ACTION Close(oJan2)
+ ACTIVATE DIALOG oJan2 CENTERED
+Return
+
+**********************
+Static Function Trava()
+**********************
+#IFDEF WINDOWS
+ Close(oJan2)
+#ENDIF
+
+ nCOMP_A :=_D1
+ nCOMP_B :=IIF(Z1_COMPRIM<(nCOMP_A+_D2),Z1_COMPRIM-_D1,_D2)
+ IF nCOMP_B<>_D2
+    ALERT("Comprim de B recalculado para "+STR(nCOMP_B,6,0))
+ ENDIF   
+ 
+ nCOMP_C :=Z1_COMPRIM-(nCOMP_A+nCOMP_B)
+ IF nCOMP_C > 0
+    ALERT("Comprim de C calculado para "+STR(nCOMP_C,6,0))
+ ENDIF   
+
+
+
+nCUBBRTA:=(0.25*3.141592*((Z1_RODO/(3.141592*100))^2)*nCOMP_A) / 100
+nCUBLIQA:=(((Z1_RODO/4)*(Z1_RODO/4)*nCOMP_A) - (Z1_OCOALT*Z1_OCOLAR*nCOMP_A))/1000000
+
+nCUBBRTB:=(0.25*3.141592*((Z1_RODO/(3.141592*100))^2)*nCOMP_B) / 100
+nCUBLIQB:=(((Z1_RODO/4)*(Z1_RODO/4)*nCOMP_B) - (Z1_OCOALT*Z1_OCOLAR*nCOMP_B))/1000000
+
+nCUBBRTC:=(0.25*3.141592*((Z1_RODO/(3.141592*100))^2)*nCOMP_C) / 100
+nCUBLIQC:=(((Z1_RODO/4)*(Z1_RODO/4)*nCOMP_C) - (Z1_OCOALT*Z1_OCOLAR*nCOMP_C))/1000000
+
+_COD:=Z1_COD
+_MEDICAO:=Z1_MEDICAO
+_SITUACA:=Z1_SITUACA
+_TIPOORI :=Z1_TIPOORI
+_ORIGEM  :=Z1_ORIGEM
+_ESPECIE :=Z1_ESPECIE
+_RODO    :=Z1_RODO
+_CASCA   :=Z1_CASCA
+_DCOMPRI :=Z1_DCOMPRI
+_OCOALT  :=Z1_OCOALT
+_OCOLAR  :=Z1_OCOLAR
+_QUALIDA :=Z1_QUALIDA
+_FRETEIR :=Z1_FRETEIR
+_CODFOR  :=Z1_CODFOR
+_NFORN   :=Z1_NFORN
+_BALSA   :=Z1_BALSA
+
+IF RECLOCK("SZ1",.F.) .AND. nCOMP_B > 0
+   REPLACE Z1_COMPRIM WITH nCOMP_A
+   REPLACE Z1_CUBBRUT WITH nCUBBRTA
+   REPLACE Z1_CUBLIQU WITH nCUBLIQA
+   REPLACE Z1_CORTE   WITH "A"
+   APPEND BLANK
+   REPLACE Z1_FILIAL  WITH xFilial("SZ1")
+   REPLACE Z1_COD     WITH _COD
+   REPLACE Z1_MEDICAO WITH _MEDICAO
+   REPLACE Z1_SITUACA WITH _SITUACA 
+   REPLACE Z1_TIPOORI WITH _TIPOORI
+   REPLACE Z1_ORIGEM  WITH _ORIGEM
+   REPLACE Z1_ESPECIE WITH _ESPECIE
+   REPLACE Z1_RODO    WITH _RODO
+   REPLACE Z1_CASCA   WITH _CASCA
+   REPLACE Z1_DCOMPRI WITH _DCOMPRI
+   REPLACE Z1_OCOALT  WITH _OCOALT
+   REPLACE Z1_OCOLAR  WITH _OCOLAR
+   REPLACE Z1_QUALIDA WITH _QUALIDA
+   REPLACE Z1_FRETEIR WITH _FRETEIR
+   REPLACE Z1_CODFOR  WITH _CODFOR
+   REPLACE Z1_NFORN   WITH _NFORN
+   REPLACE Z1_BALSA   WITH _BALSA
+   
+   REPLACE Z1_COMPRIM WITH nCOMP_B
+   REPLACE Z1_CUBBRUT WITH nCUBBRTB
+   REPLACE Z1_CUBLIQU WITH nCUBLIQB
+   REPLACE Z1_CORTE   WITH "B"
+
+   IF nCOMP_C > 0
+      APPEND BLANK
+      REPLACE Z1_FILIAL  WITH xFilial("SZ1")
+      REPLACE Z1_COD     WITH _COD
+      REPLACE Z1_MEDICAO WITH _MEDICAO
+      REPLACE Z1_SITUACA WITH _SITUACA 
+      REPLACE Z1_TIPOORI WITH _TIPOORI
+      REPLACE Z1_ORIGEM  WITH _ORIGEM
+      REPLACE Z1_ESPECIE WITH _ESPECIE
+      REPLACE Z1_RODO    WITH _RODO
+      REPLACE Z1_CASCA   WITH _CASCA
+      REPLACE Z1_DCOMPRI WITH _DCOMPRI
+      REPLACE Z1_OCOALT  WITH _OCOALT
+      REPLACE Z1_OCOLAR  WITH _OCOLAR
+      REPLACE Z1_QUALIDA WITH _QUALIDA
+      REPLACE Z1_FRETEIR WITH _FRETEIR
+      REPLACE Z1_CODFOR  WITH _CODFOR
+      REPLACE Z1_NFORN   WITH _NFORN
+      REPLACE Z1_BALSA   WITH _BALSA
+   
+      REPLACE Z1_COMPRIM WITH nCOMP_C
+      REPLACE Z1_CUBBRUT WITH nCUBBRTC
+      REPLACE Z1_CUBLIQU WITH nCUBLIQC
+      REPLACE Z1_CORTE   WITH "C"
+
+   ENDIF   
+ENDIF
+
+   
+DBGOTO(nREG)
+RETURN NIL
+
+**************************
+USER FUNCTION SZ1CANCE()
+**************************
+DBSELECTAREA("SZ1")
+DBSETORDER(1)
+nREG:=RECNO()
+IF EMPTY(Z1_CORTE)
+   ALERT("Impossivel Cancelamento do Corte !!")
+   RETURN nil
+ENDIF
+_COD:=Z1_COD
+DBSEEK(xFilial("SZ1")+SZ1->Z1_COD)
+nREG:=RECNO()
+_COMPRIM:=0
+WHILE !EOF() .AND. Z1_COD==_COD
+      _COMPRIM:=_COMPRIM+Z1_COMPRIM
+      IF Z1_CORTE>"A" .AND. RECLOCK("SZ1",.F.)
+         DELETE
+      ENDIF
+      DBSKIP()
+ENDDO         
+DBGOTO(nREG)
+IF _COMPRIM > 0
+   nCUBBRTA:=(0.25*3.141592*((Z1_RODO/(3.141592*100))^2)*_COMPRIM) / 100
+   nCUBLIQA:=(((Z1_RODO/4)*(Z1_RODO/4)*_COMPRIM) - (Z1_OCOALT*Z1_OCOLAR*_COMPRIM))/1000000
+
+   IF RECLOCK("SZ1",.F.)
+      REPLACE Z1_COMPRIM WITH _COMPRIM
+      REPLACE Z1_CUBBRUT WITH nCUBBRTA
+      REPLACE Z1_CUBLIQU WITH nCUBLIQA
+      REPLACE Z1_CORTE   WITH " "
+    ENDIF  
+
+ENDIF
+ALERT("Processo efetuado com  sucesso !!!")         
+
+Return Nil

@@ -1,0 +1,321 @@
+#INCLUDE "RWMAKE.CH"
+#include 'topconn.ch'
+#include 'fivewin.ch'
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³ recibpre ³ Autor ³ Agamenon Caldas       ³ Data ³ 08/03/06 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ IMPRESSAO DOS RECIBOS    EM LASER                          ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Especifico para Mauricea Alimentos                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+User Function NotProGraf()
+
+dbSelectArea("SE1")
+cPerg     := "NOTPRO"
+
+//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+//³ Verifica as perguntas selecionadas                           ³
+//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+
+//ValidPerg()
+
+If ( ! Pergunte(cPerg,.T.) )
+	Return
+Else
+	RptStatus({ |lend| MontaRel() })
+endif
+
+Return Nil
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³  RBOL001 ³ Autor ³ Agamenon Caldas       ³ Data ³ 08/03/06 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ IMPRESSAO DOS RECIBOS DE VENDA MERCANTIL                   ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Especifico para Clientes Microsiga                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function MontaRel()
+
+LOCAL oPrint
+LOCAL n := 0
+LOCAL aDadosEmp
+LOCAL aDadosTit
+LOCAL aDatSacado
+LOCAL i         := 1
+LOCAL nRec      := 0
+LOCAL _nVlrAbat := 0
+LOCAL _nTotEnc  := 0
+Local nVlAtraso := 0
+Local cCGC
+Local cQry
+Local cAlias := Alias()
+
+cQry := "SELECT E1_FILIAL, E1_NUM, E1_PREFIXO, E1_PARCELA, E1_VALOR, E1_VENCREA, E1_TIPO, E1_CLIENTE, E1_LOJA, E1_EMISSAO "
+cQry += "FROM "+RetSQLName("SE1")+" E1 "
+cQry += "WHERE D_E_L_E_T_ <> '*' AND E1_FILIAL = '"+XFILIAL("SE1")+"' AND "
+cQry += "E1_FILIAL = '"+xFilial("SE1")+"' AND "
+//cQry += "E1_TIPO ='FI ' AND "
+cQry += "E1_PREFIXO = '"+MV_PAR02+"' AND "
+cQry += "E1_NUM = '"+MV_PAR01+"' "
+cQry += "AND E1_PARCELA >= '"+MV_PAR03+"' AND E1_PARCELA <= '"+MV_PAR04+"'"
+cQry += "ORDER BY E1_VENCREA"
+
+dbUseArea( .T., "TOPCONN", TcGenQry(,,CHANGEQUERY(cQry)), "XYZ", .T., .F. )
+
+DbSelectArea("SA1")
+DbSetOrder(1)
+
+DbSelectArea("XYZ")
+
+SA1->(DbSeek(XFILIAL("SA1")+XYZ->(E1_CLIENTE+E1_LOJA)))
+
+aDatSacado   := {SUBSTR(SA1->A1_NOME,1,40)                           ,;      // [1]Razão Social
+AllTrim(SA1->A1_COD)+"-"+SA1->A1_LOJA           ,;      // [2]Código
+AllTrim(SA1->A1_END) + " " + AllTrim(SA1->A1_BAIRRO),;      // [3]Endereço
+AllTrim(SA1->A1_MUN )                            ,;      // [4]Cidade
+SA1->A1_EST                                      ,;      // [5]Estado
+SA1->A1_CEP                                      ,;      // [6]CEP
+SA1->A1_CGC                                      ,;      // [7]CGC
+SA1->A1_TEL                              }      // [8]FONE
+cCGC := IIF(SA1->A1_PESSOA == "J",substr(SA1->A1_CGC,1,2) +"."+substr(SA1->A1_CGC,3,3) +"."+ substr(SA1->A1_CGC,6,3) +"/"+ substr(SA1->A1_CGC,9,4) +"-"+substr(SA1->A1_CGC,13,2),substr(SA1->A1_CGC,1,3) +"."+substr(SA1->A1_CGC,4,3) +"."+ substr(SA1->A1_CGC,7,3) +"-"+ substr(SA1->A1_CGC,10,2))
+
+aDadosEmp    := {SM0->M0_NOMECOM                                    ,; //[1]Nome da Empresa
+SM0->M0_ENDCOB                                      ,; //[2]Endereço
+AllTrim(SM0->M0_BAIRCOB)+", "+AllTrim(SM0->M0_CIDCOB)+", "+SM0->M0_ESTCOB ,; //[3]Complemento
+"CEP: "+Subs(SM0->M0_CEPCOB,1,5)+"-"+Subs(SM0->M0_CEPCOB,6,3)             ,; //[4]CEP
+"PABX/FAX: "+SM0->M0_TEL                                                  ,; //[5]Telefones
+"CNPJ: "+Subs(SM0->M0_CGC,1,2)+"."+Subs(SM0->M0_CGC,3,3)+"."+          ; //[6]
+Subs(SM0->M0_CGC,6,3)+"/"+Subs(SM0->M0_CGC,9,4)+"-"+                       ; //[6]
+Subs(SM0->M0_CGC,13,2)                                                    ,; //[6]CGC
+"IE: "+alltrim(SM0->M0_INSC) }                      											 //[7]I.E
+
+Private  oBrush      := TBrush():New(,CLR_LIGHTGRAY),;
+oPen     := TPen():New(0,5,CLR_BLACK),;
+cFileLogo   := GetSrvProfString('Startpath','') + 'pwa' + '.bmp',;
+oFont5      := TFont():New( "Arial",,5,,.F.,,,,,.F. ),;
+oFont07     := TFont():New('Courier New',07,07,,.F.,,,,.T.,.F.),;
+oFont08     := TFont():New('Courier New',08,08,,.F.,,,,.T.,.F.),;
+oFont08n    := TFont():New('Courier New',08,08,,.T.,,,,.T.,.F.),;
+oFont09     := TFont():New('Tahoma',09,09,,.T.,,,,.T.,.F.),;
+oFont10     := TFont():New('Tahoma',10,10,,.F.,,,,.T.,.F.),;
+oFont10n    := TFont():New('Courier New',10,10,,.T.,,,,.T.,.F.),;
+oFont10a    := TFont():New( "Arial",,10,,.t.,,,,,.f. ),;
+oFont11     := TFont():New('Tahoma',11,11,,.F.,,,,.T.,.F.),;
+oFont11n    := TFont():New('Tahoma',11,11,,.T.,,,,.T.,.F.),;
+oFont12     := TFont():New('Tahoma',12,12,,.T.,,,,.T.,.F.),;
+oFont12n    := TFont():New('Tahoma',12,12,,.F.,,,,.T.,.F.),;
+oFont13     := TFont():New('Tahoma',13,13,,.T.,,,,.T.,.F.),;
+oFont14     := TFont():New('Tahoma',14,14,,.T.,,,,.T.,.F.),;
+oFont15     := TFont():New('Courier New',15,15,,.T.,,,,.T.,.F.),;
+oFont18     := TFont():New('Arial',18,18,,.T.,,,,.T.,.T.),;
+oFont16     := TFont():New('Arial',16,16,,.T.,,,,.T.,.F.),;
+oFont20     := TFont():New('Arial',20,20,,.F.,,,,.T.,.F.),;
+oFont22     := TFont():New('Arial',22,22,,.T.,,,,.T.,.F.)
+
+oPrint:= TMSPrinter():New( "Nota Promissoria" )
+
+DbSelectArea("XYZ")
+SetRegua(RecCount())
+
+While ! Eof()
+	IncRegua()
+	
+	// IMPRIME DUAS VIAS
+	
+	cDiaVenc := Substr(DTOC(STOD(E1_VENCREA)),1,2)
+	cMesVenc := Upper(MesExtenso(Month( STOD(E1_VENCREA) )))
+	cAnoVenc := Substr(E1_VENCREA,1,4)
+	cDiaExt := alltrim( extenso( Val( Substr(DTOC(STOD(E1_VENCREA)),1,2) ) ) )
+	cDiaExt := Substr(cDiaExt,1,Len(cDiaExt)-5)
+	cAnoExt := alltrim( extenso( Val( Substr(E1_VENCREA,1,4) ) ) )
+	cAnoExt := Substr(cAnoExt,1,Len(cAnoExt)-5)
+	
+	oPrint:SetPortrait() // ou SetLandscape()
+	oPrint:StartPage()   // Inicia uma nova página
+	oPrint:SetpaperSize(9) // <==== AJUSTE PARA PAPEL a4
+	nLinha      := 100   // Controla a linha por extenso
+	
+	FOR I := 1 TO 2
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Imprime o cabecalho da empresa. !³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+		If I=2 .and. MV_PAR05="1"
+			oPrint:EndPage() // Finaliza a página
+			oPrint:SetPortrait() // ou SetLandscape()
+			oPrint:StartPage()   // Inicia uma nova página
+			oPrint:SetpaperSize(9) // <==== AJUSTE PARA PAPEL a4
+			nLinha      := 100   // Controla a linha por extenso
+		EndIf
+		
+		oPrint:Box(nLinha,100,nLinha+220,1200)
+		oPrint:Box(nLinha,1210,nLinha+220,2300)
+		
+		oPrint:SayBitmap(nLinha+5,130,cFileLogo,530,130)
+		
+		oPrint:Say(nLinha+130,110,AllTrim(Upper(aDadosEmp[1])),oFont11n) // 16
+		oPrint:Say(nLinha+170,110,aDadosEmp[6]+" "+aDadosEmp[7],oFont11n)
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Titulo do Relatorio³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+		oPrint:Say(nLinha+70,1250,OemToAnsi('NOTA FISCAL / FATURA'),oFont22)
+		nLinha += 220 // 270
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³PROMISSÓRIA        ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+		oPrint:Say(nLinha+20,0120,"Numero: "+E1_NUM+"/"+E1_PREFIXO+"/"+E1_PARCELA,oFont12)
+		oPrint:Say(nLinha+20,0800,"Emissão: "+substr(E1_EMISSAO,7,2)+"/"+substr(E1_EMISSAO,5,2)+"/"+substr(E1_EMISSAO,1,4),oFont12)
+		oPrint:Say(nLinha+20,1500,"Vencimento: "+cDiaVenc+ " de  "+cMesVenc+" de "+ cAnoVenc,oFont12)
+		
+		oPrint:Say(nLinha+110,1500,"V A L O R",oFont20)
+		
+		oPrint:Box(nLinha+90,1900,nLinha+210,2300)
+		oPrint:FillRect({nLinha+90,1900,nLinha+210,2300},oBrush)
+		oPrint:Say(nLinha+140,2000,"R$ "+TRANSFORM(E1_VALOR,"@E 999,999.99"),oFont12)
+		nLinha += 210
+		nLinha += 45
+		oPrint:Say(nLinha,0120,OemToAnsi("Aos "+cDiaExt+" dia(s) do mês de "+cMesVenc+" do ano de "+cAnoExt+" ***"),oFont11)
+		nLinha += 60
+		oPrint:Say(nLinha,1200,OemToAnsi("*** pagarei por esta única via de NOTA FISCAL / FATURA"),oFont11)
+		nLinha += 60
+		oPrint:Say(nLinha,0120,OemToAnsi("à "+alltrim(aDadosEmp[1])+" - "+aDadosEmp[6]+"ou à sua ordem a quantia de R$ "+TRANSFORM(E1_VALOR,"@E 999,999.99")),oFont11)
+		oPrint:Box(nLinha+60,100,nLinha+160,2300)
+		oPrint:FillRect({nLinha+60,100,nLinha+160,2300},oBrush)
+		nLinha += 60
+		oPrint:Say(nLinha,0120,OemToAnsi(ALLTRIM(SUBS(EXTENSO(E1_VALOR),1,083))+REPLICATE('*',083-LEN(ALLTRIM(SUBS(EXTENSO(E1_VALOR),1,083))))),oFont11)
+		nLinha += 60
+		oPrint:Say(nLinha,0120,OemToAnsi(ALLTRIM(SUBS(EXTENSO(E1_VALOR),084,083))+REPLICATE('*',081-LEN(ALLTRIM(SUBS(EXTENSO(E1_VALOR),084,083))))),oFont11)
+		nLinha += 60
+		oPrint:Say(nLinha,0120,OemToAnsi("em moeda corrente deste pais."),oFont11)
+		nLinha += 90
+		oPrint:Say(nLinha,0120,OemToAnsi("Local de Pagamento: ITACOATIARA/AM"),oFont11)
+		oPrint:Say(nLinha,1700,OemToAnsi("Data da Impressão: "+DTOC(dDataBase)),oFont11)
+		nLinha += 60
+		
+		//ÚÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿
+		//³Cliente/Emitente   ³
+		//ÀÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ
+		
+		//   oPrint:Box(nLinha+45,100,nLinha+215,2300)
+		oPrint:Say(nLinha+60,0120,OemToAnsi('Sacado :'),oFont12)
+		oPrint:Say(nLinha+60,0500,AllTrim(aDatSacado[1]) + '  ('+AllTrim(aDatSacado[2])+') '+OemToAnsi(' - Cnpj/Cpf: ')+cCGC,oFont11)
+		oPrint:Say(nLinha+110,0120,OemToAnsi('Endereço :'),oFont12)
+		oPrint:Say(nLinha+110,0500,aDatSacado[3],oFont11)
+		oPrint:Say(nLinha+160,0120,OemToAnsi('Município/U.F.:'),oFont12)
+		oPrint:Say(nLinha+160,0500,AllTrim(aDatSacado[4])+'/'+AllTrim(aDatSacado[5]),oFont11)
+		oPrint:Say(nLinha+160,1200,OemToAnsi('Cep:'),oFont12)
+		oPrint:Say(nLinha+160,1370,TransForm(aDatSacado[6],'@R 99.999-999'),oFont11)
+		oPrint:Say(nLinha+160,1700,OemToAnsi('Fone:'),oFont12)
+		oPrint:Say(nLinha+160,1870,ALLTRIM(aDatSacado[8]),oFont11)
+		
+		// Instruções para Pagamento
+		
+		oPrint:Say(nLinha+250,0120,OemToAnsi("Instruções para Pagamento: "),oFont12)
+		oPrint:Say(nLinha+295,0120,OemToAnsi("   A Mil Madeiras Preciosas Ltda, autoriza que os pagamentos da"),oFont11)
+		oPrint:Say(nLinha+340,0120,OemToAnsi("   Nota Fiscal, referente a esta FATURA, sejam depositados no"),oFont11)
+		oPrint:Say(nLinha+385,0120,OemToAnsi("   BANCO DO BRASIL S/A, Ag. 0326-3, C/C 5015-6 em nome de "),oFont11)
+		oPrint:Say(nLinha+430,0120,OemToAnsi("   CAROLINA INDUSTRIA LTDA - CNPJ: 04.022.877/0001-34."),oFont11)
+
+		// assinatura
+		
+		nLinha += 390
+		oPrint:Say(nLinha,1350,OemToAnsi('Data e Aceite:'),oFont11)
+		oPrint:Say(nLinha,1600,'_______________________________',oFont12n)
+		nLinha += 45
+		oPrint:Say(nLinha,1600,AllTrim(aDatSacado[1]),oFont08n)
+		
+		nLinha += 100
+		
+		oPrint:Line(nLinha,0100,nLinha,2300)
+		nLinha += 15
+		oPrint:Say(nLinha,120,AllTrim(SM0->M0_ENDENT)+" - "+Capital(AllTrim(SM0->M0_CIDENT))+'/'+AllTrim(SM0->M0_ESTENT)+ ' CEP.: ' + AllTrim(TransForm(SM0->M0_CEPENT,'@R 99.999-999')) + '  -  FONE: ' + AllTrim(SM0->M0_TEL),oFont10)
+		IF I == 1
+			oPrint:Say(nLinha,2050,"VIA CLIENTE",oFont11)
+			If MV_PAR05="2"
+				nLinha += 100
+				oPrint:Say(nLinha,070,Repli('-',2000),oFont10a,100)
+				oPrint:Say(nLinha+30,080,"CORTE AQUI",oFont5,100)
+				nLinha += 150
+			endif
+		ELSE
+			oPrint:Say(nLinha,2050,"VIA EMPRESA",oFont11)
+		ENDIF
+		
+	NEXT
+	
+	oPrint:EndPage() // Finaliza a página
+	
+	dbskip()
+Enddo
+
+dbCloseArea()
+
+oPrint:Preview()     // Visualiza antes de imprimir
+oPrint:End()     // Finaliza Objeto
+ms_flush() // desativar impressora
+
+Return nil
+
+/*/
+ÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜÜ
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+±±ÚÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÂÄÄÄÄÄÄÂÄÄÄÄÄÄÄÄÄÄ¿±±
+±±³Programa  ³VALIDPERG ³ Autor ³ Agamenon Caldas       ³ Data ³ 12/10/05 ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Descri‡…o ³ INCLUI PERGUNTAS DO RELATORIO                              ³±±
+±±ÃÄÄÄÄÄÄÄÄÄÄÅÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ´±±
+±±³Uso       ³ Especifico para Clientes Microsiga                         ³±±
+±±ÀÄÄÄÄÄÄÄÄÄÄÁÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙ±±
+±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±±
+ßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßßß
+/*/
+
+Static Function ValidPerg()
+_sAlias := Alias()
+DbSelectArea("SX1")
+DbSetOrder(1)
+cPerg     := "NOTPRO"
+aRegs:={}
+// Grupo/Ordem/Pergunta/Variavel/Tipo/Tamanho/Decimal/Presel/GSC/Valid/Var01/Def01/Cnt01/Var02/Def02/Cnt02/Var03/Def03/Cnt03/Var04/Def04/Cnt04/Var05/Def05/Cnt05
+aAdd(aRegs,{cPerg,'01', 'Nota         ?', 'Nota         ?', 'Nota         ?', 'mv_ch1', 'C',  9,	0, 0, 'G', 'naovazio', 'mv_par01' , '', '', '', ''  , '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''})
+aAdd(aRegs,{cPerg,'02', 'Prefixo      ?', 'Prefixo      ?', 'Prefixo      ?', 'mv_ch2', 'C',  3,	0, 0, 'G', 'naovazio', 'mv_par02' , '', '', '', ''      , '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''})
+aAdd(aRegs,{cPerg,'03', 'Parcela de   ?', 'Parcela de   ?', 'Parcela de   ?', 'mv_ch3', 'C',  1,	0, 0, 'G', '', 'mv_par03' , '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''})
+aAdd(aRegs,{cPerg,'04', 'Parcela ate  ?', 'Parcela ate  ?', 'Parcela ate  ?', 'mv_ch4', 'C',  1,	0, 0, 'G', '', 'mv_par04' , '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''})
+aAdd(aRegs,{cPerg,'05', 'Guias/Pagina ?', 'Guias/Pagina ?', 'Guias/Pagina ?', 'mv_ch5', 'C',  1,	0, 0, 'G', '', 'mv_par05' , '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', ''})
+For i:=1 to Len(aRegs)
+	If !DBSeek(cPerg+aRegs[i,2])
+		RecLock("SX1",.T.)
+		For j:=1 to Max(39, Len(aRegs[i])) //fCount()
+			FieldPut(j,aRegs[i,j])
+		Next
+		MsUnlock()
+	Endif
+Next
+DBSkip()
+do while x1_grupo == cPerg
+	RecLock("SX1", .F.)
+	DBDelete()
+	DBSkip()
+Enddo
+DBSelectArea(_sAlias)
+Return

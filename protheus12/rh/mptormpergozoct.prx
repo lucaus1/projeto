@@ -1,0 +1,93 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmpergozoct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local cLine :=""
+
+// m1
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADPERGOZOCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADPERGOZOIT.TXT")
+Endcase 
+*/
+
+// M2
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERGOZ0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADPERGOZ0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERGOZ0201.TXT")
+Endcase 
+
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - periodo de gozo ")
+DbselectArea("SRH")
+DbSetOrder(1)
+DbSeek(Xfilial("SRH")+"",.T.)
+While !EOF() .AND. RH_FILIAL == SM0->M0_CODFIL 
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    cLine := PADR(RH_MAT,16) + ";"	//	1	Chapa	String	16	PFUFERIASPER.CHAPA
+    DbselectArea("SRF")
+    DbSetOrder(1)
+    IF Dbseek(Xfilial("SRF")+SRH->RH_MAT+DTOS(SRH->RH_DATABAS))
+      cLine += PADR(STRTRAN(DTOC(RF_DATAFIM),"/",""),08) + ";"	//	2	Data final do período aquisitivo	Data	8	PFUFERIASPER.FIMPERAQUIS
+    ELSE
+      DbselectArea("SRH")
+      DBSKIP()
+      LOOP 
+    ENDIF    
+    DbselectArea("SRH")
+    cLine += PADR(STRTRAN(DTOC(RH_DBASEAT),"/",""),08) + ";"	//	2	Data final do período aquisitivo	Data	8	PFUFERIASPER.FIMPERAQUIS
+    cLine += PADR(STRTRAN(DTOC(RH_DTRECIB),"/",""),08) + ";"	//	3	Data de pagamento das férias	Data	8	PFUFERIASPER.DATAPAGTO
+    cLine += PADR(STRTRAN(DTOC(RH_DATAINI),"/",""),08) + ";"	//	4	Data de início das férias	Data	8	PFUFERIASPER.DATAINICIO
+    cLine += PADR(STRTRAN(DTOC(RH_DATAFIM),"/",""),08) + ";"	//	5	Data de fim das férias	Data	8	PFUFERIASPER.DATAFIM
+    cLine += PADR(STRTRAN(DTOC(RH_DTAVISO),"/",""),08) + ";"	//	6	Data de aviso das férias	Data	8	PFUFERIASPER.DATAAVISO
+    cLine += PADL(RH_DABONPE,09) + ";"	//	7	Número de dias de abono pecuniário	Real	9	PFUFERIASPER.NRODIASABONO
+    cLine += PADR(RH_PERC13S,09) + ";"	//	8	Ind. de pagto. da 1ª parcela 13ºsalário	Booleano	2	PFUFERIASPER.PAGA1APARC13O
+    cLine += PADL('0,00',09) + ";"	//	9	Licença remunerada férias colet. 1ºmês	Real	9	PFUFERIASPER.NDIASLICREM1
+    cLine += PADL('0,00',09) + ";"	//	10	Licença remunerada férias colet. 2ºmês	Real	9	PFUFERIASPER.NDIASLICREM2
+    cLine += PADR('',02) + ";"	//	11	Indicativo de per.ref.à férias coletivas	Booleano	2	PFUFERIASPER.FERIASCOLETIVAS
+    cLine += PADL(RH_DFERIAS,02) + ";"	//	12	Dias de férias perdidos devido a faltas	Inteiro	2	PFUFERIASPER.FERIASPERDIDAS
+    cLine += PADR('',80) + ";"	//	13	Obs. a ser impressa no recibo de férias	String	80	PFUFERIASPER.OBSERVACAO
+    cLine += PADR(RH_TIPCAL,01) + ";"	//	14	Situação das férias	String	1	PFUFERIASPER.SITUACAOFERIAS
+    cLine += PADR('',08) + ";"	//	15	Data Inicio Desconto Empréstimo Férias	Data	8	PFUFERIASPER.DATAINICIODESCEMPR
+    cLine += PADR('',04) + ";"	//	16	Nro Vezes Desconto Empréstimo Férias	Inteiro	4	PFUFERIASPER.NROVEZESDESCEMPR
+    cLine += PADL(RH_DFALTAS,02) + ";"	//	17	Faltas	Real	9	PFUFERIASPER.FALTAS
+    cLine += PADL('0,00',09) + ";"	//	18	Nro.dias antecipados do próx.periodo	Real	9	PFUFERIASPER.NRODIASANTECIPADOS
+    cLine += PADR('',08) + ";"	//	19	Fim per.aquis.referente aos dias antec.	Data	8	PFUFERIASPER.FIMPERAQUISANTEC
+    cLine += PADR('',08) + ";"	//	20	Data pagto.referente aos dias antec.	Data	8	PFUFERIASPER.DATAPAGTOANTEC
+    cLine += PADR('',02) + ";"	//	21	Indica se este periodo foi antecipado	Booleano	2	PFUFERIASPER.PERIODOANTECIPADO
+    cLine += PADL('0,00',09) + ";"	//	22	NRODIASFERIADO	Real	9	PFUFERIASPER.NRODIASFERIADO
+    cLine += PADL(RH_DFERIAS,09) + ";"	//	23	Número de dias de férias corridos	Real	9	PFUFERIASPER.NRODIASFERIASCORRIDOS
+    cLine += PADL(RH_DABONPE,09) + ";"	//	24	Número de dias de abono corridos	Real	9	PFUFERIASPER.NRODIASABONOCORRIDOS
+    cLine += PADR('',02) + ";"	//	25	Abono antes ou depois das férias	Inteiro	2	PFUFERIASPER.POSICAOABONO
+    // cLine += PADR('',02) + ";"	//	26	Indicativo de per.ref.à férias compulsórias	Booleano	2	PFUFERIASPER.FERIASCOMPULSORIA
+    
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

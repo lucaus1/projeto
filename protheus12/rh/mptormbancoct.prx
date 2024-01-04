@@ -1,0 +1,58 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+
+user function mp2rmbancoct()    
+Local nLin := 1
+Local nHdl := 0
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+
+/* -- CT
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADBCOCT.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADBCOIT.TXT")
+Endcase 
+*/ 
+// M2
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADBCO0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADFBCO0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADFBCO0201.TXT")
+Endcase 
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - BANCOS  ")
+DbselectArea("SA6")
+nTot := RECCOUNT()
+DbSetOrder(1)
+DbSeek(Xfilial("SA6")+"",.T.)
+While !EOF()  
+  // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    cFixo := "INSERT INTO GAGENCIA (NUMBANCO,NUMAGENCIA,NOME) VALUES ("
+    cLine := cFixo+"'"+ PADR(A6_COD,03) + "',"	
+    cLine += "'"+PADR(A6_AGENCIA,05) + "',"	
+    cLine += "'"+PADR(A6_NOMEAGE,40) +"');"	
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+
+end
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+/*
+
+/*

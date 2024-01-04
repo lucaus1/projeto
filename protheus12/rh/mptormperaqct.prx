@@ -1,0 +1,203 @@
+#Include "Protheus.CH"
+#Include "TOTVS.CH"
+#include "Fileio.ch"
+#INCLUDE "Topconn.ch"
+
+user function mp2rmpaqct()    
+Local nLin := 1
+Local nCt := 0
+Local nTot := 0
+Local cLine :=""
+nHdl := 0
+cLine1:=""
+// M1
+/*
+Do case 
+  Case SM0->M0_CODIGO == "01"
+    nHdl := FCREATE("CADPERAQCT-SQL.TXT")
+  Case SM0->M0_CODIGO == "02"
+    nHdl := FCREATE("CADPERAQIT-SQL.TXT")
+Endcase
+*/
+
+// M2
+
+Do case 
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERAQ-sql0101.TXT")
+  Case SM0->M0_CODIGO == "01" .and. SM0->M0_CODFIL =="03"
+    nHdl := FCREATE("CADPERAQ-sql0103.TXT")
+  Case SM0->M0_CODIGO == "02"  .and. SM0->M0_CODFIL =="01"
+    nHdl := FCREATE("CADPERAQ-sql0201.TXT")
+Endcase 
+
+
+if nHdl = -1
+    Alert("Erro ao criar arquivo - ferror " + Str(Ferror()))
+Endif 
+
+Alert("Inicio da Rotina de Migracao Protheus para RM - periodo aquisitivo ")
+DbselectArea("SRF")
+cQuery := " SELECT * FROM "+RetSqlName("SRF") 
+cQuery := cQuery + " WHERE  D_E_L_E_T_ = ' ' "
+cQuery := cQuery + " AND RF_FILIAL = '"+SM0->M0_CODFIL+"'"
+cQuery := cQuery + " ORDER BY RF_MAT, RF_DATABAS DESC "
+
+
+// Usando o comando TCQUERY
+TCQUERY (cQuery) ALIAS QRY NEW
+DbselectArea("QRY")
+nTot := RECCOUNT()
+dbGotop()
+
+While  !EOF()
+  cMat := RF_MAT
+  nAnos := 0 
+  nAberto := 0
+  n1Per := 1
+  nAberto := TotPAberto(cMat)
+  n1Per := nAberto
+   // Alert("Total de Periodo aquisitivo: "+STR(nAberto))
+
+  nFechado:= 1
+  DbselectArea("QRY")
+  do while RF_MAT == cMAT .and. !EOF()
+    
+    DbSelectArea("SRA")
+    DbSetOrder(1)
+    If !DBSEEK("01"+cMAT) .and. !Dbseek("03"+cMAT)
+      DbselectArea("QRY")
+      DbSkip()
+      Loop
+    Endif  
+    DbSelectArea("SRA")
+    if !Empty(RA_DEMISSA)
+      nAno := RA_DEMISSA - RA_ADMISSA 
+      // ALERT("DIAS DE ATIVO: "+STR(nAno))
+      if nAno <= 365
+        n1Per := 1
+     Endif  
+      if nFechado > n1Per
+        DbselectArea("QRY")
+        DbSkip()
+        Loop
+      Endif
+    Endif     
+    DbselectArea("QRY")
+    cFixo := "INSERT INTO PFUFERIAS(CODCOLIGADA,CHAPA,FIMPERAQUIS,INICIOPERAQUIS,SALDO,PERIODOABERTO,PERIODOPERDIDO,FALTAS) VALUES ("
+    // Formula 		Posição	Descrição	Tipo	Tamanho	Campo
+    if SM0->M0_CODIGO == "01"
+      cLine :=cFixo+"1"+","+"'"+PADR(RF_MAT,6)+"'"+","	//	1	Chapa	String	16	PFUNC.CHAPA
+    Else
+      cLine :=cFixo+"2"+","+"'"+PADR(RF_MAT,6)+"'"+","	//	1	Chapa	String	16	PFUNC.CHAPA
+    ENDIF
+    Do Case 
+      Case LEFT(RF_DATABAS,4) < "2021" .and. nFechado == 1
+        IncLinha()
+        DbselectArea("QRY")
+        // "'"+SUBSTR(DTOS(RF_DATABAS),1,4)+"-"+SUBSTR(DTOS(dDataIni+364),5,2)+"-"+SUBSTR(DTOS(dDataIni+364),7,2)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+        cLine += "'"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),1,4)+"-"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),5,2)+"-"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),7,2)+" 00:00:00"+"'"+ ","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+        cLine += "'"+SUBSTR(DTOS(STOD(RF_DATABAS)),1,4)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),5,2)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),7,2)+" 00:00:00"+"'"+","	//	3	Data inicial do período aquisitivo	Data	8	PFUFERIAS.INICIOPERAQUIS
+      Case STOD(RF_DATAFIM) > (STOD(RF_DATABAS)+364)
+        cLine += "'"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),1,4)+"-"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),5,2)+"-"+SUBSTR(DTOS((STOD(RF_DATABAS)+364)),7,2)+" 00:00:00"+"'"+ ","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+        cLine += "'"+SUBSTR(DTOS(STOD(RF_DATABAS)),1,4)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),5,2)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),7,2)+" 00:00:00"+"'"+","	//	3	Data inicial do período aquisitivo	Data	8	PFUFERIAS.INICIOPERAQUIS
+      OTHERWISE 
+        // cLine += "'"+PADR(STRTRAN(DTOC(STOD(RF_DATAFIM)),"/","-"),08)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+        cLine += "'"+SUBSTR(DTOS(STOD(RF_DATAFIM)),1,4)+"-"+SUBSTR(DTOS(STOD(RF_DATAFIM)),5,2)+"-"+SUBSTR(DTOS(STOD(RF_DATAFIM)),7,2)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS    
+        cLine += "'"+SUBSTR(DTOS(STOD(RF_DATABAS)),1,4)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),5,2)+"-"+SUBSTR(DTOS(STOD(RF_DATABAS)),7,2)+" 00:00:00"+"'"+","	//	3	Data inicial do período aquisitivo	Data	8	PFUFERIAS.INICIOPERAQUIS
+    EndCase 
+    cStatus := "1"
+      Do case 
+       Case RF_STATUS == "1" .and. (nAberto == 1 .or. nFechado == 1) // Ativo 
+         cStatus :="1" // Aberto  
+         nFechado++
+       OTHERWISE
+         cStatus :="0" // Fechado
+         nFechado++  
+      Endcase 
+    if cStatus == "0"// Fechado 
+      cLine += PADL("0",09) + ","	//	4	Saldo do período de férias	Real	9	PFUFERIAS.SALDO
+    else
+      cLine += STRTRAN(STR(RF_DIASDIR),",",".") + ","	//	4	Saldo do período de férias	Real	9	PFUFERIAS.SALDO
+    Endif 
+    cLine += PADR(cSTATUS,02) + ","	//	5	Indicativo de período aquisitivo aberto	Booleano	2	 PFUFERIAS.PERIODOABERTO
+    cLine += PADR('0',02) + ","	//	6	Indicativo de período aquisitivo perdido	Booleano	2	PFUFERIAS.PERIODOPERDIDO
+    // cLine += PADR('0',02) + ")"	//	7	Motivo da perda do período aquisitivo	String	2	PFUFERIAS.MOTIVOPERDA
+    cLine += PADL(RF_DFALVAT,02) + ");"	//	8	Faltas ocorridas no período aquisitivo	Real	9	PFUFERIAS.FALTAS
+    // cLine += PADL('0',02) + ")"	//	9	Bônus	Real	9	PFUFERIAS.BONUS
+    fWrite(nHdl,cLine+CRLF)
+    nLin++
+    nCt++
+    // @ Row(),1 Say Alltrim(Str(nCt,4))+" de "+Alltrim(Str(nTot,4))
+    Dbskip()
+  enddo
+End
+DbselectArea("QRY")
+DBCLOSEAREA()      
+fClose(nHdl)
+Alert("Fim da Rotina de Migracao Protheus para RM ")
+Return 
+
+Static Function TotPAberto(cMat)
+	cQuery := " SELECT * FROM "+RetSqlName("SRF") 
+  cQuery += " WHERE D_E_L_E_T_ = '' AND RF_MAT = '"+cMat+"'"
+  TcQuery cQuery New Alias qAtu
+  // Alert("Valor da cQuery: "+cQuery)
+DbSelectArea("qAtu")    
+DbGotop()
+nPerAberto := 0 
+If Eof()
+  nPerAberto := 0 
+Endif
+Do while !eof()
+  nPerAberto++  
+  DBSKIP()
+end
+// Alert("Total de Periodo aquisitivo:"+STR(nPerAberto))
+DbSelectArea("qAtu")    
+DBCLOSEAREA()
+Return(nPerAberto)
+
+Static Function IncLinha()
+    if SM0->M0_CODIGO == "01"
+      cLine1 :=cFixo+"1"+","+"'"+PADR(RF_MAT,6)+"'"+ ","	//	1	Chapa	String	16	PFUNC.CHAPA
+    Else
+      cLine1 :=cFixo+"2"+","+"'"+PADR(RF_MAT,6)+"'"+ ","	//	1	Chapa	String	16	PFUNC.CHAPA
+    ENDIF    
+    // MsgAlert("Conteudo Matricula - LEFT 4 DATAFIM: "+RF_MAT+"-"+LEFT(RF_DATAFIM,4), "DEBUG")
+    dDataIni := stod("2021"+substr(RF_DATABAS,5,4))  // 20210101
+    // MsgAlert("Conteudo dDataini: "+Dtoc(dDataIni), "DEBUG")
+    cLine1 += "'"+SUBSTR(DTOS(dDataIni+364),1,4)+"-"+SUBSTR(DTOS(dDataIni+364),5,2)+"-"+SUBSTR(DTOS(dDataIni+364),7,2)+" 00:00:00"+"'"+","	//	2	Data final do período aquisitivo	Data	8	PFUFERIAS.FIMPERAQUIS   
+    cLine1 += "'"+SUBSTR(DTOS(dDataIni),1,4)+"-"+SUBSTR(DTOS(dDataIni),5,2)+"-"+SUBSTR(DTOS(dDataIni),7,2)+" 00:00:00"+"'"+ ","	//	3	Data inicial do período aquisitivo	Data	8	PFUFERIAS.INICIOPERAQUIS
+    cLine1 += STRTRAN(STR(RF_DIASDIR),",",".") + ","	//	4	Saldo do período de férias	Real	9	PFUFERIAS.SALDO
+    cStatus := "1"
+      Do case 
+       Case RF_STATUS == "1" .and. (nAberto == 1 .or. nFechado == 1) // Ativo 
+         cStatus :="1" // Aberto  
+         nFechado++
+       OTHERWISE
+         cStatus :="0" // Fechado
+         nFechado++  
+      Endcase 
+    cLine1 += PADR(cSTATUS,02) + ","	//	5	Indicativo de período aquisitivo aberto	Booleano	2	 PFUFERIAS.PERIODOABERTO
+    cLine1 += PADR('0',02) + ","	//	6	Indicativo de período aquisitivo perdido	Booleano	2	PFUFERIAS.PERIODOPERDIDO
+    // cLine1 += PADR('0',02) + ")"	//	7	Motivo da perda do período aquisitivo	String	2	PFUFERIAS.MOTIVOPERDA
+    cLine1 += PADL(RF_DFALVAT,02) + ");"	//	8	Faltas ocorridas no período aquisitivo	Real	9	PFUFERIAS.FALTAS
+    // cLine1 += PADL('0',02) + ")"	//	9	Bônus	Real	9	PFUFERIAS.BONUS
+    fWrite(nHdl,cLine1+CRLF)
+Return
+/*
+cQuery := "SELECT E2_NATUREZ, E2_VENCREA, E2_NOMFOR, E2_PREFIXO, "
+cQuery := cQuery + " E2_NUM, E2_PARCELA, E2_VENCTO, E2_FORNECE, E2_LOJA," 
+cQuery := cQuery + " E2_VALOR, E2_SALDO, E2_TIPO, E2_BAIXA, E2_EMISSAO"
+cQuery := cQuery + ? FROM RetSqlName("SE1") ?   
+cQuery := cQuery + " WHERE E2_FILIAL = '" + xFilial("SE2") + "'"
+cQuery := cQuery + " AND  D_E_L_E_T_ = ' ' "
+cQuery := cQuery + " AND  E2_NATUREZ >= '"+ MV_PAR01 +"' AND E2_NATUREZ <= '"+mv_par02+"'"
+cQuery := cQuery + " AND  E2_VENCREA >= '"+DTOS(mv_par03)+"' AND E2_VENCREA <= '"+DTOS(mv_par04)+"'"
+cQuery := cQuery + " AND  E2_FORNECE >= '"+mv_par07+"' And E2_FORNECE <= '"+mv_par08+"'"
+cQuery := cQuery + " AND  E2_EMISSAO >= '"+DTOS(mv_par09)+"' AND E2_EMISSAO <= '"+DTOS(mv_par10)+"'"
+cQuery := cQuery + " AND  E2_TIPO <> 'AB-'"   
+cQuery := cQuery + " ORDER BY E2_NATUREZ, E2_VENCREA, E2_NOMFOR"
+
+*/
